@@ -130,11 +130,11 @@ export default function BrowseIdeasPage() {
                 <div className="flex-grow">
                     <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
                     <h3 className="text-lg font-bold">{idea.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3 h-16">{idea.summary}</p>
-                    <div className="flex justify-between w-full text-sm mt-4">
-                        <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
-                        <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
-                    </div>
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.summary}</p>
+                </div>
+                <div className="flex justify-between w-full text-sm mt-4">
+                    <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
+                    <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
                 </div>
                 <div className="border-t pt-4 mt-4">
                     <div className="flex justify-between items-center w-full">
