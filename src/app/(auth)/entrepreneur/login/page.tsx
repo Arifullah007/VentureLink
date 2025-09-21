@@ -52,44 +52,13 @@ export default function EntrepreneurLoginPage() {
     });
 
     router.push('/entrepreneur/dashboard');
-    router.refresh();
-  };
-
-  const handleSignUp = async () => {
-    if (!email || !password) {
-      toast({ title: 'Sign Up Failed', description: 'Please enter both email and password.', variant: 'destructive'});
-      return;
-    }
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          role: 'entrepreneur',
-        },
-      },
-    });
-    if (error) {
-       toast({
-        title: 'Sign Up Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Sign Up Successful!',
-        description: 'Please check your email to verify your account and then login.',
-      });
-    }
-    setLoading(false);
   };
 
   return (
     <Card className="shadow-2xl">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl font-bold">Entrepreneur Portal</CardTitle>
-        <CardDescription>Login or create an account to get started.</CardDescription>
+        <CardDescription>Login to your account to manage your ideas.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleLogin} className="space-y-4">
@@ -107,8 +76,8 @@ export default function EntrepreneurLoginPage() {
         <Button className="w-full" type="submit" onClick={handleLogin} disabled={loading}>
           {loading ? 'Logging in...' : 'Login'}
         </Button>
-        <Button className="w-full" variant="outline" onClick={handleSignUp} disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign Up'}
+         <Button variant="outline" className="w-full" asChild>
+            <Link href="/entrepreneur/signup">Don't have an account? Sign Up</Link>
         </Button>
         <p className="text-xs text-muted-foreground text-center">
             By logging in, you agree to our Terms of Service and Privacy Policy.
