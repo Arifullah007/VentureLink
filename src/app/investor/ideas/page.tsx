@@ -126,38 +126,40 @@ export default function BrowseIdeasPage() {
                   </Watermark>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow p-4">
-                <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
-                <h3 className="text-lg font-bold">{idea.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-3 h-16">{idea.summary}</p>
-                 <div className="flex justify-between w-full text-sm mt-4">
-                  <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
-                  <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
+              <div className="flex flex-col flex-grow p-4">
+                <div className="flex-grow">
+                    <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
+                    <h3 className="text-lg font-bold">{idea.title}</h3>
+                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3 h-16">{idea.summary}</p>
+                    <div className="flex justify-between w-full text-sm mt-4">
+                        <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
+                        <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
+                    </div>
                 </div>
-              </CardContent>
-              <CardFooter className="p-4 border-t">
-                <div className="flex justify-between items-center w-full">
-                  <div className="flex items-center gap-2">
-                    {idea.users ? (
-                      <>
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={idea.users.avatar_url} alt={idea.users.full_name} />
-                          <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm font-medium">{idea.users.full_name}</span>
-                      </>
-                    ) : (
-                        <div className="flex items-center gap-2">
-                            <Skeleton className="h-8 w-8 rounded-full" />
-                            <Skeleton className="h-4 w-24" />
-                        </div>
-                    )}
-                  </div>
-                  <Button onClick={() => handleUnlockDetails(idea)}>
-                    Unlock Details
-                  </Button>
+                <div className="border-t pt-4 mt-4">
+                    <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center gap-2">
+                        {idea.users ? (
+                        <>
+                            <Avatar className="h-8 w-8">
+                            <AvatarImage src={idea.users.avatar_url} alt={idea.users.full_name} />
+                            <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm font-medium">{idea.users.full_name}</span>
+                        </>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <Skeleton className="h-4 w-24" />
+                            </div>
+                        )}
+                    </div>
+                    <Button onClick={() => handleUnlockDetails(idea)}>
+                        Unlock Details
+                    </Button>
+                    </div>
                 </div>
-              </CardFooter>
+              </div>
             </Card>
           );
         })}
@@ -179,14 +181,6 @@ export default function BrowseIdeasPage() {
             entrepreneurName={selectedIdea.users?.full_name || 'the entrepreneur'}
         />
       )}
-
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
-          <button className="bg-destructive text-destructive-foreground font-bold py-2 px-4 rounded-md shadow-lg flex items-center gap-2">
-              <span>N</span>
-              <span>Next</span>
-              <span>&times;</span>
-          </button>
-      </div>
     </div>
   );
 }
