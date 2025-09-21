@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import { Home, Lightbulb, Users, Handshake, LogOut, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
+import { LogoutButton } from '@/components/logout-button';
 
 const navItems = [
     { href: "/entrepreneur/dashboard", icon: <Home />, label: "Dashboard" },
@@ -62,12 +63,7 @@ export default function EntrepreneurLayout({
         <SidebarFooter>
             <SidebarMenu>
                 <SidebarMenuItem>
-                    <SidebarMenuButton asChild>
-                        <Link href="/">
-                            <LogOut />
-                            <span>Logout</span>
-                        </Link>
-                    </SidebarMenuButton>
+                    <LogoutButton />
                 </SidebarMenuItem>
             </SidebarMenu>
         </SidebarFooter>
@@ -106,12 +102,9 @@ export default function EntrepreneurLayout({
                 <span>Settings</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                 <Link href="/">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                </Link>
-              </DropdownMenuItem>
+               <DropdownMenuItem>
+                  <LogoutButton isDropdown />
+               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
