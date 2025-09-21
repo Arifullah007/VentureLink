@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { Home, Lightbulb, Users, Handshake, LogOut, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
+import { AuthGuard } from '@/components/auth-guard';
 
 const navItems = [
     { href: "/entrepreneur/dashboard", icon: <Home />, label: "Dashboard" },
@@ -38,6 +39,7 @@ export default function EntrepreneurLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AuthGuard role="entrepreneur">
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
@@ -113,5 +115,6 @@ export default function EntrepreneurLayout({
         </main>
       </SidebarInset>
     </SidebarProvider>
+    </AuthGuard>
   );
 }
