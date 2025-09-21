@@ -32,7 +32,6 @@ export default function EntrepreneurSignUpPage() {
           role: 'entrepreneur',
           full_name: fullName,
         },
-        emailRedirectTo: `${location.origin}/auth/callback`,
       },
     });
 
@@ -44,10 +43,10 @@ export default function EntrepreneurSignUpPage() {
       });
     } else {
       toast({
-        title: 'Sign Up Successful!',
-        description: 'Please check your email to verify your account.',
+        title: 'OTP Sent!',
+        description: 'Please check your email for the verification code.',
       });
-      router.push('/entrepreneur/login');
+      router.push(`/entrepreneur/verify-otp?email=${encodeURIComponent(email)}`);
     }
     setLoading(false);
   };

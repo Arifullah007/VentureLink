@@ -32,7 +32,6 @@ export default function InvestorSignUpPage() {
           role: 'investor',
           full_name: fullName,
         },
-        emailRedirectTo: `${location.origin}/auth/callback`,
       }
     });
     if (error) {
@@ -43,10 +42,10 @@ export default function InvestorSignUpPage() {
       });
     } else {
       toast({
-        title: 'Sign Up Successful!',
-        description: 'Please check your email to verify your account.',
+        title: 'OTP Sent!',
+        description: 'Please check your email for the verification code.',
       });
-      router.push('/investor/login');
+      router.push(`/investor/verify-otp?email=${encodeURIComponent(email)}`);
     }
     setLoading(false);
   };
