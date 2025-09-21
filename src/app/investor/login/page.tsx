@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/icons';
 import { supabase } from '@/lib/supabase';
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function InvestorLoginPage() {
@@ -17,7 +17,7 @@ export default function InvestorLoginPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -48,10 +48,8 @@ export default function InvestorLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
     
-    // Timeout to allow toast to be seen
     setTimeout(() => {
         router.push('/investor/dashboard');
-        router.refresh(); 
     }, 1000);
   };
 
