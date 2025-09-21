@@ -3,17 +3,66 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/icons';
+import { supabase } from '@/lib/supabase';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 export default function EntrepreneurLoginPage() {
   const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    router.push('/entrepreneur/dashboard');
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      toast({
+        title: 'Login Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Login Successful',
+        description: 'Redirecting to your dashboard...',
+      });
+      router.push('/entrepreneur/dashboard');
+      router.refresh();
+    }
+    setLoading(false);
+  };
+
+  const handleSignUp = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          role: 'entrepreneur',
+        },
+      },
+    });
+    if (error) {
+       toast({
+        title: 'Sign Up Failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Sign Up Successful!',
+        description: 'Please check your email to verify your account and then login.',
+      });
+    }
+    setLoading(false);
   };
 
   return (
@@ -26,36 +75,26 @@ export default function EntrepreneurLoginPage() {
               <span className="text-2xl font-bold text-foreground">VentureLink</span>
             </Link>
             <CardTitle className="text-2xl font-bold">Entrepreneur Portal</CardTitle>
-            <CardDescription>Verify your identity to access your dashboard.</CardDescription>
+            <CardDescription>Login or create an account to get started.</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input id="name" defaultValue="Sharad" required />
+               <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input id="email" type="email" placeholder="name@example.com" required value={email} onChange={e => setEmail(e.target.value)} />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="aadhaar">Aadhaar / PAN Number</Label>
-                <Input id="aadhaar" placeholder="e.g., 1234 5678 9012" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="dob">Date of Birth</Label>
-                <Input id="dob" type="date" required />
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox id="age-verification" required />
-                <label
-                  htmlFor="age-verification"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I confirm I am 18 years or older
-                </label>
+               <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input id="password" type="password" required value={password} onChange={e => setPassword(e.target.value)} />
               </div>
             </form>
           </CardContent>
           <CardFooter className="flex flex-col gap-4">
-            <Button className="w-full" type="submit" onClick={handleLogin}>
-              Verify &amp; Login
+            <Button className="w-full" type="submit" onClick={handleLogin} disabled={loading}>
+              {loading ? 'Logging in...' : 'Login'}
+            </Button>
+            <Button className="w-full" variant="outline" onClick={handleSignUp} disabled={loading}>
+               {loading ? 'Signing up...' : 'Sign Up'}
             </Button>
             <p className="text-xs text-muted-foreground text-center">
               By logging in, you agree to our Terms of Service and Privacy Policy.

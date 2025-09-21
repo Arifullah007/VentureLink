@@ -11,14 +11,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Lightbulb, UploadCloud } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
+import { v4 as uuidv4 } from 'uuid';
 
 const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
   field: z.string().min(1, 'Please select a field.'),
-  summary: z.string().min(20, 'Summary must be at least 20 characters.').max(300, 'Summary cannot exceed 300 characters.'),
+  summary: z.string().min(20, 'Summary must be at least 20 characters.').max(500, 'Summary cannot exceed 500 characters.'),
   requiredInvestment: z.string().min(1, 'Please select an investment range.'),
   estimatedReturns: z.string().min(1, 'Please select an estimated return.'),
-  prototype: z.any().refine((file) => file?.length == 1, 'A prototype file is required.'),
+  prototype: z.any().refine((files) => files?.length == 1, 'A prototype file is required.')
+    .refine((files) => files?.[0]?.size <= 10000000, `Max file size is 10MB.`),
 });
 
 type IdeaFormValues = z.infer<typeof ideaSchema>;
@@ -43,13 +46,50 @@ export default function NewIdeaPage() {
         }
     });
 
-    function onSubmit(data: IdeaFormValues) {
-        console.log(data);
-        toast({
-            title: 'Idea Submitted!',
-            description: 'Your idea has been successfully submitted for review by investors.',
-        });
-        router.push('/entrepreneur/dashboard');
+    async function onSubmit(data: IdeaFormValues) {
+        try {
+            form.formState.isSubmitting = true;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("User not authenticated.");
+
+            const file = data.prototype[0];
+            const filePath = `${user.id}/${uuidv4()}-${file.name}`;
+            
+            const { error: uploadError } = await supabase.storage.from('prototypes').upload(filePath, file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage.from('prototypes').getPublicUrl(filePath);
+
+            const { error: dbError } = await supabase
+                .from('ideas')
+                .insert([{ 
+                    title: data.title,
+                    summary: data.summary,
+                    field: data.field,
+                    required_investment: data.requiredInvestment,
+                    estimated_returns: data.estimatedReturns,
+                    prototype_url: publicUrlData.publicUrl,
+                    entrepreneur_id: user.id
+                }]);
+
+            if (dbError) throw dbError;
+
+            toast({
+                title: 'Idea Submitted!',
+                description: 'Your idea has been successfully submitted for review by investors.',
+            });
+            router.push('/entrepreneur/dashboard');
+
+        } catch (error: any) {
+             toast({
+                title: 'Submission Failed',
+                description: error.message,
+                variant: 'destructive'
+            });
+        } finally {
+             form.formState.isSubmitting = false;
+        }
     }
 
   return (
@@ -83,7 +123,7 @@ export default function NewIdeaPage() {
               name="summary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Idea Summary (2-3 lines)</FormLabel>
+                  <FormLabel>Idea Summary</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Briefly describe your idea, its purpose, and target audience." {...field} />
                   </FormControl>
@@ -169,7 +209,7 @@ export default function NewIdeaPage() {
                                 </label>
                                 <p className="pl-1">or drag and drop</p>
                             </div>
-                            <p className="text-xs text-gray-500">PDF, PNG, JPG, GIF up to 10MB</p>
+                            <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
                         </div>
                     </div>
                   </FormControl>
