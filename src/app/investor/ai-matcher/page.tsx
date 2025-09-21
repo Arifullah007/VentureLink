@@ -15,7 +15,6 @@ import { Bot, Loader2, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { Watermark } from '@/components/watermark';
 

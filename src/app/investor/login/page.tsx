@@ -48,9 +48,7 @@ export default function InvestorLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
     
-    setTimeout(() => {
-        router.push('/investor/dashboard');
-    }, 1000);
+    router.push('/investor/dashboard');
   };
 
   const handleSignUp = async () => {

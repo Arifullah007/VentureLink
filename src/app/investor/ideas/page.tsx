@@ -2,7 +2,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -48,7 +47,7 @@ export default function BrowseIdeasPage() {
 
             if (error) {
                 console.error('Error fetching ideas:', error);
-            } else {
+            } else if (data) {
                 setIdeas(data as Idea[]);
             }
             setLoading(false);
@@ -58,16 +57,12 @@ export default function BrowseIdeasPage() {
     }, []);
 
     const handleUnlockDetails = (idea: Idea) => {
-        // In a real app, you'd check for subscription status here.
-        // For now, we'll assume they are subscribed and show the NDA.
         setSelectedIdea(idea);
         setNdaOpen(true);
     };
 
     const handleNdaAccept = () => {
         setNdaOpen(false);
-        // Here you would navigate to the full details page, or reveal more info.
-        // For this example, we'll just log it.
         console.log("NDA accepted for idea:", selectedIdea?.title);
         alert(`NDA Accepted! You can now view the full details for "${selectedIdea?.title}".`);
         setSelectedIdea(null);

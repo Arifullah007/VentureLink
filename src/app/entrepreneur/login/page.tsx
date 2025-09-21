@@ -48,9 +48,7 @@ export default function EntrepreneurLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
 
-    setTimeout(() => {
-        router.push('/entrepreneur/dashboard');
-    }, 1000);
+    router.push('/entrepreneur/dashboard');
   };
 
   const handleSignUp = async () => {

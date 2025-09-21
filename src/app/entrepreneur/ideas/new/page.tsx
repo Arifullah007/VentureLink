@@ -48,7 +48,6 @@ export default function NewIdeaPage() {
 
     async function onSubmit(data: IdeaFormValues) {
         try {
-            form.setValue('title', form.getValues('title'), { shouldTouch: true, shouldDirty: true, shouldValidate: true });
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("User not authenticated.");
 

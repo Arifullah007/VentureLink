@@ -1,10 +1,9 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Briefcase, Lightbulb, Zap } from 'lucide-react';
+import { ArrowRight, Briefcase, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
-import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 const features = [
@@ -25,7 +24,7 @@ const features = [
 ];
 
 export default function Home() {
-  const [year, setYear] = useState(new Date().getFullYear());
+  const [year, setYear] = useState<number | null>(null);
 
   useEffect(() => {
     setYear(new Date().getFullYear());
@@ -122,7 +121,7 @@ export default function Home() {
       </main>
       <footer className="bg-white border-t">
         <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {year} VentureLink. All rights reserved.</p>
+          <p>&copy; {year || new Date().getFullYear()} VentureLink. All rights reserved.</p>
         </div>
       </footer>
     </div>
