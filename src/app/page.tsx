@@ -1,9 +1,11 @@
+'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Briefcase, Lightbulb, Zap } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 const features = [
   {
@@ -23,6 +25,12 @@ const features = [
 ];
 
 export default function Home() {
+  const [year, setYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -114,7 +122,7 @@ export default function Home() {
       </main>
       <footer className="bg-white border-t">
         <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} VentureLink. All rights reserved.</p>
+          <p>&copy; {year} VentureLink. All rights reserved.</p>
         </div>
       </footer>
     </div>

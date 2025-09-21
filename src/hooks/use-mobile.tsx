@@ -9,17 +9,18 @@ export function useIsMobile() {
 
   React.useEffect(() => {
     const checkIsMobile = () => {
-        setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
+      setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
     }
-    // Check on mount (client-side)
-    checkIsMobile();
-
-    // Add event listener
-    window.addEventListener("resize", checkIsMobile);
-
-    // Cleanup
-    return () => window.removeEventListener("resize", checkIsMobile);
+    checkIsMobile()
+    window.addEventListener("resize", checkIsMobile)
+    return () => window.removeEventListener("resize", checkIsMobile)
   }, [])
 
-  return isMobile
+  // Only return the value on the client-side after mounting
+  const [isClient, setIsClient] = React.useState(false);
+  React.useEffect(() => {
+      setIsClient(true);
+  }, []);
+
+  return isClient ? isMobile : false;
 }
