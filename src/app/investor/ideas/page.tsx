@@ -97,7 +97,7 @@ export default function BrowseIdeasPage() {
                         <Skeleton className="h-6 w-3/4" />
                         <Skeleton className="h-12 w-full" />
                     </CardContent>
-                    <CardFooter className="flex flex-col items-start gap-4">
+                    <CardFooter className="flex flex-col items-start gap-4 pt-4">
                         <div className="flex justify-between w-full">
                            <Skeleton className="h-5 w-1/3" />
                            <Skeleton className="h-5 w-1/4" />
@@ -113,7 +113,7 @@ export default function BrowseIdeasPage() {
         ) : ideas.map((idea) => {
           return (
             <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <CardHeader>
+              <CardHeader className="p-0">
                 <div className="relative">
                   <Watermark text="VentureLink">
                     <Image
@@ -121,22 +121,21 @@ export default function BrowseIdeasPage() {
                       alt={`Prototype for ${idea.title}`}
                       width={400}
                       height={250}
-                      className="rounded-lg aspect-video w-full object-cover"
+                      className="rounded-t-lg aspect-video w-full object-cover"
                     />
                   </Watermark>
                 </div>
               </CardHeader>
-              <CardContent className="flex-grow">
+              <CardContent className="flex-grow p-4">
                 <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
                 <h3 className="text-lg font-bold">{idea.title}</h3>
-                <p className="text-sm text-muted-foreground mt-2 line-clamp-3">{idea.summary}</p>
-              </CardContent>
-              <CardFooter className="flex flex-col items-start gap-4">
-                <div className="flex justify-between w-full text-sm">
+                <p className="text-sm text-muted-foreground mt-2 line-clamp-3 h-16">{idea.summary}</p>
+                 <div className="flex justify-between w-full text-sm mt-4">
                   <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
                   <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
                 </div>
-                <div className="w-full h-px bg-border"></div>
+              </CardContent>
+              <CardFooter className="p-4 border-t">
                 <div className="flex justify-between items-center w-full">
                   <div className="flex items-center gap-2">
                     {idea.users ? (
