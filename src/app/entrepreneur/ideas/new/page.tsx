@@ -1,0 +1,189 @@
+'use client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Lightbulb, UploadCloud } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+
+const ideaSchema = z.object({
+  title: z.string().min(5, 'Title must be at least 5 characters.'),
+  field: z.string().min(1, 'Please select a field.'),
+  summary: z.string().min(20, 'Summary must be at least 20 characters.').max(300, 'Summary cannot exceed 300 characters.'),
+  requiredInvestment: z.string().min(1, 'Please select an investment range.'),
+  estimatedReturns: z.string().min(1, 'Please select an estimated return.'),
+  prototype: z.any().refine((file) => file?.length == 1, 'A prototype file is required.'),
+});
+
+type IdeaFormValues = z.infer<typeof ideaSchema>;
+
+const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR', '1CR+'];
+const returnExpectations = ['Less', 'Medium', 'High'];
+const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech', 'Other'];
+
+
+export default function NewIdeaPage() {
+    const { toast } = useToast();
+    const router = useRouter();
+
+    const form = useForm<IdeaFormValues>({
+        resolver: zodResolver(ideaSchema),
+        defaultValues: {
+            title: '',
+            field: '',
+            summary: '',
+            requiredInvestment: '',
+            estimatedReturns: '',
+        }
+    });
+
+    function onSubmit(data: IdeaFormValues) {
+        console.log(data);
+        toast({
+            title: 'Idea Submitted!',
+            description: 'Your idea has been successfully submitted for review by investors.',
+        });
+        router.push('/entrepreneur/dashboard');
+    }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+            <Lightbulb className="h-6 w-6 text-primary"/>
+            <CardTitle>Submit Your New Idea</CardTitle>
+        </div>
+        <CardDescription>Fill out the details below to get your idea in front of investors. Be clear and concise.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            <FormField
+              control={form.control}
+              name="title"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Idea Title</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., Eco-Friendly Packaging Solution" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="summary"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Idea Summary (2-3 lines)</FormLabel>
+                  <FormControl>
+                    <Textarea placeholder="Briefly describe your idea, its purpose, and target audience." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <div className="grid md:grid-cols-3 gap-8">
+                <FormField
+                control={form.control}
+                name="field"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Field / Sector</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select a field" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {fields.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="requiredInvestment"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Required Investment</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select a range" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                             {investmentRanges.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+                <FormField
+                control={form.control}
+                name="estimatedReturns"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Estimated Guaranteed Returns</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger><SelectValue placeholder="Select return level" /></SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                             {returnExpectations.map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            </div>
+             <FormField
+              control={form.control}
+              name="prototype"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Watermarked Prototype</FormLabel>
+                  <FormControl>
+                    <div className="relative flex justify-center w-full h-32 px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
+                        <div className="space-y-1 text-center">
+                            <UploadCloud className="w-12 h-12 mx-auto text-gray-400" />
+                            <div className="flex text-sm text-gray-600">
+                                <label
+                                htmlFor="file-upload"
+                                className="relative font-medium text-primary bg-white rounded-md cursor-pointer hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                                >
+                                <span>Upload a file</span>
+                                <Input id="file-upload" type="file" className="sr-only" 
+                                    onChange={(e) => field.onChange(e.target.files)} />
+                                </label>
+                                <p className="pl-1">or drag and drop</p>
+                            </div>
+                            <p className="text-xs text-gray-500">PDF, PNG, JPG, GIF up to 10MB</p>
+                        </div>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
+                {form.formState.isSubmitting ? 'Submitting...' : 'Submit My Idea'}
+            </Button>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,3 +1,59 @@
+
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "investor1",
+      "description": "Avatar for Sarah Connor",
+      "imageUrl": "https://picsum.photos/seed/investor1/100/100",
+      "imageHint": "woman portrait"
+    },
+    {
+      "id": "investor2",
+      "description": "Avatar for John Paul",
+      "imageUrl": "https://picsum.photos/seed/investor2/100/100",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "investor3",
+      "description": "Avatar for Anika Singh",
+      "imageUrl": "https://picsum.photos/seed/investor3/100/100",
+      "imageHint": "woman professional"
+    },
+    {
+      "id": "investor4",
+      "description": "Avatar for Mike Chen",
+      "imageUrl": "https://picsum.photos/seed/investor4/100/100",
+      "imageHint": "man casual"
+    },
+    {
+      "id": "prototype1",
+      "description": "Prototype for Eco-friendly packaging",
+      "imageUrl": "https://picsum.photos/seed/prototype1/600/400",
+      "imageHint": "eco packaging"
+    },
+    {
+      "id": "prototype2",
+      "description": "Prototype for Health monitoring app",
+      "imageUrl": "https://picsum.photos/seed/prototype2/600/400",
+      "imageHint": "health app"
+    },
+    {
+      "id": "prototype3",
+      "description": "Prototype for AI-powered logistics platform",
+      "imageUrl": "https://picsum.photos/seed/prototype3/600/400",
+      "imageHint": "logistics platform"
+    },
+    {
+      "id": "prototype4",
+      "description": "Prototype for artisanal coffee subscription",
+      "imageUrl": "https://picsum.photos/seed/prototype4/600/400",
+      "imageHint": "artisanal coffee"
+    },
+    {
+      "id": "prototype5",
+      "description": "Prototype for VR education module",
+      "imageUrl": "https://picsum.photos/seed/prototype5/600/400",
+      "imageHint": "vr education"
+    }
+  ]
 }
