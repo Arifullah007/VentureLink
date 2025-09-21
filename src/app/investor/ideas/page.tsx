@@ -57,7 +57,7 @@ export default function BrowseIdeasPage() {
     }, []);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <Card>
         <CardHeader>
           <CardTitle>Browse Ideas</CardTitle>
@@ -150,6 +150,14 @@ export default function BrowseIdeasPage() {
             </CardContent>
         </Card>
       )}
+
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
+          <button className="bg-destructive text-destructive-foreground font-bold py-2 px-4 rounded-md shadow-lg flex items-center gap-2">
+              <span>N</span>
+              <span>Next</span>
+              <span>&times;</span>
+          </button>
+      </div>
     </div>
   );
 }
