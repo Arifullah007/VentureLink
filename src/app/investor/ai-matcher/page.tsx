@@ -125,7 +125,7 @@ export default function AiMatcherPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Expected Returns</FormLabel>
-                      <Select onValuechange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select expectation" />
@@ -165,32 +165,45 @@ export default function AiMatcherPage() {
         <div className="space-y-4">
             <h2 className="text-2xl font-bold">Matching Results</h2>
             {results.map(({ idea, matchScore, matchReason }) => (
-                <Card key={idea.id} className="overflow-hidden">
-                    <CardHeader>
-                        <div className="flex justify-between items-start gap-4">
-                            <div>
-                                <CardTitle>{idea.title}</CardTitle>
-                                <CardDescription>Field: {idea.field}</CardDescription>
+                <Card key={idea.id} className="overflow-hidden md:grid md:grid-cols-3 md:gap-4">
+                    <div className="md:col-span-2">
+                        <CardHeader>
+                            <div className="flex justify-between items-start gap-4">
+                                <div>
+                                    <CardTitle>{idea.title}</CardTitle>
+                                    <CardDescription>Field: {idea.field}</CardDescription>
+                                </div>
+                                <div className="text-right flex-shrink-0">
+                                    <p className="text-sm font-medium text-muted-foreground">Match Score</p>
+                                    <p className="text-2xl font-bold text-primary">{(matchScore * 100).toFixed(0)}%</p>
+                                </div>
                             </div>
-                            <div className="text-right flex-shrink-0">
-                                <p className="text-sm font-medium text-muted-foreground">Match Score</p>
-                                <p className="text-2xl font-bold text-primary">{(matchScore * 100).toFixed(0)}%</p>
-                            </div>
-                        </div>
-                         <Progress value={matchScore * 100} className="w-full mt-2" />
-                    </CardHeader>
-                    <CardContent>
-                        <Alert>
-                            <Bot className="h-4 w-4" />
-                            <AlertTitle>AI Analysis</AlertTitle>
-                            <AlertDescription>
-                                {matchReason}
-                            </AlertDescription>
-                        </Alert>
-                         <Button asChild className="mt-4">
-                            <Link href="/investor/subscriptions">Unlock Full Details</Link>
-                        </Button>
-                    </CardContent>
+                            <Progress value={matchScore * 100} className="w-full mt-2" />
+                        </CardHeader>
+                        <CardContent>
+                            <Alert>
+                                <Bot className="h-4 w-4" />
+                                <AlertTitle>AI Analysis</AlertTitle>
+                                <AlertDescription>
+                                    {matchReason}
+                                </AlertDescription>
+                            </Alert>
+                            <Button asChild className="mt-4">
+                                <Link href="/investor/subscriptions">Unlock Full Details</Link>
+                            </Button>
+                        </CardContent>
+                    </div>
+                     <div className="p-4 md:p-0 md:pr-4 md:py-4">
+                        <Watermark text="VentureLink">
+                           <Image
+                                src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
+                                alt={`Prototype for ${idea.title}`}
+                                width={600}
+                                height={400}
+                                className="aspect-video w-full object-cover rounded-lg"
+                            />
+                        </Watermark>
+                    </div>
                 </Card>
             ))}
         </div>
