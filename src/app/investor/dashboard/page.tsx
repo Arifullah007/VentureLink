@@ -7,6 +7,7 @@ import Image from "next/image";
 import { Watermark } from "@/components/watermark";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Idea = {
   id: string;
@@ -18,19 +19,24 @@ type Idea = {
 
 export default function InvestorDashboard() {
   const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchIdeas = async () => {
-      const { data, error } = await supabase
-        .from('ideas')
-        .select('id, title, summary, field, prototype_url')
-        .limit(2);
+      const { data: { session }} = await supabase.auth.getSession();
+      if (session) {
+        const { data, error } = await supabase
+          .from('ideas')
+          .select('id, title, summary, field, prototype_url')
+          .limit(2);
 
-      if (error) {
-        console.error('Error fetching featured ideas:', error);
-      } else {
-        setFeaturedIdeas(data as Idea[]);
+        if (error) {
+          console.error('Error fetching featured ideas:', error);
+        } else {
+          setFeaturedIdeas(data as Idea[]);
+        }
       }
+      setLoading(false);
     };
 
     fetchIdeas();
@@ -99,7 +105,20 @@ export default function InvestorDashboard() {
           <CardDescription>Check out some of the top-trending ideas on the platform.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
-          {featuredIdeas.map((idea) => (
+          {loading ? (
+            <>
+              <div className="space-y-2">
+                  <Skeleton className="h-40 w-full" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+              </div>
+              <div className="space-y-2">
+                  <Skeleton className="h-40 w-full" />
+                  <Skeleton className="h-6 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+              </div>
+            </>
+          ) : featuredIdeas.map((idea) => (
             <Card key={idea.id} className="overflow-hidden">
               <div className="relative">
                 <Watermark text="VentureLink">
@@ -124,6 +143,9 @@ export default function InvestorDashboard() {
               </div>
             </Card>
           ))}
+           {!loading && featuredIdeas.length === 0 && (
+            <p className="text-muted-foreground col-span-2 text-center">No featured ideas available yet. Check back soon!</p>
+           )}
         </CardContent>
       </Card>
     </div>
