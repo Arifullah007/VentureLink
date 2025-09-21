@@ -1,26 +1,17 @@
 "use server";
 
-import { matchInvestorToEntrepreneur, type MatchInvestorToEntrepreneurOutput } from "@/ai/flows/match-investor-to-entrepreneur";
-import { ideas, type Idea } from "@/lib/data";
-import { z } from "zod";
+import { matchInvestorToEntrepreneur } from "@/ai/flows/match-investor-to-entrepreneur";
+import { supabase } from "@/lib/supabase";
+import type { MatchResult, InvestorPreferences, Idea } from './types';
 
-export const investorPreferencesSchema = z.object({
-  investorSector: z.string().min(1, "Sector is required."),
-  investmentRange: z.string().min(1, "Investment range is required."),
-  expectedReturns: z.string().min(1, "Expected returns are required."),
-});
-
-export type InvestorPreferences = z.infer<typeof investorPreferencesSchema>;
-
-export type MatchResult = MatchInvestorToEntrepreneurOutput & {
-  idea: Idea;
-};
 
 export async function getAiMatches(investorPrefs: InvestorPreferences): Promise<MatchResult[]> {
   try {
-    const allIdeas: Idea[] = ideas;
+    const { data: allIdeas, error } = await supabase.from('ideas').select('*');
+
+    if (error) throw error;
     
-    const matchPromises = allIdeas.map(async (idea) => {
+    const matchPromises = (allIdeas as Idea[]).map(async (idea) => {
       try {
         const input = {
           investorSector: investorPrefs.investorSector,
@@ -28,25 +19,36 @@ export async function getAiMatches(investorPrefs: InvestorPreferences): Promise<
           expectedReturns: investorPrefs.expectedReturns,
           entrepreneurIdeaSummary: idea.summary,
           entrepreneurField: idea.field,
-          requiredInvestment: idea.requiredInvestment,
-          estimatedGuaranteedReturns: idea.estimatedGuaranteedReturns,
+          requiredInvestment: idea.required_investment,
+          estimatedGuaranteedReturns: idea.estimated_returns,
         };
         const match = await matchInvestorToEntrepreneur(input);
-        return { ...match, idea };
+        
+        // Construct a serializable idea object. We are assuming the 'idea' has serializable fields.
+        const serializableIdea: Idea = {
+            id: idea.id,
+            title: idea.title,
+            summary: idea.summary,
+            field: idea.field,
+            required_investment: idea.required_investment,
+            estimated_returns: idea.estimated_returns,
+            prototype_url: idea.prototype_url,
+            entrepreneur_id: idea.entrepreneur_id,
+        };
+
+        return { ...match, idea: serializableIdea };
       } catch (error) {
         console.error(`Error matching idea ${idea.id}:`, error);
-        // Return a default low-score match on error to not break the entire process
         return { 
           matchScore: 0,
           matchReason: "An error occurred while processing this match.",
-          idea
+          idea: idea as Idea
         };
       }
     });
 
     const results = await Promise.all(matchPromises);
     
-    // Sort by match score descending
     results.sort((a, b) => b.matchScore - a.matchScore);
     
     return results;

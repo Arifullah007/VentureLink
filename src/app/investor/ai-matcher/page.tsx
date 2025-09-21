@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { InvestorPreferences } from './actions';
-import { investorPreferencesSchema, getAiMatches, type MatchResult } from './actions';
+import type { InvestorPreferences, MatchResult } from './types';
+import { investorPreferencesSchema } from './types';
+import { getAiMatches } from './actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
@@ -14,10 +15,13 @@ import { Bot, Loader2, Sparkles } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
+import { Watermark } from '@/components/watermark';
 
-const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR'];
+const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR', '1CR+'];
 const returnExpectations = ['Less', 'Medium', 'High'];
-const sectors = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech'];
+const sectors = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech', 'Other'];
 
 export default function AiMatcherPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -98,7 +102,7 @@ export default function AiMatcherPage() {
                   name="investmentRange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Investment Range (Lakhs)</FormLabel>
+                      <FormLabel>Investment Range</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -121,7 +125,7 @@ export default function AiMatcherPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Expected Returns</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValuechange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select expectation" />

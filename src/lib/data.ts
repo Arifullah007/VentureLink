@@ -65,61 +65,7 @@ export const entrepreneurs: Entrepreneur[] = [
 ];
 
 export const ideas: Idea[] = [
-  {
-    id: 'idea1',
-    title: 'Eco-Friendly Packaging Solution',
-    summary: 'A biodegradable packaging material made from agricultural waste to replace single-use plastics.',
-    field: 'Sustainability',
-    requiredInvestment: '5L-25L',
-    estimatedGuaranteedReturns: 'Medium',
-    prototypeImageUrl: 'https://picsum.photos/seed/prototype1/600/400',
-    prototypeImageHint: 'eco packaging',
-    entrepreneurId: 'e1',
-  },
-  {
-    id: 'idea2',
-    title: 'AI-Powered Health Monitoring App',
-    summary: 'A mobile application that uses AI to predict potential health issues based on wearable device data.',
-    field: 'Healthcare',
-    requiredInvestment: '26L-1CR',
-    estimatedGuaranteedReturns: 'High',
-    prototypeImageUrl: 'https://picsum.photos/seed/prototype2/600/400',
-    prototypeImageHint: 'health app',
-    entrepreneurId: 'e2',
-  },
-  {
-    id: 'idea3',
-    title: 'Smart Logistics Platform',
-    summary: 'A SaaS platform that optimizes delivery routes in real-time, reducing fuel costs and delivery times for businesses.',
-    field: 'Tech',
-    requiredInvestment: '5L-25L',
-    estimatedGuaranteedReturns: 'Medium',
-    prototypeImageUrl: 'https://picsum.photos/seed/prototype3/600/400',
-    prototypeImageHint: 'logistics platform',
-    entrepreneurId: 'e1',
-  },
-  {
-    id: 'idea4',
-    title: 'Artisanal Coffee Subscription Box',
-    summary: 'A D2C subscription service delivering curated, single-origin coffee from around the world.',
-    field: 'Consumer Goods',
-    requiredInvestment: '70K-5L',
-    estimatedGuaranteedReturns: 'Less',
-    prototypeImageUrl: 'https://picsum.photos/seed/prototype4/600/400',
-    prototypeImageHint: 'artisanal coffee',
-    entrepreneurId: 'e3',
-  },
-  {
-    id: 'idea5',
-    title: 'Immersive VR Education Modules',
-    summary: 'Virtual reality modules for K-12 science education, providing interactive and engaging learning experiences.',
-    field: 'EdTech',
-    requiredInvestment: '26L-1CR',
-    estimatedGuaranteedReturns: 'High',
-    prototypeImageUrl: 'https://picsum.photos/seed/prototype5/600/400',
-    prototypeImageHint: 'vr education',
-    entrepreneurId: 'e2',
-  },
+ 
 ];
 
 export const subscriptionPlans: SubscriptionPlan[] = [

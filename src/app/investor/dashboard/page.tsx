@@ -1,18 +1,45 @@
+'use client';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Bot, Search } from "lucide-react";
 import Link from "next/link";
-import { ideas } from "@/lib/data";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
+import { supabase } from "@/lib/supabase";
+import { useEffect, useState } from "react";
+
+type Idea = {
+  id: string;
+  title: string;
+  summary: string;
+  field: string;
+  prototype_url: string;
+};
 
 export default function InvestorDashboard() {
-  const featuredIdeas = ideas.slice(0, 2);
+  const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
+
+  useEffect(() => {
+    const fetchIdeas = async () => {
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('id, title, summary, field, prototype_url')
+        .limit(2);
+
+      if (error) {
+        console.error('Error fetching featured ideas:', error);
+      } else {
+        setFeaturedIdeas(data as Idea[]);
+      }
+    };
+
+    fetchIdeas();
+  }, []);
 
   return (
     <div className="space-y-6">
       <div className="bg-card p-6 rounded-lg shadow-sm">
-        <h1 className="text-3xl font-bold">Welcome, Sharad!</h1>
+        <h1 className="text-3xl font-bold">Welcome back!</h1>
         <p className="text-muted-foreground">Discover the most promising ventures and fuel innovation.</p>
       </div>
       
@@ -77,12 +104,11 @@ export default function InvestorDashboard() {
               <div className="relative">
                 <Watermark text="VentureLink">
                   <Image
-                    src={idea.prototypeImageUrl}
+                    src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
                     alt={`Prototype for ${idea.title}`}
                     width={600}
                     height={400}
                     className="aspect-video w-full object-cover"
-                    data-ai-hint={idea.prototypeImageHint}
                   />
                 </Watermark>
               </div>
