@@ -9,6 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { NdaModal } from "@/components/ui/nda-modal";
 
 type Idea = {
   id: string;
@@ -29,6 +30,8 @@ type Idea = {
 export default function BrowseIdeasPage() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+    const [isNdaOpen, setNdaOpen] = useState(false);
 
     useEffect(() => {
         const fetchIdeas = async () => {
@@ -55,6 +58,23 @@ export default function BrowseIdeasPage() {
 
         fetchIdeas();
     }, []);
+
+    const handleUnlockDetails = (idea: Idea) => {
+        // In a real app, you'd check for subscription status here.
+        // For now, we'll assume they are subscribed and show the NDA.
+        setSelectedIdea(idea);
+        setNdaOpen(true);
+    };
+
+    const handleNdaAccept = () => {
+        setNdaOpen(false);
+        // Here you would navigate to the full details page, or reveal more info.
+        // For this example, we'll just log it.
+        console.log("NDA accepted for idea:", selectedIdea?.title);
+        alert(`NDA Accepted! You can now view the full details for "${selectedIdea?.title}".`);
+        setSelectedIdea(null);
+    }
+
 
   return (
     <div className="space-y-6 pb-24">
@@ -134,8 +154,8 @@ export default function BrowseIdeasPage() {
                         </div>
                     )}
                   </div>
-                  <Button asChild>
-                    <Link href="/investor/subscriptions">Unlock Details</Link>
+                  <Button onClick={() => handleUnlockDetails(idea)}>
+                    Unlock Details
                   </Button>
                 </div>
               </CardFooter>
@@ -149,6 +169,16 @@ export default function BrowseIdeasPage() {
                 <p className="text-muted-foreground">No ideas have been submitted yet. Be the first to know when a new idea is posted!</p>
             </CardContent>
         </Card>
+      )}
+      
+       {selectedIdea && (
+        <NdaModal
+            isOpen={isNdaOpen}
+            onClose={() => setNdaOpen(false)}
+            onAccept={handleNdaAccept}
+            ideaTitle={selectedIdea.title}
+            entrepreneurName={selectedIdea.users?.full_name || 'the entrepreneur'}
+        />
       )}
 
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2">
