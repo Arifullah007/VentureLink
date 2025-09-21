@@ -32,6 +32,7 @@ export default function EntrepreneurSignUpPage() {
           role: 'entrepreneur',
           full_name: fullName,
         },
+        emailRedirectTo: `${location.origin}/auth/callback`,
       },
     });
 

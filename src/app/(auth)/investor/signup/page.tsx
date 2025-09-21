@@ -31,7 +31,8 @@ export default function InvestorSignUpPage() {
         data: {
           role: 'investor',
           full_name: fullName,
-        }
+        },
+        emailRedirectTo: `${location.origin}/auth/callback`,
       }
     });
     if (error) {
