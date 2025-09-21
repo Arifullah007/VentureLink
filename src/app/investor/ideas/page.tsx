@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NdaModal } from "@/components/ui/nda-modal";
+import Link from "next/link";
 
 type Idea = {
   id: string;
@@ -108,7 +109,7 @@ export default function BrowseIdeasPage() {
             <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
               <div className="flex flex-col flex-grow">
                 <CardHeader className="p-0">
-                  <div className="relative">
+                  <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer" className="relative block">
                     <Watermark text="VentureLink">
                       <Image
                         src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
@@ -118,7 +119,7 @@ export default function BrowseIdeasPage() {
                         className="rounded-t-lg aspect-video w-full object-cover"
                       />
                     </Watermark>
-                  </div>
+                  </Link>
                 </CardHeader>
                 <CardContent className="p-4 flex-grow">
                   <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
