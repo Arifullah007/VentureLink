@@ -35,23 +35,21 @@ export default function BrowseIdeasPage() {
 
     useEffect(() => {
         const fetchIdeas = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session) {
-                const { data, error } = await supabase
-                    .from('ideas')
-                    .select(`
-                        *,
-                        users (
-                            full_name,
-                            avatar_url
-                        )
-                    `);
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('ideas')
+                .select(`
+                    *,
+                    users (
+                        full_name,
+                        avatar_url
+                    )
+                `);
 
-                if (error) {
-                    console.error('Error fetching ideas:', error);
-                } else {
-                    setIdeas(data as Idea[]);
-                }
+            if (error) {
+                console.error('Error fetching ideas:', error);
+            } else {
+                setIdeas(data as Idea[]);
             }
             setLoading(false);
         };
@@ -113,52 +111,54 @@ export default function BrowseIdeasPage() {
         ) : ideas.map((idea) => {
           return (
             <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="p-0">
-                <div className="relative">
-                  <Watermark text="VentureLink">
-                    <Image
-                      src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
-                      alt={`Prototype for ${idea.title}`}
-                      width={400}
-                      height={250}
-                      className="rounded-t-lg aspect-video w-full object-cover"
-                    />
-                  </Watermark>
-                </div>
-              </CardHeader>
-              <div className="flex flex-col flex-grow p-4">
-                <div className="flex-grow">
-                    <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
-                    <h3 className="text-lg font-bold">{idea.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.summary}</p>
-                </div>
-                <div className="flex justify-between w-full text-sm mt-4">
-                    <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
-                    <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
-                </div>
-                <div className="border-t pt-4 mt-4">
-                    <div className="flex justify-between items-center w-full">
-                    <div className="flex items-center gap-2">
-                        {idea.users ? (
-                        <>
-                            <Avatar className="h-8 w-8">
-                            <AvatarImage src={idea.users.avatar_url} alt={idea.users.full_name} />
-                            <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm font-medium">{idea.users.full_name}</span>
-                        </>
-                        ) : (
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-8 w-8 rounded-full" />
-                                <Skeleton className="h-4 w-24" />
-                            </div>
-                        )}
-                    </div>
-                    <Button onClick={() => handleUnlockDetails(idea)}>
-                        Unlock Details
-                    </Button>
-                    </div>
-                </div>
+              <div className="flex flex-col flex-grow">
+                <CardHeader className="p-0">
+                  <div className="relative">
+                    <Watermark text="VentureLink">
+                      <Image
+                        src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
+                        alt={`Prototype for ${idea.title}`}
+                        width={400}
+                        height={250}
+                        className="rounded-t-lg aspect-video w-full object-cover"
+                      />
+                    </Watermark>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 flex-grow">
+                  <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
+                  <h3 className="text-lg font-bold">{idea.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.summary}</p>
+                </CardContent>
+                <CardFooter className="p-4 pt-0 flex-col items-start gap-4">
+                  <div className="flex justify-between w-full text-sm">
+                      <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.required_investment}</span></div>
+                      <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
+                  </div>
+                  <div className="border-t pt-4 mt-auto w-full">
+                      <div className="flex justify-between items-center w-full">
+                      <div className="flex items-center gap-2">
+                          {idea.users ? (
+                          <>
+                              <Avatar className="h-8 w-8">
+                              <AvatarImage src={idea.users.avatar_url} alt={idea.users.full_name} />
+                              <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium">{idea.users.full_name}</span>
+                          </>
+                          ) : (
+                              <div className="flex items-center gap-2">
+                                  <Skeleton className="h-8 w-8 rounded-full" />
+                                  <Skeleton className="h-4 w-24" />
+                              </div>
+                          )}
+                      </div>
+                      <Button onClick={() => handleUnlockDetails(idea)}>
+                          Unlock Details
+                      </Button>
+                      </div>
+                  </div>
+                </CardFooter>
               </div>
             </Card>
           );

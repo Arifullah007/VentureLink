@@ -23,18 +23,16 @@ export default function InvestorDashboard() {
 
   useEffect(() => {
     const fetchIdeas = async () => {
-      const { data: { session }} = await supabase.auth.getSession();
-      if (session) {
-        const { data, error } = await supabase
-          .from('ideas')
-          .select('id, title, summary, field, prototype_url')
-          .limit(2);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('ideas')
+        .select('id, title, summary, field, prototype_url')
+        .limit(2);
 
-        if (error) {
-          console.error('Error fetching featured ideas:', error);
-        } else {
-          setFeaturedIdeas(data as Idea[]);
-        }
+      if (error) {
+        console.error('Error fetching featured ideas:', error);
+      } else {
+        setFeaturedIdeas(data as Idea[]);
       }
       setLoading(false);
     };

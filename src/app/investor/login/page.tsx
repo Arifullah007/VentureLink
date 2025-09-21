@@ -20,23 +20,39 @@ export default function InvestorLoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
+    if (error || !user) {
       toast({
         title: 'Login Failed',
-        description: error.message,
+        description: error?.message || "An unknown error occurred.",
         variant: 'destructive',
       });
-    } else {
-      toast({
-        title: 'Login Successful',
-        description: 'Redirecting to your dashboard...',
-      });
-      router.push('/investor/dashboard');
-      router.refresh(); // to reflect login state
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    if (user.user_metadata?.role !== 'investor') {
+        await supabase.auth.signOut();
+        toast({
+            title: 'Access Denied',
+            description: 'This account is not registered as an investor.',
+            variant: 'destructive',
+        });
+        setLoading(false);
+        return;
+    }
+
+    toast({
+      title: 'Login Successful',
+      description: 'Redirecting to your dashboard...',
+    });
+    
+    // Timeout to allow toast to be seen
+    setTimeout(() => {
+        router.push('/investor/dashboard');
+        router.refresh(); 
+    }, 1000);
   };
 
   const handleSignUp = async () => {
