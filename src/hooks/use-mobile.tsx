@@ -16,11 +16,5 @@ export function useIsMobile() {
     return () => window.removeEventListener("resize", checkIsMobile)
   }, [])
 
-  // Only return the value on the client-side after mounting
-  const [isClient, setIsClient] = React.useState(false);
-  React.useEffect(() => {
-      setIsClient(true);
-  }, []);
-
-  return isClient ? isMobile : false;
+  return isMobile;
 }
