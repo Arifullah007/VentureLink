@@ -27,6 +27,7 @@ export default function InvestorDashboard() {
       const { data, error } = await supabase
         .from('ideas')
         .select('id, title, summary, field, prototype_url')
+        .order('created_at', { ascending: false })
         .limit(2);
 
       if (error) {
@@ -105,44 +106,53 @@ export default function InvestorDashboard() {
         <CardContent className="grid gap-6 md:grid-cols-2">
           {loading ? (
             <>
-              <div className="space-y-2">
-                  <Skeleton className="h-40 w-full" />
+              <div className="space-y-3">
+                  <Skeleton className="h-48 w-full" />
                   <Skeleton className="h-6 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
+                  <div className="flex justify-between items-center pt-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-8 w-1/3" />
+                  </div>
               </div>
-              <div className="space-y-2">
-                  <Skeleton className="h-40 w-full" />
+              <div className="space-y-3">
+                  <Skeleton className="h-48 w-full" />
                   <Skeleton className="h-6 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
+                   <div className="flex justify-between items-center pt-2">
+                    <Skeleton className="h-4 w-1/4" />
+                    <Skeleton className="h-8 w-1/3" />
+                  </div>
               </div>
             </>
-          ) : featuredIdeas.map((idea) => (
-            <Card key={idea.id} className="overflow-hidden">
-              <div className="relative">
-                <Watermark text="VentureLink">
-                  <Image
-                    src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                    alt={`Prototype for ${idea.title}`}
-                    width={600}
-                    height={400}
-                    className="aspect-video w-full object-cover"
-                  />
-                </Watermark>
-              </div>
-              <div className="p-4">
-                <h3 className="font-semibold">{idea.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{idea.summary}</p>
-                <div className="flex justify-between items-center mt-4">
-                    <span className="text-xs font-semibold bg-primary/10 text-primary py-1 px-2 rounded-full">{idea.field}</span>
-                    <Button variant="link" size="sm" asChild>
-                        <Link href="/investor/ideas">View Details</Link>
-                    </Button>
+          ) : featuredIdeas.length > 0 ? (
+            featuredIdeas.map((idea) => (
+              <Card key={idea.id} className="overflow-hidden">
+                <div className="relative">
+                  <Watermark text="VentureLink">
+                    <Image
+                      src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
+                      alt={`Prototype for ${idea.title}`}
+                      width={600}
+                      height={400}
+                      className="aspect-video w-full object-cover"
+                    />
+                  </Watermark>
                 </div>
-              </div>
-            </Card>
-          ))}
-           {!loading && featuredIdeas.length === 0 && (
-            <p className="text-muted-foreground col-span-2 text-center">No featured ideas available yet. Check back soon!</p>
+                <div className="p-4">
+                  <h3 className="font-semibold truncate">{idea.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.summary}</p>
+                  <div className="flex justify-between items-center mt-4">
+                      <Badge variant="secondary">{idea.field}</Badge>
+                      <Button variant="link" size="sm" asChild>
+                          <Link href={`/investor/ideas`}>View Details</Link>
+                      </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <p className="text-muted-foreground col-span-2 text-center py-8">No featured ideas available yet. Check back soon!</p>
            )}
         </CardContent>
       </Card>

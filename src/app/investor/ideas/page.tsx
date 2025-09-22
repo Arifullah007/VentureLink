@@ -21,8 +21,8 @@ type Idea = {
   prototype_url: string;
   entrepreneur_id: string;
   users: {
-      avatar_url: string;
-      full_name: string;
+      avatar_url: string | null;
+      full_name: string | null;
   } | null
 };
 
@@ -49,7 +49,13 @@ export default function BrowseIdeasPage() {
             if (error) {
                 console.error('Error fetching ideas:', error);
             } else if (data) {
-                setIdeas(data as Idea[]);
+                // Supabase returns an array of matching rows, join with users table might result in array of users
+                // We need to flatten it.
+                const ideasWithUsers = data.map(idea => ({
+                    ...idea,
+                    users: Array.isArray(idea.users) ? idea.users[0] : idea.users
+                }));
+                setIdeas(ideasWithUsers as Idea[]);
             }
             setLoading(false);
         };
@@ -85,22 +91,25 @@ export default function BrowseIdeasPage() {
         {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
                 <Card key={index} className="flex flex-col overflow-hidden">
-                    <CardHeader>
-                        <Skeleton className="h-40 w-full rounded-lg" />
+                    <CardHeader className="p-0">
+                        <Skeleton className="h-48 w-full" />
                     </CardHeader>
-                    <CardContent className="flex-grow space-y-2">
+                    <CardContent className="flex-grow p-4 space-y-2">
                         <Skeleton className="h-4 w-1/4" />
                         <Skeleton className="h-6 w-3/4" />
                         <Skeleton className="h-12 w-full" />
                     </CardContent>
-                    <CardFooter className="flex flex-col items-start gap-4 pt-4">
+                    <CardFooter className="p-4 pt-0 flex flex-col items-start gap-4">
                         <div className="flex justify-between w-full">
                            <Skeleton className="h-5 w-1/3" />
                            <Skeleton className="h-5 w-1/4" />
                         </div>
-                        <div className="w-full h-px bg-border"></div>
+                        <div className="border-t w-full my-2"></div>
                         <div className="flex justify-between items-center w-full">
-                           <Skeleton className="h-8 w-1/2" />
+                            <div className="flex items-center gap-2">
+                                <Skeleton className="h-8 w-8 rounded-full" />
+                                <Skeleton className="h-4 w-24" />
+                           </div>
                            <Skeleton className="h-10 w-1/3" />
                         </div>
                     </CardFooter>
@@ -139,7 +148,7 @@ export default function BrowseIdeasPage() {
                           {idea.users ? (
                           <>
                               <Avatar className="h-8 w-8">
-                              <AvatarImage src={idea.users.avatar_url} alt={idea.users.full_name} />
+                              <AvatarImage src={idea.users.avatar_url || undefined} alt={idea.users.full_name || ''} />
                               <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <span className="text-sm font-medium">{idea.users.full_name}</span>
@@ -165,7 +174,7 @@ export default function BrowseIdeasPage() {
       {!loading && ideas.length === 0 && (
         <Card>
             <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No ideas have been submitted yet. Be the first to know when a new idea is posted!</p>
+                <p className="text-muted-foreground">No ideas have been submitted yet. Check back soon!</p>
             </CardContent>
         </Card>
       )}
