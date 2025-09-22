@@ -48,20 +48,39 @@ export default function NewPitchPage() {
     });
 
     async function onSubmit(data: PitchFormValues) {
-        const { toast } = useToast();
-
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error("User not authenticated.");
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("User not authenticated.");
 
-            // 1. Create the pitch in the database
+            const file = data.prototype[0];
+            const fileExtension = file.name.split('.').pop();
+            const fileName = `${uuidv4()}.${fileExtension}`;
+            const filePath = `${user.id}/${fileName}`;
+
+            // 1. Get a signed URL from our Edge Function
+            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke('get-signed-upload-url', {
+                body: { filePath },
+            });
+            if (signedUrlError) throw new Error(`Failed to get signed URL: ${signedUrlError.message}`);
+            
+            const { signedUrl } = signedUrlData;
+
+            // 2. Upload the file to Supabase Storage using the signed URL
+            const { error: uploadError } = await fetch(signedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type },
+                body: file,
+            });
+            if (uploadError) throw new Error(`File upload failed: ${(uploadError as any).message}`);
+            
+            // 3. Create the pitch in the database
             const { data: pitchData, error: pitchError } = await supabase
                 .from('pitches')
                 .insert({
-                    entrepreneur_id: session.user.id,
+                    entrepreneur_id: user.id,
                     pitch_title: data.title,
-                    anonymized_summary: data.summary, // Initially, full summary is used as anonymized
-                    full_text: data.summary, // Full text for processing
+                    anonymized_summary: data.summary,
+                    full_text: data.summary,
                     sector: data.field,
                     investment_required: data.requiredInvestment,
                     estimated_returns: data.estimatedReturns,
@@ -72,29 +91,7 @@ export default function NewPitchPage() {
             if (pitchError) throw pitchError;
             if (!pitchData) throw new Error("Failed to create pitch record.");
 
-            const file = data.prototype[0];
-            const fileExtension = file.name.split('.').pop();
-            const filePath = `${session.user.id}/${pitchData.id}.${fileExtension}`;
-
-            // 2. Get a signed URL from our Edge Function
-            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke('get-signed-upload-url', {
-                body: { filePath },
-            });
-
-            if (signedUrlError) throw new Error(`Failed to get signed URL: ${signedUrlError.message}`);
-            
-            const { signedUrl } = signedUrlData;
-
-            // 3. Upload the file to Supabase Storage using the signed URL
-            const { error: uploadError } = await fetch(signedUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': file.type },
-                body: file,
-            });
-
-            if (uploadError) throw new Error(`File upload failed: ${(uploadError as any).message}`);
-
-            // 4. Create a record in pitch_files to trigger the webhook
+            // 4. Create a record in pitch_files to trigger the processing webhook
             const { error: fileRecordError } = await supabase
                 .from('pitch_files')
                 .insert({

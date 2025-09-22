@@ -1,156 +1,158 @@
--- VentureLink Database Schema
--- This schema defines the core tables for the platform.
+-- VentureLink DB Schema
 
--- Profiles table
--- Stores public user profile information, linked to auth.users.
+-- Profiles Table
+-- Stores public user information linked to the auth.users table.
 create table if not exists profiles (
   id uuid references auth.users not null primary key,
   updated_at timestamp with time zone,
   full_name text,
   avatar_url text,
+  bio text,
   website_url text,
   linkedin_url text,
-  bio text,
-  role user_role not null -- 'entrepreneur' or 'investor'
+  role text -- 'entrepreneur' or 'investor'
 );
 
--- Custom type for user roles
-create type user_role as enum ('investor', 'entrepreneur');
-
--- Pitches table
--- Stores the core details of an entrepreneur's pitch.
+-- Pitches Table
+-- Stores the core information about an entrepreneur's idea.
 create table if not exists pitches (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    entrepreneur_id uuid references public.profiles not null,
-    pitch_title text not null,
-    anonymized_summary text,
-    full_text text, -- Not exposed to investors directly
-    sector text,
-    investment_required text,
-    estimated_returns text,
-    contact_revealed boolean default false
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  entrepreneur_id uuid references profiles not null,
+  pitch_title text not null,
+  anonymized_summary text not null,
+  full_text text, -- For internal processing, may be redacted.
+  sector text,
+  investment_required text,
+  estimated_returns text,
+  contact_revealed boolean default false
 );
-comment on column pitches.anonymized_summary is 'A version of the pitch summary with contact info stripped, safe for public viewing.';
-comment on column pitches.full_text is 'The full, original text of the pitch. Used for internal processing.';
 
--- Pitch Files table
--- Stores metadata about files uploaded for a pitch.
+-- Ideas Table
+-- This table is a simplified, public-facing view of pitches.
+create table if not exists ideas (
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  title text not null,
+  summary text not null,
+  field text not null,
+  required_investment text not null,
+  estimated_returns text not null,
+  prototype_url text,
+  entrepreneur_id uuid references profiles not null
+);
+
+-- Pitch Files Table
+-- Tracks files associated with a pitch, like prototypes or documents.
 create table if not exists pitch_files (
-    id uuid default gen_random_uuid() primary key,
-    pitch_id uuid references public.pitches not null,
-    created_at timestamp with time zone default now() not null,
-    file_name text not null,
-    file_path text not null,
-    watermarked_path text,
-    watermarked boolean default false,
-    quarantined boolean default false,
-    has_contact_info boolean default false
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  pitch_id uuid references pitches not null,
+  file_path text not null,
+  file_name text,
+  watermarked boolean default false,
+  watermarked_path text,
+  quarantined boolean default false,
+  has_contact_info boolean default false
 );
-comment on table pitch_files is 'Links uploaded files to their respective pitches. A DB webhook on this table triggers processing.';
 
--- Investor Subscriptions table
--- Tracks the subscription status for investors.
+-- Investor Subscriptions Table
+-- Manages investor subscription status with Stripe.
 create table if not exists investor_subscriptions (
-    id uuid default gen_random_uuid() primary key,
-    user_id uuid references public.profiles not null,
-    stripe_customer_id text unique,
-    stripe_subscription_id text unique,
-    status text, -- e.g., 'active', 'canceled', 'past_due'
-    current_period_end timestamp with time zone
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles not null unique,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  status text, -- e.g., 'active', 'canceled', 'past_due'
+  current_period_end timestamp with time zone
 );
 
--- Deal Rooms table
--- Represents a private space for an investor and entrepreneur to connect.
+-- Deal Rooms Table
+-- A dedicated space for an investor and entrepreneur to communicate.
 create table if not exists deal_rooms (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    pitch_id uuid references public.pitches not null,
-    nda_signed boolean default false
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  pitch_id uuid references pitches not null
 );
 
--- Deal Room Participants table
+-- Deal Room Participants Table
 -- Links users (investors/entrepreneurs) to deal rooms.
 create table if not exists deal_room_participants (
-    id uuid default gen_random_uuid() primary key,
-    deal_room_id uuid references public.deal_rooms not null,
-    user_id uuid references public.profiles not null,
-    unique(deal_room_id, user_id)
+  id uuid default gen_random_uuid() primary key,
+  deal_room_id uuid references deal_rooms not null,
+  user_id uuid references profiles not null,
+  unique(deal_room_id, user_id)
 );
 
--- Messages table
--- Stores chat messages within a deal room.
+-- Messages Table
+-- Stores messages exchanged within a deal room.
 create table if not exists messages (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    sender_id uuid references public.profiles not null,
-    deal_room_id uuid references public.deal_rooms not null,
-    body text
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  deal_room_id uuid references deal_rooms not null,
+  sender_id uuid references profiles not null,
+  body text not null
 );
 
--- NDAs (Non-Disclosure Agreements) table
--- Records when an investor signs an NDA for a specific pitch.
+-- NDAs (Non-Disclosure Agreements) Table
+-- Records when an investor agrees to an NDA for a specific pitch.
 create table if not exists ndas (
-    id uuid default gen_random_uuid() primary key,
-    pitch_id uuid references public.pitches not null,
-    investor_id uuid references public.profiles not null,
-    signed_at timestamp with time zone default now() not null,
-    signature text, -- Could be the typed name of the investor
-    unique(pitch_id, investor_id)
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  pitch_id uuid references pitches not null,
+  investor_id uuid references profiles not null,
+  signed_at timestamp with time zone,
+  unique(pitch_id, investor_id)
 );
 
--- Transactions table
--- Logs all financial transactions, e.g., from Stripe.
+-- Transactions Table
+-- Logs payments and transactions, primarily from Stripe.
 create table if not exists transactions (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    user_id uuid references public.profiles not null,
-    stripe_charge_id text unique,
-    amount integer,
-    currency text,
-    status text
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  user_id uuid references profiles not null,
+  stripe_charge_id text unique,
+  amount integer,
+  currency text,
+  status text
 );
 
--- Reports table
--- Logs violations, such as attempts to share contact info.
+-- Reports Table
+-- Logs violations or other reportable events on the platform.
 create table if not exists reports (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    reporter_id uuid references public.profiles, -- The user who triggered the report
-    report_type text not null, -- e.g., 'contact_info_blocked'
-    description text,
-    related_pitch_id uuid references public.pitches,
-    related_message_id uuid references public.messages
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  report_type text, -- e.g., 'pii_violation', 'spam'
+  description text,
+  related_user_id uuid references profiles,
+  related_pitch_id uuid references pitches,
+  resolved boolean default false
 );
 
--- Events table
--- Generic table for logging significant application events.
+-- Events Table
+-- A generic table for logging significant user actions or system events.
 create table if not exists events (
-    id uuid default gen_random_uuid() primary key,
-    created_at timestamp with time zone default now() not null,
-    user_id uuid references public.profiles,
-    event_type text not null, -- e.g., 'user_login', 'pitch_created'
-    details jsonb
+  id uuid default gen_random_uuid() primary key,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  event_type text,
+  user_id uuid references profiles,
+  details jsonb
 );
 
--- Automatically create a profile for new users
+-- Function to create a profile for a new user
 create or replace function public.handle_new_user()
-returns trigger as $$
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
 begin
-  insert into public.profiles (id, role)
-  values (new.id, new.raw_user_meta_data->>'role');
+  insert into public.profiles (id, full_name, role)
+  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
   return new;
 end;
-$$ language plpgsql security definer;
+$$;
 
-create or replace trigger on_auth_user_created
+-- Trigger to create a profile when a new user signs up
+create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
-
--- Setup Storage buckets
-insert into storage.buckets (id, name, public)
-values 
-    ('pitch-uploads', 'pitch-uploads', false),
-    ('watermarked-files', 'watermarked-files', false),
-    ('quarantined-files', 'quarantined-files', false)
-on conflict (id) do nothing;
