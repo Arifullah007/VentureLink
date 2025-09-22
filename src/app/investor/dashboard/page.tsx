@@ -8,6 +8,8 @@ import { Watermark } from "@/components/watermark";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 
 type Idea = {
   id: string;
@@ -24,17 +26,33 @@ export default function InvestorDashboard() {
   useEffect(() => {
     const fetchIdeas = async () => {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch live ideas from Supabase
+      const { data: liveIdeas, error } = await supabase
         .from('ideas')
-        .select('id, title, summary, field, prototype_url')
-        .order('created_at', { ascending: false })
-        .limit(2);
+        .select('id, title, summary, field, prototype_url');
 
       if (error) {
         console.error('Error fetching featured ideas:', error);
-      } else {
-        setFeaturedIdeas(data as Idea[]);
       }
+      
+      // Map predefined ideas to the correct type
+      const mappedPredefinedIdeas = predefinedIdeas.map(idea => ({
+          id: idea.id,
+          title: idea.title,
+          summary: idea.summary,
+          field: idea.field,
+          prototype_url: idea.prototypeImageUrl,
+      }));
+
+      // Combine live and predefined ideas
+      let allIdeas: Idea[] = [...mappedPredefinedIdeas];
+      if (liveIdeas) {
+        allIdeas = [...allIdeas, ...(liveIdeas as Idea[])];
+      }
+
+      // Set the first 2 as featured
+      setFeaturedIdeas(allIdeas.slice(0, 2));
       setLoading(false);
     };
 
