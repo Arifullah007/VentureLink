@@ -24,6 +24,7 @@ import {
 import { deleteAccountAction, updatePasswordAction } from '@/app/(dashboard)/settings/actions';
 import { Loader2, ShieldAlert, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Label } from './ui/label';
 
 const passwordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required.'),
@@ -145,21 +146,21 @@ export function SettingsForm() {
         <div className="space-y-4 max-w-lg">
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
-              <FormLabel>Investor Inquiries</FormLabel>
+              <Label>Investor Inquiries</Label>
               <p className="text-sm text-muted-foreground">Receive an email when an investor shows interest in your pitch.</p>
             </div>
             <Switch />
           </div>
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
-              <FormLabel>New Messages</FormLabel>
+              <Label>New Messages</Label>
               <p className="text-sm text-muted-foreground">Get notified about new messages in your deal rooms.</p>
             </div>
             <Switch />
           </div>
            <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="space-y-0.5">
-              <FormLabel>Platform Updates</FormLabel>
+              <Label>Platform Updates</Label>
               <p className="text-sm text-muted-foreground">Receive news and updates about the VentureLink platform.</p>
             </div>
             <Switch defaultChecked/>
