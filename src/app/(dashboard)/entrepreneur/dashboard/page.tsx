@@ -135,9 +135,21 @@ export default function EntrepreneurDashboard() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100/80">Active</Badge>
-                    <Button variant="outline" size="sm"><FilePenLine className="h-4 w-4 mr-1" /> Edit</Button>
-                    <Button variant="default" size="sm"><BarChart className="h-4 w-4 mr-1" /> View Analytics</Button>
-                    <Button variant="outline" size="sm"><MessageSquare className="h-4 w-4 mr-1" /> Inquiries</Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/entrepreneur/ideas/${idea.id}/edit`}>
+                            <FilePenLine className="h-4 w-4 mr-1" /> Edit
+                        </Link>
+                    </Button>
+                    <Button variant="default" size="sm" asChild>
+                        <Link href={`/entrepreneur/ideas/${idea.id}/analytics`}>
+                             <BarChart className="h-4 w-4 mr-1" /> View Analytics
+                        </Link>
+                    </Button>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/entrepreneur/ideas/${idea.id}/inquiries`}>
+                            <MessageSquare className="h-4 w-4 mr-1" /> Inquiries
+                        </Link>
+                    </Button>
                 </div>
               </div>
             ))
@@ -156,5 +168,3 @@ export default function EntrepreneurDashboard() {
     </div>
   );
 }
-
-    
