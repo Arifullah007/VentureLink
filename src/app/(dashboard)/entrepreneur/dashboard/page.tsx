@@ -47,7 +47,7 @@ export default function EntrepreneurDashboard() {
                 if (!error && fetchedIdeas) {
                     setIdeas(fetchedIdeas);
                     
-                    const totalViews = fetchedIdeas.reduce((acc, idea) => acc + (idea.views || 0), 0);
+                    const totalViews = fetchedIdeas.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
                     const totalInquiries = 0;
 
                     setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });

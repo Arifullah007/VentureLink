@@ -1,85 +1,115 @@
---
--- PROFILES TABLE
---
-
--- 1. Enable RLS
+-- Enable RLS for all tables that need protection
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- 2. Create Policies
--- Any authenticated user can view any profile (profiles are public)
-CREATE POLICY "Authenticated users can view profiles."
-    ON public.profiles FOR SELECT
-    USING (auth.role() = 'authenticated');
-
--- Users can only insert or update their own profile
-CREATE POLICY "Users can insert or update their own profile."
-    ON public.profiles FOR ALL
-    USING (auth.uid() = id);
+ALTER TABLE public.ideas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.idea_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investor_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 
 
---
--- PITCHES TABLE
---
+-- ||||||||||||||||||||||||||||||||||
+--           PROFILES
+-- ||||||||||||||||||||||||||||||||||
 
--- 1. Enable RLS
-ALTER TABLE public.pitches ENABLE ROW LEVEL SECURITY;
+-- 1. Anyone authenticated can see any profile
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
+CREATE POLICY "Public profiles are viewable by everyone."
+  ON public.profiles FOR SELECT
+  USING ( auth.role() = 'authenticated' );
 
--- 2. Create Policies
--- Entrepreneurs can perform all actions on their own pitches
-CREATE POLICY "Entrepreneurs can manage their own pitches."
-    ON public.pitches FOR ALL
+-- 2. Users can create their own profile
+DROP POLICY IF EXISTS "Users can insert their own profile." ON public.profiles;
+CREATE POLICY "Users can insert their own profile."
+  ON public.profiles FOR INSERT
+  WITH CHECK ( auth.uid() = id );
+
+-- 3. Users can update their own profile
+DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
+CREATE POLICY "Users can update their own profile."
+  ON public.profiles FOR UPDATE
+  USING ( auth.uid() = id );
+
+
+-- ||||||||||||||||||||||||||||||||||
+--             IDEAS
+-- ||||||||||||||||||||||||||||||||||
+
+-- 1. Entrepreneurs can see their own ideas
+DROP POLICY IF EXISTS "Entrepreneurs can view their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can view their own ideas."
+    ON public.ideas FOR SELECT
+    TO authenticated
     USING (auth.uid() = entrepreneur_id);
 
--- Investors can view all pitches (access to full details is controlled by application logic/NDA)
-CREATE POLICY "Investors can view all pitches."
-    ON public.pitches FOR SELECT
-    USING (auth.role() = 'investor');
+-- 2. Investors can see all ideas
+DROP POLICY IF EXISTS "Investors can view all ideas." ON public.ideas;
+CREATE POLICY "Investors can view all ideas."
+    ON public.ideas FOR SELECT
+    TO authenticated
+    USING (((get_my_claim('role'::text)) = '"investor"'::jsonb));
 
---
--- PITCH_FILES TABLE
---
+-- 3. Entrepreneurs can create new ideas
+DROP POLICY IF EXISTS "Entrepreneurs can insert their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can insert their own ideas."
+    ON public.ideas FOR INSERT
+    TO authenticated
+    WITH CHECK (auth.uid() = entrepreneur_id AND (get_my_claim('role'::text)) = '"entrepreneur"'::jsonb);
 
--- 1. Enable RLS
-ALTER TABLE public.pitch_files ENABLE ROW LEVEL SECURITY;
-
--- 2. Create Policies
--- Entrepreneurs can manage files related to their own pitches
-CREATE POLICY "Entrepreneurs can manage their pitch files."
-    ON public.pitch_files FOR ALL
-    USING ((SELECT entrepreneur_id FROM pitches WHERE pitches.id = pitch_id) = auth.uid());
-
--- Investors can view file records (but not access files directly without NDA)
-CREATE POLICY "Investors can view pitch file records."
-    ON public.pitch_files FOR SELECT
-    USING (auth.role() = 'investor');
-
-
---
--- REPORTS TABLE
---
-
--- 1. Enable RLS
-ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
--- Note: No policies needed for 'reports' for now, as it's an admin/backend-only table.
--- The default-deny nature of RLS means no one can access it unless a policy is defined.
+-- 4. Entrepreneurs can update their own ideas
+DROP POLICY IF EXISTS "Entrepreneurs can update their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can update their own ideas."
+    ON public.ideas FOR UPDATE
+    TO authenticated
+    USING (auth.uid() = entrepreneur_id)
+    WITH CHECK (auth.uid() = entrepreneur_id);
 
 
---
--- TRANSACTIONS & SUBSCRIPTIONS
---
+-- ||||||||||||||||||||||||||||||||||
+--           REPORTS
+-- ||||||||||||||||||||||||||||||||||
 
--- 1. Enable RLS for transactions
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+-- Allow automated systems (using service_role) to insert reports
+-- No RLS needed for inserts if using service_role key from a trigger.
+-- For SELECT, you might want to restrict access to admins, which requires a custom claims setup.
+-- For now, no SELECT/UPDATE/DELETE policies are set, so only service_role can access.
 
--- 2. Enable RLS for subscriptions
-ALTER TABLE public.investor_subscriptions ENABLE ROW LEVEL SECURITY;
 
--- 3. Create Policies
--- Users can only view their own transactions and subscriptions
-CREATE POLICY "Users can view their own financial records."
-    ON public.transactions FOR SELECT
-    USING (auth.uid() = user_id);
+-- ||||||||||||||||||||||||||||||||||
+--        SUBSCRIPTIONS
+-- ||||||||||||||||||||||||||||||||||
 
-CREATE POLICY "Users can view their own subscriptions."
-    ON public.investor_subscriptions FOR SELECT
-    USING (auth.uid() = user_id);
+-- 1. Investors can view their own subscription
+DROP POLICY IF EXISTS "Investors can view their own subscription." ON public.investor_subscriptions;
+CREATE POLICY "Investors can view their own subscription."
+  ON public.investor_subscriptions FOR SELECT
+  USING ( auth.uid() = user_id );
+
+-- Webhooks using service_role key will bypass RLS for inserts/updates.
+
+
+-- ||||||||||||||||||||||||||||||||||
+--        TRANSACTIONS
+-- ||||||||||||||||||||||||||||||||||
+
+-- 1. Users can view their own transactions
+DROP POLICY IF EXISTS "Users can view their own transactions." ON public.transactions;
+CREATE POLICY "Users can view their own transactions."
+  ON public.transactions FOR SELECT
+  USING ( auth.uid() = user_id );
+
+-- Webhooks using service_role key will bypass RLS for inserts.
+
+
+-- ||||||||||||||||||||||||||||||||||
+--           IDEA_FILES
+-- ||||||||||||||||||||||||||||||||||
+
+-- Allow entrepreneurs to insert files for their own ideas
+DROP POLICY IF EXISTS "Entrepreneurs can insert idea files." ON public.idea_files;
+CREATE POLICY "Entrepreneurs can insert idea files."
+    ON public.idea_files FOR INSERT
+    WITH CHECK (auth.uid() IN (SELECT entrepreneur_id FROM ideas WHERE id = idea_id));
+
+-- Allow investors who have signed an NDA (logic to be added) to view files.
+-- For now, access is restricted.
+-- Processing will be handled by Edge Functions with service_role key.
