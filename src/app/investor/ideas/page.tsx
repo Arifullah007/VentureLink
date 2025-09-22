@@ -65,7 +65,9 @@ export default function BrowseIdeasPage() {
     const handleNdaAccept = () => {
         setNdaOpen(false);
         console.log("NDA accepted for idea:", selectedIdea?.title);
-        alert(`NDA Accepted! You can now view the full details for "${selectedIdea?.title}".`);
+        // Here you would typically record the NDA acceptance in your database
+        // For now, we'll just show an alert and log it.
+        alert(`NDA Accepted! You can now view the full details for "${selectedIdea?.title}". In a real application, this would unlock the content.`);
         setSelectedIdea(null);
     }
 
@@ -94,7 +96,7 @@ export default function BrowseIdeasPage() {
                     <CardFooter className="flex flex-col items-start gap-4 pt-4">
                         <div className="flex justify-between w-full">
                            <Skeleton className="h-5 w-1/3" />
-                           <Skeleton className="h-5 w-1/4" />
+                           <Skeleton classNameh-5 w-1/4" />
                         </div>
                         <div className="w-full h-px bg-border"></div>
                         <div className="flex justify-between items-center w-full">
