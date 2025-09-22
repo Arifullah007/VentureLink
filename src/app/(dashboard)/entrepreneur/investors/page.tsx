@@ -1,11 +1,27 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { investors } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Send } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BrowseInvestorsPage() {
+  const { toast } = useToast();
+
+  const handleApproach = (investorName: string) => {
+    // In a real application, this would trigger a backend process:
+    // 1. Check if a connection already exists.
+    // 2. Create a "deal room" or a notification for the investor.
+    // 3. Log the event.
+    toast({
+      title: "Approach Initiated",
+      description: `Your interest has been sent to ${investorName}. You'll be notified if they accept.`,
+    });
+  };
+
   return (
     <div className="space-y-6">
        <Card>
@@ -35,7 +51,7 @@ export default function BrowseInvestorsPage() {
               </p>
             </CardContent>
             <div className="p-4 border-t">
-              <Button className="w-full">
+              <Button className="w-full" onClick={() => handleApproach(investor.name)}>
                 <Send className="mr-2 h-4 w-4" /> Approach
               </Button>
             </div>
