@@ -45,10 +45,13 @@ The backend consists of a database schema, security policies, and serverless Edg
     ```bash
     ./infra/deploy.sh
     ```
-    This script will:
-    *   Push your database schema (`infra/schema.sql`) to your Supabase project.
-    *   Deploy the three Edge Functions (`get-signed-upload-url`, `process-upload-webhook`, `stripe-webhook`).
-    *   **Important**: After `db push`, you must manually run the `infra/triggers.sql` and `infra/rls_policies.sql` scripts in the Supabase SQL Editor (**Database > SQL Editor**). The CLI does not yet support pushing these resource types.
+    This script will push your database schema and deploy the Edge Functions.
+
+3.  **CRITICAL: Manually Apply Triggers and Security Policies**
+    The Supabase CLI does not currently support applying triggers and RLS policies from files. You **must** do this manually for the app to function correctly.
+    *   Navigate to the **SQL Editor** in your Supabase project dashboard.
+    *   Open the `infra/triggers.sql` file in your local code editor, copy its entire content, paste it into the Supabase SQL Editor, and click **Run**.
+    *   Do the same for `infra/rls_policies.sql`: open the file, copy its content, paste it into the editor, and click **Run**.
 
 ### 4. Run the Next.js App Locally
 
@@ -108,7 +111,7 @@ npm install
 # 5. Start the local development server
 npm run dev
 
-# 6. Manually apply RLS policies and Triggers by pasting the contents of 
+# 6. Manually apply RLS policies and Triggers by pasting the contents of
 #    infra/rls_policies.sql and infra/triggers.sql into the Supabase SQL Editor.
-echo "Now, go to the Supabase SQL Editor and run the SQL from infra/rls_policies.sql and infra/triggers.sql"
+echo "Now, go to the Supabase SQL Editor and run the SQL from infra/triggers.sql and infra/rls_policies.sql"
 ```

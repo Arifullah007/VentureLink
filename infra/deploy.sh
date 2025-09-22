@@ -20,9 +20,6 @@ echo "Applying database schema..."
 supabase db push
 
 echo "✅ Database schema applied successfully."
-echo "🔔 REMINDER: RLS Policies and Triggers must be applied manually via the Supabase SQL Editor."
-echo "Please copy the content of 'infra/rls_policies.sql' and 'infra/triggers.sql' and run it."
-
 
 # --- 2. Deploy Edge Functions ---
 echo "Deploying Edge Functions..."
@@ -39,4 +36,13 @@ echo "  - Deployed stripe-webhook"
 
 echo "✅ All Edge Functions deployed successfully."
 
-echo "🎉 Backend deployment complete!"
+echo -e "\n\n🎉 Backend deployment complete!"
+echo -e "\n\n⚠️  CRITICAL MANUAL STEP REQUIRED ⚠️"
+echo "----------------------------------------------------------------"
+echo "You MUST now manually apply the security policies and triggers."
+echo "1. Go to the SQL Editor in your Supabase project dashboard."
+echo "2. Copy the entire content of 'infra/triggers.sql' and run it."
+echo "3. Copy the entire content of 'infra/rls_policies.sql' and run it."
+echo "----------------------------------------------------------------"
+echo "The application will not function correctly until this is done."
+echo "----------------------------------------------------------------"
