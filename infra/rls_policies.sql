@@ -1,102 +1,85 @@
--- Enable Row Level Security (RLS) on all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pitches ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pitch_files ENABLE ROW LEVEL SECURITY;
-ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE investor_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-
-
 --
--- RLS Policies for `profiles`
+-- PROFILES TABLE
 --
--- 1. Allow users to view any profile (profiles are considered public).
+
+-- 1. Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- 2. Create Policies
+-- Any authenticated user can view any profile (profiles are public)
 CREATE POLICY "Authenticated users can view profiles."
-  ON profiles FOR SELECT
-  USING (auth.role() = 'authenticated');
+    ON public.profiles FOR SELECT
+    USING (auth.role() = 'authenticated');
 
--- 2. Allow users to update their own profile.
-CREATE POLICY "Users can update their own profile."
-  ON profiles FOR UPDATE
-  USING (auth.uid() = id);
+-- Users can only insert or update their own profile
+CREATE POLICY "Users can insert or update their own profile."
+    ON public.profiles FOR ALL
+    USING (auth.uid() = id);
 
 
 --
--- RLS Policies for `pitches`
+-- PITCHES TABLE
 --
--- 1. Entrepreneurs can create, view, update, and delete their own pitches.
-CREATE POLICY "Entrepreneurs can view their own pitches."
-  ON pitches FOR SELECT
-  USING (auth.uid() = entrepreneur_id);
 
-CREATE POLICY "Entrepreneurs can create their own pitches."
-  ON pitches FOR INSERT
-  WITH CHECK (auth.uid() = entrepreneur_id);
+-- 1. Enable RLS
+ALTER TABLE public.pitches ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Entrepreneurs can update their own pitches."
-  ON pitches FOR UPDATE
-  USING (auth.uid() = entrepreneur_id);
-
-CREATE POLICY "Entrepreneurs can delete their own pitches."
-    ON pitches FOR DELETE
+-- 2. Create Policies
+-- Entrepreneurs can perform all actions on their own pitches
+CREATE POLICY "Entrepreneurs can manage their own pitches."
+    ON public.pitches FOR ALL
     USING (auth.uid() = entrepreneur_id);
 
--- 2. Allow investors to view all pitches (anonymized summary is shown by default).
+-- Investors can view all pitches (access to full details is controlled by application logic/NDA)
 CREATE POLICY "Investors can view all pitches."
-  ON pitches FOR SELECT
-  TO authenticated -- Change to a specific investor role if needed
-  USING (true);
+    ON public.pitches FOR SELECT
+    USING (auth.role() = 'investor');
+
+--
+-- PITCH_FILES TABLE
+--
+
+-- 1. Enable RLS
+ALTER TABLE public.pitch_files ENABLE ROW LEVEL SECURITY;
+
+-- 2. Create Policies
+-- Entrepreneurs can manage files related to their own pitches
+CREATE POLICY "Entrepreneurs can manage their pitch files."
+    ON public.pitch_files FOR ALL
+    USING ((SELECT entrepreneur_id FROM pitches WHERE pitches.id = pitch_id) = auth.uid());
+
+-- Investors can view file records (but not access files directly without NDA)
+CREATE POLICY "Investors can view pitch file records."
+    ON public.pitch_files FOR SELECT
+    USING (auth.role() = 'investor');
 
 
 --
--- RLS Policies for `pitch_files`
+-- REPORTS TABLE
 --
--- 1. Entrepreneurs can manage files for their own pitches.
-CREATE POLICY "Entrepreneurs can manage their own pitch files."
-  ON pitch_files FOR ALL
-  USING (
-    (
-      SELECT entrepreneur_id
-      FROM pitches
-      WHERE id = pitch_id
-    ) = auth.uid()
-  );
 
--- 2. Allow investors to view pitch files if they have an active subscription
---    (This is a placeholder, you would expand this logic).
-CREATE POLICY "Subscribed investors can view pitch files."
-    ON pitch_files FOR SELECT
-    USING (
-        (
-            SELECT status
-            FROM investor_subscriptions
-            WHERE user_id = auth.uid()
-        ) = 'active'::text
-    );
+-- 1. Enable RLS
+ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
+-- Note: No policies needed for 'reports' for now, as it's an admin/backend-only table.
+-- The default-deny nature of RLS means no one can access it unless a policy is defined.
 
 
 --
--- RLS Policies for `reports`
+-- TRANSACTIONS & SUBSCRIPTIONS
 --
--- 1. Allow the system (or specific admin roles) to insert reports.
---    This is implicitly handled by the trigger which runs with elevated privileges.
---    No direct user policy is needed for insertion via trigger.
 
--- 2. Only admins should be able to view reports.
---    (You would create an admin role in Supabase for this).
---    CREATE POLICY "Admins can view reports."
---      ON reports FOR SELECT
---      USING (is_admin(auth.uid())); -- Requires a custom is_admin function
+-- 1. Enable RLS for transactions
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 
+-- 2. Enable RLS for subscriptions
+ALTER TABLE public.investor_subscriptions ENABLE ROW LEVEL SECURITY;
 
---
--- RLS Policies for `investor_subscriptions` & `transactions`
---
--- 1. Users can only view and manage their own subscriptions and transactions.
-CREATE POLICY "Users can view their own subscription."
-    ON investor_subscriptions FOR SELECT
+-- 3. Create Policies
+-- Users can only view their own transactions and subscriptions
+CREATE POLICY "Users can view their own financial records."
+    ON public.transactions FOR SELECT
     USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can view their own transactions."
-    ON transactions FOR SELECT
+CREATE POLICY "Users can view their own subscriptions."
+    ON public.investor_subscriptions FOR SELECT
     USING (auth.uid() = user_id);
