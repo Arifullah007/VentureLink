@@ -108,12 +108,12 @@ export default function Home() {
                </div>
                <div className="relative flex flex-col items-center text-center p-4">
                    <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold z-10 mb-4 ring-8 ring-background">2</div>
-                   <h4 className="mt-4 text-xl font-semibold">Discover &amp; Match</h4>
+                   <h4 className="mt-4 text-xl font-semibold">Discover & Match</h4>
                    <p className="mt-2 text-muted-foreground">Investors browse opportunities or use our AI to find the perfect match.</p>
                </div>
                <div className="relative flex flex-col items-center text-center p-4">
                    <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold z-10 mb-4 ring-8 ring-background">3</div>
-                   <h4 className="mt-4 text-xl font-semibold">Connect &amp; Invest</h4>
+                   <h4 className="mt-4 text-xl font-semibold">Connect & Invest</h4>
                    <p className="mt-2 text-muted-foreground">Subscribe to unlock details, connect directly, and fuel the next big thing.</p>
                </div>
             </div>
@@ -123,7 +123,7 @@ export default function Home() {
       </main>
       <footer className="bg-card border-t">
         <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {year || ''} VentureLink. All rights reserved.</p>
+          <p>&copy; {year || new Date().getFullYear()} VentureLink. All rights reserved.</p>
         </div>
       </footer>
     </div>
