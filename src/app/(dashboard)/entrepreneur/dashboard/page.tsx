@@ -52,8 +52,8 @@ const StatCard = ({ title, value, icon }: { title: string; value: string | numbe
 );
 
 export default function EntrepreneurDashboard() {
-    const [ideas, setIdeas] = useState<Idea[]>(mockIdeas);
-    const [stats, setStats] = useState({ activeIdeas: 3, totalViews: 149, investorInquiries: 12 });
+    const [ideas, setIdeas] = useState<Idea[]>([]);
+    const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 149, investorInquiries: 12 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -65,21 +65,23 @@ export default function EntrepreneurDashboard() {
                 // In a real scenario, you would fetch these stats from your backend/DB
                 // For now, we'll use a mix of mock data and fetched data count
                 const { data: fetchedIdeas, error, count } = await supabase
-                    .from('ideas')
+                    .from('pitches')
                     .select('*', { count: 'exact' })
                     .eq('entrepreneur_id', user.id);
 
                 if (!error && fetchedIdeas) {
                     const formattedIdeas: Idea[] = fetchedIdeas.map(idea => ({
                         id: idea.id,
-                        title: idea.title,
-                        summary: idea.summary.split('. ')[0], // Simple summary logic
+                        title: idea.pitch_title,
+                        summary: idea.anonymized_summary.split('. ')[0], // Simple summary logic
                         location: 'Remote', // Placeholder
                         views: Math.floor(Math.random() * 200), // Placeholder
-                        required_investment: idea.required_investment,
+                        required_investment: idea.investment_required,
                     }));
                     setIdeas(formattedIdeas);
                     setStats(prev => ({ ...prev, activeIdeas: count || 0 }));
+                } else if (error) {
+                    console.error("Error fetching pitches", error);
                 }
             }
             // Keep mock data for visual representation if fetch fails or returns empty
@@ -102,7 +104,7 @@ export default function EntrepreneurDashboard() {
           </div>
           <Button asChild size="lg">
               <Link href="/entrepreneur/ideas/new">
-                <PlusCircle className="mr-2 h-5 w-5" /> Submit New Idea
+                <PlusCircle className="mr-2 h-5 w-5" /> Submit New Pitch
               </Link>
             </Button>
       </div>
@@ -113,7 +115,7 @@ export default function EntrepreneurDashboard() {
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
         </> : <>
-            <StatCard title="Active Ideas" value={stats.activeIdeas} icon={<Zap className="h-4 w-4 text-muted-foreground" />} />
+            <StatCard title="Active Pitches" value={stats.activeIdeas} icon={<Zap className="h-4 w-4 text-muted-foreground" />} />
             <StatCard title="Total Views" value={stats.totalViews} icon={<EyeIcon className="h-4 w-4 text-muted-foreground" />} />
             <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageCircle className="h-4 w-4 text-muted-foreground" />} />
         </>
@@ -122,7 +124,7 @@ export default function EntrepreneurDashboard() {
 
        <Card>
         <CardHeader>
-          <CardTitle>Your Startup Ideas</CardTitle>
+          <CardTitle>Your Startup Pitches</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
         {loading ? (
@@ -162,10 +164,10 @@ export default function EntrepreneurDashboard() {
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <p>You haven&apos;t submitted any ideas yet.</p>
+              <p>You haven&apos;t submitted any pitches yet.</p>
                <Button asChild className="mt-4">
                   <Link href="/entrepreneur/ideas/new">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Idea
+                    <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Pitch
                   </Link>
                 </Button>
             </div>

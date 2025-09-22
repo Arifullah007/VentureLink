@@ -8,36 +8,36 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Lightbulb, UploadCloud, ShieldCheck } from 'lucide-react';
+import { Lightbulb, UploadCloud, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const ideaSchema = z.object({
+const pitchSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
   field: z.string().min(1, 'Please select a field.'),
-  summary: z.string().min(20, 'Summary must be at least 20 characters.').max(500, 'Summary cannot exceed 500 characters.'),
+  summary: z.string().min(20, 'Summary must be at least 20 characters.').max(1000, 'Summary cannot exceed 1000 characters.'),
   requiredInvestment: z.string().min(1, 'Please select an investment range.'),
   estimatedReturns: z.string().min(1, 'Please select an estimated return.'),
   prototype: z.any().refine((files) => files?.length == 1, 'A prototype file is required.')
     .refine((files) => files?.[0]?.size <= 10000000, `Max file size is 10MB.`),
 });
 
-type IdeaFormValues = z.infer<typeof ideaSchema>;
+type PitchFormValues = z.infer<typeof pitchSchema>;
 
 const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR', '1CR+'];
 const returnExpectations = ['Less', 'Medium', 'High'];
 const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech', 'Other'];
 
 
-export default function NewIdeaPage() {
+export default function NewPitchPage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const form = useForm<IdeaFormValues>({
-        resolver: zodResolver(ideaSchema),
+    const form = useForm<PitchFormValues>({
+        resolver: zodResolver(pitchSchema),
         defaultValues: {
             title: '',
             field: '',
@@ -47,37 +47,67 @@ export default function NewIdeaPage() {
         }
     });
 
-    async function onSubmit(data: IdeaFormValues) {
+    async function onSubmit(data: PitchFormValues) {
+        const { toast } = useToast();
+
         try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User not authenticated.");
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("User not authenticated.");
+
+            // 1. Create the pitch in the database
+            const { data: pitchData, error: pitchError } = await supabase
+                .from('pitches')
+                .insert({
+                    entrepreneur_id: session.user.id,
+                    pitch_title: data.title,
+                    anonymized_summary: data.summary, // Initially, full summary is used as anonymized
+                    full_text: data.summary, // Full text for processing
+                    sector: data.field,
+                    investment_required: data.requiredInvestment,
+                    estimated_returns: data.estimatedReturns,
+                })
+                .select()
+                .single();
+
+            if (pitchError) throw pitchError;
+            if (!pitchData) throw new Error("Failed to create pitch record.");
 
             const file = data.prototype[0];
-            const filePath = `${user.id}/${uuidv4()}-${file.name}`;
+            const fileExtension = file.name.split('.').pop();
+            const filePath = `${session.user.id}/${pitchData.id}.${fileExtension}`;
+
+            // 2. Get a signed URL from our Edge Function
+            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke('get-signed-upload-url', {
+                body: { filePath },
+            });
+
+            if (signedUrlError) throw new Error(`Failed to get signed URL: ${signedUrlError.message}`);
             
-            const { error: uploadError } = await supabase.storage.from('prototypes').upload(filePath, file);
+            const { signedUrl } = signedUrlData;
 
-            if (uploadError) throw uploadError;
+            // 3. Upload the file to Supabase Storage using the signed URL
+            const { error: uploadError } = await fetch(signedUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': file.type },
+                body: file,
+            });
 
-            const { data: publicUrlData } = supabase.storage.from('prototypes').getPublicUrl(filePath);
+            if (uploadError) throw new Error(`File upload failed: ${(uploadError as any).message}`);
 
-            const { error: dbError } = await supabase
-                .from('ideas')
-                .insert([{ 
-                    title: data.title,
-                    summary: data.summary,
-                    field: data.field,
-                    required_investment: data.requiredInvestment,
-                    estimated_returns: data.estimatedReturns,
-                    prototype_url: publicUrlData.publicUrl,
-                    entrepreneur_id: user.id
-                }]);
-
-            if (dbError) throw dbError;
-
+            // 4. Create a record in pitch_files to trigger the webhook
+            const { error: fileRecordError } = await supabase
+                .from('pitch_files')
+                .insert({
+                    pitch_id: pitchData.id,
+                    file_path: filePath,
+                    file_name: file.name,
+                });
+            
+            if (fileRecordError) throw fileRecordError;
+            
             toast({
-                title: 'Idea Submitted!',
-                description: 'Your idea has been successfully submitted for review by investors.',
+                title: 'Pitch Submitted!',
+                description: 'Your pitch is being processed and will be available to investors shortly.',
             });
             router.push('/entrepreneur/dashboard');
 
@@ -95,16 +125,16 @@ export default function NewIdeaPage() {
       <CardHeader>
         <div className="flex items-center gap-3">
             <Lightbulb className="h-6 w-6 text-primary"/>
-            <CardTitle>Submit Your New Idea</CardTitle>
+            <CardTitle>Submit Your New Pitch</CardTitle>
         </div>
-        <CardDescription>Fill out the details below to get your idea in front of investors. Be clear and concise.</CardDescription>
+        <CardDescription>Fill out the details below to get your pitch in front of investors. Be clear and concise.</CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6 border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
             <ShieldCheck className="h-4 w-4 !text-blue-600" />
-            <AlertTitle className="font-semibold">Protect Your Idea</AlertTitle>
+            <AlertTitle className="font-semibold">Protect Your Pitch</AlertTitle>
             <AlertDescription>
-                Your security is important. Always watermark your prototypes. Note that investors must sign a Non-Disclosure Agreement (NDA) before they can view the full details of your idea.
+                Your security is important. Our system will automatically process and watermark your uploaded file. Do not include personal contact information in your descriptions or uploads.
             </AlertDescription>
         </Alert>
 
@@ -115,7 +145,7 @@ export default function NewIdeaPage() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Idea Title</FormLabel>
+                  <FormLabel>Pitch Title</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Eco-Friendly Packaging Solution" {...field} />
                   </FormControl>
@@ -129,10 +159,13 @@ export default function NewIdeaPage() {
               name="summary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Idea Summary</FormLabel>
+                  <FormLabel>Pitch Summary</FormLabel>
                   <FormControl>
-                    <Textarea placeholder="Briefly describe your idea, its purpose, and target audience." {...field} />
+                    <Textarea placeholder="Briefly describe your idea, its purpose, and target audience. Do not include contact details." {...field} />
                   </FormControl>
+                   <FormDescription>
+                    This summary will be visible to investors. Our system will scan it for contact information.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -197,38 +230,50 @@ export default function NewIdeaPage() {
              <FormField
               control={form.control}
               name="prototype"
-              render={({ field }) => (
+              render={({ field }) => {
+                 const file = form.watch('prototype')?.[0];
+                 return (
                 <FormItem>
-                  <FormLabel>Watermarked Prototype</FormLabel>
+                  <FormLabel>Pitch Document/Prototype</FormLabel>
                   <FormControl>
                     <div className="relative flex justify-center w-full h-32 px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
                         <div className="space-y-1 text-center">
                             <UploadCloud className="w-12 h-12 mx-auto text-gray-400" />
-                            <div className="flex text-sm text-gray-600">
+                             <div className="flex text-sm text-gray-600">
                                 <label
                                 htmlFor="file-upload"
                                 className="relative font-medium text-primary bg-white rounded-md cursor-pointer hover:text-primary-dark focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
                                 >
                                 <span>Upload a file</span>
                                 <Input id="file-upload" type="file" className="sr-only" 
-                                    onChange={(e) => field.onChange(e.target.files)} />
+                                    onChange={(e) => field.onChange(e.target.files)} 
+                                    accept=".pdf,.png,.jpg,.jpeg"
+                                    />
                                 </label>
                                 <p className="pl-1">or drag and drop</p>
                             </div>
-                            <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                            {file ? (
+                                <p className="text-sm text-muted-foreground font-medium">{file.name}</p>
+                            ) : (
+                                <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
+                            )}
                         </div>
                     </div>
                   </FormControl>
                   <FormDescription>
-                    To protect your intellectual property, please upload a watermarked version of your prototype.
+                    To protect your intellectual property, our system will automatically watermark your upload.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
-              )}
+              )}}
             />
             
             <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? 'Submitting...' : 'Submit My Idea'}
+                {form.formState.isSubmitting ? (
+                    <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
+                    </>
+                ) : 'Submit My Pitch'}
             </Button>
           </form>
         </Form>
