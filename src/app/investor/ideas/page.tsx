@@ -193,7 +193,7 @@ export default function BrowseIdeasPage() {
                       </div>
                        {isUnlocked ? (
                          <Button asChild variant="secondary">
-                           <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">View Details</Link>
+                           <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">View Prototype</Link>
                          </Button>
                        ) : (
                          <Button onClick={() => handleUnlockDetails(idea)}>
