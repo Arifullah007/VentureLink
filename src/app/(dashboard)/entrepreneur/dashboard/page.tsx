@@ -64,7 +64,7 @@ export default function EntrepreneurDashboard() {
 
                     setStats(prev => ({ ...prev, activeIdeas: count || 0, totalViews }));
                 } else if (error) {
-                    console.error("Error fetching pitches", error);
+                    console.error("Error fetching pitches", error.message);
                 }
             }
             setLoading(false);
