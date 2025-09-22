@@ -9,16 +9,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { User, Linkedin, Link as LinkIcon } from 'lucide-react';
-import { type Profile, getProfileAction, updateProfileAction } from '@/app/(dashboard)/profile/actions';
+import { User } from 'lucide-react';
+import { getProfileAction, updateProfileAction } from '@/app/(dashboard)/profile/actions';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters.'),
   bio: z.string().max(500, 'Bio cannot exceed 500 characters.').optional(),
-  linkedinUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
-  websiteUrl: z.string().url('Please enter a valid URL.').optional().or(z.literal('')),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -32,8 +30,6 @@ export default function EntrepreneurProfilePage() {
     defaultValues: {
       fullName: '',
       bio: '',
-      linkedinUrl: '',
-      websiteUrl: '',
     },
   });
 
@@ -51,8 +47,6 @@ export default function EntrepreneurProfilePage() {
         form.reset({
           fullName: data.full_name || '',
           bio: data.bio || '',
-          linkedinUrl: data.linkedin_url || '',
-          websiteUrl: data.website_url || '',
         });
       }
       setLoading(false);
@@ -66,8 +60,6 @@ export default function EntrepreneurProfilePage() {
       const { error } = await updateProfileAction({
         fullName: data.fullName,
         bio: data.bio,
-        linkedinUrl: data.linkedinUrl,
-        websiteUrl: data.websiteUrl,
       });
 
       if (error) throw new Error(error.message);
@@ -107,14 +99,6 @@ export default function EntrepreneurProfilePage() {
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-20 w-full" />
                 </div>
-                 <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
-                 <div className="space-y-2">
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-10 w-full" />
-                </div>
                 <Skeleton className="h-11 w-32" />
             </div>
         ) : (
@@ -146,34 +130,6 @@ export default function EntrepreneurProfilePage() {
                 </FormItem>
               )}
             />
-            <div className="grid md:grid-cols-2 gap-8">
-               <FormField
-                control={form.control}
-                name="linkedinUrl"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center gap-2"><Linkedin className="h-4 w-4"/> LinkedIn Profile</FormLabel>
-                    <FormControl>
-                        <Input placeholder="https://linkedin.com/in/yourprofile" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="websiteUrl"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel className="flex items-center gap-2"><LinkIcon className="h-4 w-4"/> Website / Portfolio</FormLabel>
-                    <FormControl>
-                        <Input placeholder="https://yourwebsite.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
             <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
               {form.formState.isSubmitting ? 'Saving...' : 'Save Changes'}
             </Button>
