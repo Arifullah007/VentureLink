@@ -1,5 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Settings } from "lucide-react";
+'use client';
+
+import { SettingsForm } from '@/components/settings-form';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Settings } from 'lucide-react';
 
 export default function EntrepreneurSettingsPage() {
   return (
@@ -14,9 +17,7 @@ export default function EntrepreneurSettingsPage() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-center items-center h-48 border-2 border-dashed rounded-lg">
-          <p className="text-muted-foreground">Account settings are coming soon!</p>
-        </div>
+        <SettingsForm />
       </CardContent>
     </Card>
   );
