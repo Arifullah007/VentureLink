@@ -1,4 +1,4 @@
-
+'use client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,29 +9,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarTrigger,
-  SidebarInset,
-} from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Lightbulb, Users, Handshake, LogOut, Settings, User } from 'lucide-react';
+import { Home, Lightbulb, Users, LogOut, Settings, User, Plus } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
 import { AuthGuard } from '@/components/auth-guard';
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const navItems = [
-    { href: "/entrepreneur/dashboard", icon: <Home />, label: "Dashboard" },
-    { href: "/entrepreneur/ideas/new", icon: <Lightbulb />, label: "Post New Idea" },
-    { href: "/entrepreneur/investors", icon: <Users />, label: "Browse Investors" },
-    { href: "/entrepreneur/collaborate", icon: <Handshake />, label: "Combine & Grow" },
+  { href: '/entrepreneur/dashboard', label: 'Dashboard' },
+  { href: '/entrepreneur/investors', label: 'Browse Investors' },
 ];
 
 export default function EntrepreneurLayout({
@@ -39,86 +27,84 @@ export default function EntrepreneurLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+
   return (
     <AuthGuard role="entrepreneur">
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
-             <Logo className="w-6 h-6 text-primary"/>
-             <span className="text-lg font-semibold">VentureLink</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
+      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+          <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+            <Link
+              href="/entrepreneur/dashboard"
+              className="flex items-center gap-2 text-lg font-semibold md:text-base"
+            >
+              <Logo className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">VentureLink</span>
+            </Link>
+            <Link
+                href="/"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+              >
+                Home
+            </Link>
             {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton asChild>
-                  <Link href={item.href}>
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  'transition-colors hover:text-foreground',
+                  pathname === item.href ? 'text-foreground font-semibold' : 'text-muted-foreground'
+                )}
+              >
+                {item.label}
+              </Link>
             ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <LogoutButton />
-                </SidebarMenuItem>
-            </SidebarMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>
-        <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-card px-6">
-          <SidebarTrigger className="md:hidden" />
-          <div className="flex-1">
-            <h1 className="font-semibold text-lg">Entrepreneur Dashboard</h1>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                <Avatar className="h-8 w-8">
-                   <AvatarFallback>S</AvatarFallback>
-                </Avatar>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="end" forceMount>
-              <DropdownMenuLabel className="font-normal">
-                <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">Sharad</p>
-                  <p className="text-xs leading-none text-muted-foreground">
-                    entrepreneur@venturelink.com
-                  </p>
-                </div>
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem asChild>
-                <Link href="/entrepreneur/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                 <Link href="/entrepreneur/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-               <DropdownMenuItem>
+          </nav>
+          {/* Mobile Menu can be added here if needed */}
+          <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+             <div className="ml-auto flex-1 sm:flex-initial">
+                <Button asChild>
+                    <Link href="/entrepreneur/ideas/new">
+                        <Plus className="mr-2 h-4 w-4" /> New Idea
+                    </Link>
+                </Button>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="secondary" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>S</AvatarFallback>
+                  </Avatar>
+                  <span className="sr-only">Toggle user menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                    <Link href="/entrepreneur/profile">
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    <Link href="/entrepreneur/settings">
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
                   <LogoutButton isDropdown />
-               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
-        <main className="flex-1 p-4 sm:p-6 bg-background">
-            {children}
+        <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+          {children}
         </main>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
     </AuthGuard>
   );
 }
