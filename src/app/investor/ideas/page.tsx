@@ -96,7 +96,7 @@ export default function BrowseIdeasPage() {
                     <CardFooter className="flex flex-col items-start gap-4 pt-4">
                         <div className="flex justify-between w-full">
                            <Skeleton className="h-5 w-1/3" />
-                           <Skeleton classNameh-5 w-1/4" />
+                           <Skeleton className="h-5 w-1/4" />
                         </div>
                         <div className="w-full h-px bg-border"></div>
                         <div className="flex justify-between items-center w-full">
