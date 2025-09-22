@@ -4,15 +4,16 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Lightbulb, UploadCloud } from 'lucide-react';
+import { Lightbulb, UploadCloud, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -99,6 +100,14 @@ export default function NewIdeaPage() {
         <CardDescription>Fill out the details below to get your idea in front of investors. Be clear and concise.</CardDescription>
       </CardHeader>
       <CardContent>
+        <Alert className="mb-6 border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
+            <ShieldCheck className="h-4 w-4 !text-blue-600" />
+            <AlertTitle className="font-semibold">Protect Your Idea</AlertTitle>
+            <AlertDescription>
+                Your security is important. Always watermark your prototypes. Note that investors must sign a Non-Disclosure Agreement (NDA) before they can view the full details of your idea.
+            </AlertDescription>
+        </Alert>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
             <FormField
@@ -210,6 +219,9 @@ export default function NewIdeaPage() {
                         </div>
                     </div>
                   </FormControl>
+                  <FormDescription>
+                    To protect your intellectual property, please upload a watermarked version of your prototype.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
