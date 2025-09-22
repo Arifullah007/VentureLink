@@ -18,27 +18,6 @@ type Idea = {
   required_investment: string; // The amount like 5,00,000
 };
 
-// Mock data for initial display
-const mockIdeas: Idea[] = [
-  {
-    id: 'idea1',
-    title: 'Smart Kirana Network',
-    summary: 'Digitizing neighbourhood stores for last-mile delivery',
-    location: 'Bengaluru, India',
-    views: 85,
-    required_investment: '5,00,000',
-  },
-  {
-    id: 'idea2',
-    title: 'AI Health Advisor',
-    summary: 'AI-powered telemedicine for preventive care',
-    location: 'Mumbai, India',
-    views: 64,
-    required_investment: '12,00,000',
-  },
-];
-
-
 const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
   <Card>
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -75,23 +54,23 @@ export default function EntrepreneurDashboard() {
                         title: idea.pitch_title,
                         summary: idea.anonymized_summary.split('. ')[0], // Simple summary logic
                         location: 'Remote', // Placeholder
-                        views: Math.floor(Math.random() * 200), // Placeholder
+                        views: idea.views || 0,
                         required_investment: idea.investment_required,
                     }));
                     setIdeas(formattedIdeas);
-                    setStats(prev => ({ ...prev, activeIdeas: count || 0 }));
+                    
+                    // Calculate total views from fetched ideas
+                    const totalViews = formattedIdeas.reduce((acc, idea) => acc + idea.views, 0);
+
+                    setStats(prev => ({ ...prev, activeIdeas: count || 0, totalViews }));
                 } else if (error) {
                     console.error("Error fetching pitches", error);
                 }
             }
-            // Keep mock data for visual representation if fetch fails or returns empty
-            if(ideas.length === 0) setIdeas(mockIdeas);
-
             setLoading(false);
         };
 
-        // Using a timeout to simulate loading
-        setTimeout(fetchIdeasAndStats, 1000);
+        fetchIdeasAndStats();
     }, []);
 
 
@@ -177,3 +156,5 @@ export default function EntrepreneurDashboard() {
     </div>
   );
 }
+
+    
