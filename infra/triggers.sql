@@ -1,49 +1,52 @@
--- Database Triggers for VentureLink
-
--- This function checks for contact information (email, phone, URL) in a given text body.
--- If found, it creates a report and prevents the operation from completing.
-create or replace function public.block_contact_info()
+-- Function to create a profile for a new user
+create or replace function public.handle_new_user()
 returns trigger as $$
-declare
-  v_contains_contact_info boolean;
-  v_regex text := '(\w+@\w+\.\w+)|(\+?\d[\d -]{8,12}\d)|(https?:\/\/[^\s]+)';
 begin
-  -- Check if the body of the new row contains contact info
-  v_contains_contact_info := (NEW.body ~* v_regex) or (NEW.full_text ~* v_regex);
-
-  if v_contains_contact_info then
-    -- If contact info is found, insert a report
-    insert into public.reports (reporter_id, report_type, description, related_pitch_id, related_message_id)
-    values (
-      auth.uid(),
-      'contact_info_blocked',
-      'Attempted to insert content with contact information.',
-      (case when TG_TABLE_NAME = 'pitches' then NEW.id else null end),
-      (case when TG_TABLE_NAME = 'messages' then NEW.id else null end)
-    );
-
-    -- Block the insert/update operation
-    raise exception 'Content cannot contain contact information (email, phone, URL). This attempt has been logged.';
-    return null;
-  end if;
-
-  -- If no contact info is found, allow the operation
-  return NEW;
+  insert into public.profiles (id, full_name, email)
+  values (new.id, new.raw_user_meta_data->>'full_name', new.email);
+  return new;
 end;
 $$ language plpgsql security definer;
 
--- Drop existing triggers to avoid conflicts
-drop trigger if exists on_message_block_contact_info on public.messages;
-drop trigger if exists on_pitch_block_contact_info on public.pitches;
+-- Trigger to call the function when a new user signs up
+create or replace trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
 
--- Create the trigger for the 'messages' table
-create trigger on_message_block_contact_info
-before insert or update on public.messages
-for each row execute procedure public.block_contact_info();
+-- Function to automatically generate a report when a pitch summary contains contact info
+CREATE OR REPLACE FUNCTION public.check_pitch_summary_for_contact_info()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Check for email address or phone number in anonymized_summary
+    IF NEW.anonymized_summary ~* '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b' OR
+       NEW.anonymized_summary ~* '\+?[0-9]{10,15}' THEN
+        
+        -- Insert a report into the reports table
+        INSERT INTO public.reports (report_type, description, related_user_id, related_pitch_id)
+        VALUES ('contact_info_in_summary', 'Contact information detected in pitch summary.', NEW.entrepreneur_id, NEW.id);
+        
+        -- Prevent the insert/update by raising an exception
+        RAISE EXCEPTION 'Pitch summary cannot contain contact information like emails or phone numbers.';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- Create the trigger for the 'pitches' table (checking the full_text column)
-create trigger on_pitch_block_contact_info
-before insert or update on public.pitches
-for each row execute procedure public.block_contact_info();
+-- Trigger to call the check function before inserting or updating a pitch
+CREATE OR REPLACE TRIGGER before_pitch_insert_or_update
+BEFORE INSERT OR UPDATE ON public.pitches
+FOR EACH ROW
+EXECUTE FUNCTION public.check_pitch_summary_for_contact_info();
 
-comment on function public.block_contact_info() is 'A trigger function that blocks insertions or updates containing contact information and logs a report.';
+-- Webhook on new file upload to trigger processing
+CREATE OR REPLACE TRIGGER on_file_upload
+AFTER INSERT ON public.pitch_files
+FOR EACH ROW
+EXECUTE FUNCTION supabase_functions.http_request(
+    'https://zjecfmaemqjnyxgjmjgp.supabase.co/functions/v1/process-upload-webhook',
+    'POST',
+    '{"Content-type":"application/json"}',
+    '{}',
+    1000
+);
