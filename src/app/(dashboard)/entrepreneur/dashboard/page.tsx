@@ -11,11 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 type Idea = {
   id: string;
-  title: string;
-  summary: string; // The short description under the title
-  location: string; // e.g. Bengaluru, India
-  views: number;
-  required_investment: string; // The amount like 5,00,000
+  idea_title: string;
+  anonymized_summary: string; // The short description under the title
+  investment_required: string; // The amount like 5,00,000
 };
 
 const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
@@ -32,7 +30,7 @@ const StatCard = ({ title, value, icon }: { title: string; value: string | numbe
 
 export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
-    const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 149, investorInquiries: 12 });
+    const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -41,30 +39,20 @@ export default function EntrepreneurDashboard() {
             const { data: { user } } = await supabase.auth.getUser();
 
             if (user) {
-                // In a real scenario, you would fetch these stats from your backend/DB
-                // For now, we'll use a mix of mock data and fetched data count
                 const { data: fetchedIdeas, error, count } = await supabase
-                    .from('pitches')
+                    .from('ideas')
                     .select('*', { count: 'exact' })
                     .eq('entrepreneur_id', user.id);
 
                 if (!error && fetchedIdeas) {
-                    const formattedIdeas: Idea[] = fetchedIdeas.map(idea => ({
-                        id: idea.id,
-                        title: idea.pitch_title,
-                        summary: idea.anonymized_summary.split('. ')[0], // Simple summary logic
-                        location: 'Remote', // Placeholder
-                        views: idea.views || 0,
-                        required_investment: idea.investment_required,
-                    }));
-                    setIdeas(formattedIdeas);
+                    setIdeas(fetchedIdeas);
                     
-                    // Calculate total views from fetched ideas
-                    const totalViews = formattedIdeas.reduce((acc, idea) => acc + idea.views, 0);
+                    const totalViews = fetchedIdeas.reduce((acc, idea) => acc + (idea.views || 0), 0);
+                    const totalInquiries = 0;
 
-                    setStats(prev => ({ ...prev, activeIdeas: count || 0, totalViews }));
+                    setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
                 } else if (error) {
-                    console.error("Error fetching pitches", error.message);
+                    console.error("Error fetching ideas", error.message);
                 }
             }
             setLoading(false);
@@ -83,7 +71,7 @@ export default function EntrepreneurDashboard() {
           </div>
           <Button asChild size="lg">
               <Link href="/entrepreneur/ideas/new">
-                <PlusCircle className="mr-2 h-5 w-5" /> Submit New Pitch
+                <PlusCircle className="mr-2 h-5 w-5" /> Submit New Idea
               </Link>
             </Button>
       </div>
@@ -94,7 +82,7 @@ export default function EntrepreneurDashboard() {
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
         </> : <>
-            <StatCard title="Active Pitches" value={stats.activeIdeas} icon={<Zap className="h-4 w-4 text-muted-foreground" />} />
+            <StatCard title="Active Ideas" value={stats.activeIdeas} icon={<Zap className="h-4 w-4 text-muted-foreground" />} />
             <StatCard title="Total Views" value={stats.totalViews} icon={<EyeIcon className="h-4 w-4 text-muted-foreground" />} />
             <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageCircle className="h-4 w-4 text-muted-foreground" />} />
         </>
@@ -103,7 +91,7 @@ export default function EntrepreneurDashboard() {
 
        <Card>
         <CardHeader>
-          <CardTitle>Your Startup Pitches</CardTitle>
+          <CardTitle>Your Startup Ideas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
         {loading ? (
@@ -125,12 +113,10 @@ export default function EntrepreneurDashboard() {
             ideas.map((idea) => (
               <div key={idea.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4">
                 <div className="flex-1 space-y-1">
-                    <p className="font-semibold text-lg">{idea.title}</p>
-                    <p className="text-sm text-muted-foreground">{idea.summary}</p>
+                    <p className="font-semibold text-lg">{idea.idea_title}</p>
+                    <p className="text-sm text-muted-foreground">{idea.anonymized_summary.split('. ')[0]}</p>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
-                        <span className="flex items-center gap-1"><MapPin className="h-4 w-4"/> {idea.location}</span>
-                        <span className="flex items-center gap-1"><Eye className="h-4 w-4"/> {idea.views} views</span>
-                        <span className="flex items-center gap-1"><IndianRupee className="h-4 w-4"/> {idea.required_investment}</span>
+                        <span className="flex items-center gap-1"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -155,10 +141,10 @@ export default function EntrepreneurDashboard() {
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <p>You haven&apos;t submitted any pitches yet.</p>
+              <p>You haven&apos;t submitted any ideas yet.</p>
                <Button asChild className="mt-4">
                   <Link href="/entrepreneur/ideas/new">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Pitch
+                    <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Idea
                   </Link>
                 </Button>
             </div>

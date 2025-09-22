@@ -8,14 +8,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { FilePenLine, Loader2, UploadCloud } from 'lucide-react';
+import { FilePenLine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const pitchSchema = z.object({
+const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
   field: z.string().min(1, 'Please select a field.'),
   summary: z.string().min(20, 'Summary must be at least 20 characters.').max(1000, 'Summary cannot exceed 1000 characters.'),
@@ -23,39 +23,39 @@ const pitchSchema = z.object({
   estimatedReturns: z.string().min(1, 'Please select an estimated return.'),
 });
 
-type PitchFormValues = z.infer<typeof pitchSchema>;
+type IdeaFormValues = z.infer<typeof ideaSchema>;
 
 const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR', '1CR+'];
 const returnExpectations = ['Less', 'Medium', 'High'];
 const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech', 'Other'];
 
 
-export default function EditPitchPage() {
+export default function EditIdeaPage() {
     const { toast } = useToast();
     const router = useRouter();
     const params = useParams();
-    const pitchId = params.id as string;
+    const ideaId = params.id as string;
     const [loading, setLoading] = useState(true);
 
-    const form = useForm<PitchFormValues>({
-        resolver: zodResolver(pitchSchema),
+    const form = useForm<IdeaFormValues>({
+        resolver: zodResolver(ideaSchema),
     });
 
     useEffect(() => {
-        if (!pitchId) return;
+        if (!ideaId) return;
 
-        const fetchPitch = async () => {
+        const fetchIdea = async () => {
             setLoading(true);
             const { data, error } = await supabase
-                .from('pitches')
+                .from('ideas')
                 .select('*')
-                .eq('id', pitchId)
+                .eq('id', ideaId)
                 .single();
             
             if (error || !data) {
                 toast({
                     title: 'Error',
-                    description: 'Could not fetch pitch details.',
+                    description: 'Could not fetch idea details.',
                     variant: 'destructive'
                 });
                 router.push('/entrepreneur/dashboard');
@@ -63,7 +63,7 @@ export default function EditPitchPage() {
             }
 
             form.reset({
-                title: data.pitch_title,
+                title: data.idea_title,
                 summary: data.anonymized_summary,
                 field: data.sector,
                 requiredInvestment: data.investment_required,
@@ -71,15 +71,15 @@ export default function EditPitchPage() {
             });
             setLoading(false);
         };
-        fetchPitch();
-    }, [pitchId, form, router, toast]);
+        fetchIdea();
+    }, [ideaId, form, router, toast]);
 
-    async function onSubmit(data: PitchFormValues) {
+    async function onSubmit(data: IdeaFormValues) {
         try {
             const { error } = await supabase
-                .from('pitches')
+                .from('ideas')
                 .update({
-                    pitch_title: data.title,
+                    idea_title: data.title,
                     anonymized_summary: data.summary,
                     full_text: data.summary, // Assuming full_text is same as summary
                     sector: data.field,
@@ -87,12 +87,12 @@ export default function EditPitchPage() {
                     estimated_returns: data.estimatedReturns,
                     updated_at: new Date().toISOString(),
                 })
-                .eq('id', pitchId);
+                .eq('id', ideaId);
 
             if (error) throw error;
             
             toast({
-                title: 'Pitch Updated!',
+                title: 'Idea Updated!',
                 description: 'Your changes have been saved successfully.',
             });
             router.push('/entrepreneur/dashboard');
@@ -111,9 +111,9 @@ export default function EditPitchPage() {
       <CardHeader>
         <div className="flex items-center gap-3">
             <FilePenLine className="h-6 w-6 text-primary"/>
-            <CardTitle>Edit Your Pitch</CardTitle>
+            <CardTitle>Edit Your Idea</CardTitle>
         </div>
-        <CardDescription>Update the details of your pitch below. Clear and concise information attracts more investors.</CardDescription>
+        <CardDescription>Update the details of your idea below. Clear and concise information attracts more investors.</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -135,7 +135,7 @@ export default function EditPitchPage() {
                 name="title"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Pitch Title</FormLabel>
+                    <FormLabel>Idea Title</FormLabel>
                     <FormControl>
                         <Input placeholder="e.g., Eco-Friendly Packaging Solution" {...field} />
                     </FormControl>
@@ -149,7 +149,7 @@ export default function EditPitchPage() {
                 name="summary"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Pitch Summary</FormLabel>
+                    <FormLabel>Idea Summary</FormLabel>
                     <FormControl>
                         <Textarea placeholder="Briefly describe your idea, its purpose, and target audience. Do not include contact details." {...field} />
                     </FormControl>

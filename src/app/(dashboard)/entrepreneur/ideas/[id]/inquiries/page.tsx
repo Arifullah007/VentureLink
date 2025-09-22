@@ -12,7 +12,7 @@ export default function InquiriesPage({ params }: { params: { id: string }}) {
           </div>
           <CardTitle>Investor Inquiries</CardTitle>
           <CardDescription>
-            This is where you will manage all investor inquiries and messages for your pitch (ID: {params.id}). This feature is currently under construction.
+            This is where you will manage all investor inquiries and messages for your idea (ID: {params.id}). This feature is currently under construction.
           </CardDescription>
         </CardHeader>
         <CardContent>

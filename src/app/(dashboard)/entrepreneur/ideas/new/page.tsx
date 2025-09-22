@@ -15,7 +15,7 @@ import { supabase } from '@/lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
-const pitchSchema = z.object({
+const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
   field: z.string().min(1, 'Please select a field.'),
   summary: z.string().min(20, 'Summary must be at least 20 characters.').max(1000, 'Summary cannot exceed 1000 characters.'),
@@ -25,19 +25,19 @@ const pitchSchema = z.object({
     .refine((files) => files?.[0]?.size <= 10000000, `Max file size is 10MB.`),
 });
 
-type PitchFormValues = z.infer<typeof pitchSchema>;
+type IdeaFormValues = z.infer<typeof ideaSchema>;
 
 const investmentRanges = ['70K-5L', '5L-25L', '26L-1CR', '1CR+'];
 const returnExpectations = ['Less', 'Medium', 'High'];
 const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainability', 'EdTech', 'Other'];
 
 
-export default function NewPitchPage() {
+export default function NewIdeaPage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const form = useForm<PitchFormValues>({
-        resolver: zodResolver(pitchSchema),
+    const form = useForm<IdeaFormValues>({
+        resolver: zodResolver(ideaSchema),
         defaultValues: {
             title: '',
             field: '',
@@ -47,7 +47,7 @@ export default function NewPitchPage() {
         }
     });
 
-    async function onSubmit(data: PitchFormValues) {
+    async function onSubmit(data: IdeaFormValues) {
         try {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error("User not authenticated.");
@@ -73,12 +73,12 @@ export default function NewPitchPage() {
             });
             if (uploadError) throw new Error(`File upload failed: ${(uploadError as any).message}`);
             
-            // 3. Create the pitch in the database
-            const { data: pitchData, error: pitchError } = await supabase
-                .from('pitches')
+            // 3. Create the idea in the database
+            const { data: ideaData, error: ideaError } = await supabase
+                .from('ideas')
                 .insert({
                     entrepreneur_id: user.id,
-                    pitch_title: data.title,
+                    idea_title: data.title,
                     anonymized_summary: data.summary,
                     full_text: data.summary,
                     sector: data.field,
@@ -88,14 +88,14 @@ export default function NewPitchPage() {
                 .select()
                 .single();
 
-            if (pitchError) throw pitchError;
-            if (!pitchData) throw new Error("Failed to create pitch record.");
+            if (ideaError) throw ideaError;
+            if (!ideaData) throw new Error("Failed to create idea record.");
 
-            // 4. Create a record in pitch_files to trigger the processing webhook
+            // 4. Create a record in idea_files to trigger the processing webhook
             const { error: fileRecordError } = await supabase
-                .from('pitch_files')
+                .from('idea_files')
                 .insert({
-                    pitch_id: pitchData.id,
+                    idea_id: ideaData.id,
                     file_path: filePath,
                     file_name: file.name,
                 });
@@ -103,8 +103,8 @@ export default function NewPitchPage() {
             if (fileRecordError) throw fileRecordError;
             
             toast({
-                title: 'Pitch Submitted!',
-                description: 'Your pitch is being processed and will be available to investors shortly.',
+                title: 'Idea Submitted!',
+                description: 'Your idea is being processed and will be available to investors shortly.',
             });
             router.push('/entrepreneur/dashboard');
 
@@ -122,14 +122,14 @@ export default function NewPitchPage() {
       <CardHeader>
         <div className="flex items-center gap-3">
             <Lightbulb className="h-6 w-6 text-primary"/>
-            <CardTitle>Submit Your New Pitch</CardTitle>
+            <CardTitle>Submit Your New Idea</CardTitle>
         </div>
-        <CardDescription>Fill out the details below to get your pitch in front of investors. Be clear and concise.</CardDescription>
+        <CardDescription>Fill out the details below to get your idea in front of investors. Be clear and concise.</CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6 border-blue-500 bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-200">
             <ShieldCheck className="h-4 w-4 !text-blue-600" />
-            <AlertTitle className="font-semibold">Protect Your Pitch</AlertTitle>
+            <AlertTitle className="font-semibold">Protect Your Idea</AlertTitle>
             <AlertDescription>
                 Your security is important. Our system will automatically process and watermark your uploaded file. Do not include personal contact information in your descriptions or uploads.
             </AlertDescription>
@@ -142,7 +142,7 @@ export default function NewPitchPage() {
               name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pitch Title</FormLabel>
+                  <FormLabel>Idea Title</FormLabel>
                   <FormControl>
                     <Input placeholder="e.g., Eco-Friendly Packaging Solution" {...field} />
                   </FormControl>
@@ -156,7 +156,7 @@ export default function NewPitchPage() {
               name="summary"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Pitch Summary</FormLabel>
+                  <FormLabel>Idea Summary</FormLabel>
                   <FormControl>
                     <Textarea placeholder="Briefly describe your idea, its purpose, and target audience. Do not include contact details." {...field} />
                   </FormControl>
@@ -231,7 +231,7 @@ export default function NewPitchPage() {
                  const file = form.watch('prototype')?.[0];
                  return (
                 <FormItem>
-                  <FormLabel>Pitch Document/Prototype</FormLabel>
+                  <FormLabel>Idea Document/Prototype</FormLabel>
                   <FormControl>
                     <div className="relative flex justify-center w-full h-32 px-6 pt-5 pb-6 border-2 border-dashed rounded-md">
                         <div className="space-y-1 text-center">
@@ -270,7 +270,7 @@ export default function NewPitchPage() {
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
                     </>
-                ) : 'Submit My Pitch'}
+                ) : 'Submit My Idea'}
             </Button>
           </form>
         </Form>

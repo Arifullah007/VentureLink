@@ -9,10 +9,9 @@ export const investorPreferencesSchema = z.object({
 
 export type InvestorPreferences = z.infer<typeof investorPreferencesSchema>;
 
-// This is the shape of the data in the 'pitches' table.
-export type Pitch = {
+export type Idea = {
   id: string;
-  pitch_title: string;
+  idea_title: string;
   anonymized_summary: string;
   sector: string;
   investment_required: string;
@@ -22,5 +21,5 @@ export type Pitch = {
 };
 
 export type MatchResult = MatchInvestorToEntrepreneurOutput & {
-  idea: Pitch; // Renamed from 'idea' to 'pitch' to be consistent
+  idea: Idea;
 };

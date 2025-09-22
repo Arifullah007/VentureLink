@@ -12,7 +12,7 @@ export default function AnalyticsPage({ params }: { params: { id: string }}) {
           </div>
           <CardTitle>Analytics Coming Soon</CardTitle>
           <CardDescription>
-            We are building a comprehensive analytics dashboard for your pitch (ID: {params.id}). You will soon be able to see detailed metrics like investor views, engagement time, and more.
+            We are building a comprehensive analytics dashboard for your idea (ID: {params.id}). You will soon be able to see detailed metrics like investor views, engagement time, and more.
           </CardDescription>
         </CardHeader>
         <CardContent>

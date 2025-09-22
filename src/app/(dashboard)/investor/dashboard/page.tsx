@@ -10,42 +10,41 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
-type Pitch = {
+type Idea = {
   id: string;
-  pitch_title: string;
+  idea_title: string;
   anonymized_summary: string;
   sector: string;
   prototype_url: string; 
 };
 
 export default function InvestorDashboard() {
-  const [featuredPitches, setFeaturedPitches] = useState<Pitch[]>([]);
+  const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchPitches = async () => {
+    const fetchIdeas = async () => {
       setLoading(true);
       
-      const { data: livePitches, error } = await supabase
-        .from('pitches')
-        .select('id, pitch_title, anonymized_summary, sector')
+      const { data: liveIdeas, error } = await supabase
+        .from('ideas')
+        .select('id, idea_title, anonymized_summary, sector')
         .limit(2);
 
       if (error) {
-        console.error('Error fetching featured pitches:', error);
-      } else if (livePitches) {
-         const livePitchesWithImages = livePitches.map((pitch, index) => ({
-          ...pitch,
-          // Assigning a placeholder image. In a real app, you'd fetch this from pitch_files.
+        console.error('Error fetching featured ideas:', error);
+      } else if (liveIdeas) {
+         const liveIdeasWithImages = liveIdeas.map((idea, index) => ({
+          ...idea,
           prototype_url: `https://picsum.photos/seed/live${index}/600/400`,
         }));
-        setFeaturedPitches(livePitchesWithImages);
+        setFeaturedIdeas(liveIdeasWithImages);
       }
 
       setLoading(false);
     };
 
-    fetchPitches();
+    fetchIdeas();
   }, []);
 
   return (
@@ -132,14 +131,14 @@ export default function InvestorDashboard() {
                   </div>
               </div>
             </>
-          ) : featuredPitches.length > 0 ? (
-            featuredPitches.map((pitch) => (
-              <Card key={pitch.id} className="overflow-hidden">
+          ) : featuredIdeas.length > 0 ? (
+            featuredIdeas.map((idea) => (
+              <Card key={idea.id} className="overflow-hidden">
                 <div className="relative">
                   <Watermark text="VentureLink">
                     <Image
-                      src={pitch.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                      alt={`Prototype for ${pitch.pitch_title}`}
+                      src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
+                      alt={`Prototype for ${idea.idea_title}`}
                       width={600}
                       height={400}
                       className="aspect-video w-full object-cover"
@@ -147,10 +146,10 @@ export default function InvestorDashboard() {
                   </Watermark>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold truncate">{pitch.pitch_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{pitch.anonymized_summary}</p>
+                  <h3 className="font-semibold truncate">{idea.idea_title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.anonymized_summary}</p>
                   <div className="flex justify-between items-center mt-4">
-                      <Badge variant="secondary">{pitch.sector}</Badge>
+                      <Badge variant="secondary">{idea.sector}</Badge>
                       <Button variant="link" size="sm" asChild>
                           <Link href={`/investor/ideas`}>View Details</Link>
                       </Button>

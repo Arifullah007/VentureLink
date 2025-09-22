@@ -12,16 +12,16 @@ import { NdaModal } from "@/components/ui/nda-modal";
 import Link from "next/link";
 import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 
-type Pitch = {
+type Idea = {
   id: string;
-  pitch_title: string;
+  idea_title: string;
   anonymized_summary: string;
   sector: string;
   investment_required: string;
   estimated_returns: string;
-  prototype_url: string; // This needs to be resolved from pitch_files
+  prototype_url: string; 
   entrepreneur_id: string;
-  profiles: { // Changed from users to profiles to match Supabase schema
+  profiles: { 
       avatar_url: string | null;
       full_name: string | null;
   } | null
@@ -29,18 +29,17 @@ type Pitch = {
 
 
 export default function BrowseIdeasPage() {
-    const [pitches, setPitches] = useState<Pitch[]>([]);
+    const [ideas, setIdeas] = useState<Idea[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+    const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
     const [isNdaOpen, setNdaOpen] = useState(false);
-    const [unlockedPitches, setUnlockedPitches] = useState<Set<string>>(new Set());
+    const [unlockedIdeas, setUnlockedIdeas] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        const fetchPitches = async () => {
+        const fetchIdeas = async () => {
             setLoading(true);
-            // Fetch pitches and related profile information
             const { data, error } = await supabase
-                .from('pitches')
+                .from('ideas')
                 .select(`
                     *,
                     profiles (
@@ -50,42 +49,33 @@ export default function BrowseIdeasPage() {
                 `);
 
             if (error) {
-                console.error('Error fetching pitches:', error);
+                console.error('Error fetching ideas:', error);
             }
 
-            // In a real app, you'd also fetch the pitch_files to get the prototype_url.
-            // For now, we'll use a placeholder.
-            const allPitches = (data || []).map(pitch => ({
-              ...pitch,
-              pitch_title: pitch.pitch_title,
-              anonymized_summary: pitch.anonymized_summary,
-              sector: pitch.sector,
-              investment_required: pitch.investment_required,
-              estimated_returns: pitch.estimated_returns,
-              // This is a placeholder. You'd fetch from `pitch_files` table.
-              prototype_url: 'https://picsum.photos/seed/' + pitch.id + '/400/250',
-              profiles: Array.isArray(pitch.profiles) ? pitch.profiles[0] : pitch.profiles
-            })) as Pitch[];
+            const allIdeas = (data || []).map(idea => ({
+              ...idea,
+              prototype_url: 'https://picsum.photos/seed/' + idea.id + '/400/250',
+              profiles: Array.isArray(idea.profiles) ? idea.profiles[0] : idea.profiles
+            })) as Idea[];
             
-            setPitches(allPitches);
+            setIdeas(allIdeas);
             setLoading(false);
         };
 
-        fetchPitches();
+        fetchIdeas();
     }, []);
 
-    const handleUnlockDetails = (pitch: Pitch) => {
-        setSelectedPitch(pitch);
+    const handleUnlockDetails = (idea: Idea) => {
+        setSelectedIdea(idea);
         setNdaOpen(true);
     };
 
     const handleNdaAccept = () => {
-        if (!selectedPitch) return;
+        if (!selectedIdea) return;
         setNdaOpen(false);
-        // In a real app, you would record the NDA acceptance in your database.
-        setUnlockedPitches(prev => new Set(prev).add(selectedPitch.id));
-        alert(`NDA Accepted! You have now unlocked the details for "${selectedPitch.pitch_title}".`);
-        setSelectedPitch(null);
+        setUnlockedIdeas(prev => new Set(prev).add(selectedIdea.id));
+        alert(`NDA Accepted! You have now unlocked the details for "${selectedIdea.idea_title}".`);
+        setSelectedIdea(null);
     }
 
 
@@ -121,16 +111,16 @@ export default function BrowseIdeasPage() {
                     </CardFooter>
                 </Card>
             ))
-        ) : pitches.map((pitch) => {
-          const isUnlocked = unlockedPitches.has(pitch.id);
+        ) : ideas.map((idea) => {
+          const isUnlocked = unlockedIdeas.has(idea.id);
           return (
-            <Card key={pitch.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <CardHeader className="p-0">
                    {isUnlocked ? (
-                     <Link href={pitch.prototype_url || '#'} target="_blank" rel="noopener noreferrer">
+                     <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">
                        <Image
-                          src={pitch.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
-                          alt={`Prototype for ${pitch.pitch_title}`}
+                          src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
+                          alt={`Prototype for ${idea.idea_title}`}
                           width={400}
                           height={250}
                           className="rounded-t-lg aspect-video w-full object-cover"
@@ -139,8 +129,8 @@ export default function BrowseIdeasPage() {
                    ) : (
                     <Watermark text="VentureLink">
                       <Image
-                        src={pitch.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
-                        alt={`Prototype for ${pitch.pitch_title}`}
+                        src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
+                        alt={`Prototype for ${idea.idea_title}`}
                         width={400}
                         height={250}
                         className="rounded-t-lg aspect-video w-full object-cover"
@@ -149,24 +139,24 @@ export default function BrowseIdeasPage() {
                    )}
                 </CardHeader>
                 <CardContent className="p-4 flex-grow">
-                  <Badge variant="secondary" className="mb-2">{pitch.sector}</Badge>
-                  <h3 className="text-lg font-bold">{pitch.pitch_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{pitch.anonymized_summary}</p>
+                  <Badge variant="secondary" className="mb-2">{idea.sector}</Badge>
+                  <h3 className="text-lg font-bold">{idea.idea_title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.anonymized_summary}</p>
                 </CardContent>
                 <CardFooter className="p-4 pt-0 flex flex-col items-start gap-4">
                   <div className="flex justify-between w-full text-sm">
-                      <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{pitch.investment_required}</span></div>
-                      <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{pitch.estimated_returns}</span></div>
+                      <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.investment_required}</span></div>
+                      <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
                   </div>
                   <div className="border-t pt-4 w-full">
                       <div className="flex justify-between items-center w-full">
                       <div className="flex items-center gap-2">
-                          {pitch.profiles ? (
+                          {idea.profiles ? (
                           <>
                               <Avatar className="h-8 w-8">
-                                <AvatarFallback>{pitch.profiles.full_name?.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{idea.profiles.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
-                              <span className="text-sm font-medium">{pitch.profiles.full_name}</span>
+                              <span className="text-sm font-medium">{idea.profiles.full_name}</span>
                           </>
                           ) : (
                               <div className="flex items-center gap-2">
@@ -177,10 +167,10 @@ export default function BrowseIdeasPage() {
                       </div>
                        {isUnlocked ? (
                          <Button asChild variant="secondary">
-                           <Link href={pitch.prototype_url || '#'} target="_blank" rel="noopener noreferrer">View Prototype</Link>
+                           <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">View Prototype</Link>
                          </Button>
                        ) : (
-                         <Button onClick={() => handleUnlockDetails(pitch)}>
+                         <Button onClick={() => handleUnlockDetails(idea)}>
                             Unlock Details
                          </Button>
                        )}
@@ -191,21 +181,21 @@ export default function BrowseIdeasPage() {
           );
         })}
       </div>
-      {!loading && pitches.length === 0 && (
+      {!loading && ideas.length === 0 && (
         <Card>
             <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">No pitches have been submitted yet. Check back soon!</p>
+                <p className="text-muted-foreground">No ideas have been submitted yet. Check back soon!</p>
             </CardContent>
         </Card>
       )}
       
-       {selectedPitch && (
+       {selectedIdea && (
         <NdaModal
             isOpen={isNdaOpen}
             onClose={() => setNdaOpen(false)}
             onAccept={handleNdaAccept}
-            ideaTitle={selectedPitch.pitch_title}
-            entrepreneurName={selectedPitch.profiles?.full_name || 'the entrepreneur'}
+            ideaTitle={selectedIdea.idea_title}
+            entrepreneurName={selectedIdea.profiles?.full_name || 'the entrepreneur'}
         />
       )}
     </div>

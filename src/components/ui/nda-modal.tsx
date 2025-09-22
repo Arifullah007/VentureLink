@@ -38,7 +38,6 @@ export function NdaModal({ isOpen, onClose, onAccept, ideaTitle, entrepreneurNam
         });
         return;
     }
-    // In a real app, you'd also save the signature and a timestamp
     onAccept();
   }
 

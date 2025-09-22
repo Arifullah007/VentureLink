@@ -51,7 +51,7 @@ serve(async (req) => {
 
     // 1. Download the uploaded file
     const { data: fileData, error: downloadError } = await supabaseAdmin.storage
-      .from('pitch-uploads')
+      .from('idea-uploads')
       .download(fileRecord.file_path);
 
     if (downloadError) throw downloadError;
@@ -59,20 +59,19 @@ serve(async (req) => {
     const fileBuffer = await fileData.arrayBuffer();
 
     // 2. Process file content for contact info
-    const extractedText = await extractTextFromPdf(fileBuffer);
     const contactRegex = /(\w+@\w+\.\w+)|(\+?\d[\d -]{8,12}\d)|(https?:\/\/[^\s]+)/;
-    const hasContactInfo = contactRegex.test(extractedText);
+    const hasContactInfo = contactRegex.test(await extractTextFromPdf(fileBuffer));
 
     if (hasContactInfo) {
       // 3a. Quarantine the file
       const quarantinePath = `quarantined/${fileRecord.file_path}`;
       const { error: moveError } = await supabaseAdmin.storage
-        .from('pitch-uploads').move(fileRecord.file_path, quarantinePath);
+        .from('idea-uploads').move(fileRecord.file_path, quarantinePath);
 
       if (moveError) throw new Error(`Failed to move file to quarantine: ${moveError.message}`);
 
-      // Update the pitch_files record to mark as quarantined
-      await supabaseAdmin.from('pitch_files').update({
+      // Update the idea_files record to mark as quarantined
+      await supabaseAdmin.from('idea_files').update({
         quarantined: true,
         has_contact_info: true
       }).eq('id', fileRecord.id);
@@ -81,15 +80,15 @@ serve(async (req) => {
       await supabaseAdmin.from('reports').insert({
         report_type: 'contact_info_in_file',
         description: `Contact info found in file: ${fileRecord.file_name}`,
-        related_pitch_id: fileRecord.pitch_id,
+        related_idea_id: fileRecord.idea_id,
       });
 
       console.log(`File ${fileRecord.file_name} quarantined.`);
 
     } else {
       // 3b. Watermark and move the file
-      const { data: pitch } = await supabaseAdmin.from('pitches').select('entrepreneur_id').eq('id', fileRecord.pitch_id).single();
-      const watermarkText = `VentureLink | Pitch ID: ${fileRecord.pitch_id} | User: ${pitch?.entrepreneur_id}`;
+      const { data: idea } = await supabaseAdmin.from('ideas').select('entrepreneur_id').eq('id', fileRecord.idea_id).single();
+      const watermarkText = `VentureLink | Idea ID: ${fileRecord.idea_id} | User: ${idea?.entrepreneur_id}`;
       
       const watermarkedBuffer = await applyWatermark(fileBuffer, watermarkText);
 
@@ -101,14 +100,14 @@ serve(async (req) => {
         
       if(uploadError) throw new Error(`Failed to upload watermarked file: ${uploadError.message}`);
 
-      // Update the pitch_files record
-      await supabaseAdmin.from('pitch_files').update({
+      // Update the idea_files record
+      await supabaseAdmin.from('idea_files').update({
         watermarked: true,
         watermarked_path: watermarkedPath,
       }).eq('id', fileRecord.id);
 
       // Clean up original upload
-      await supabaseAdmin.storage.from('pitch-uploads').remove([fileRecord.file_path]);
+      await supabaseAdmin.storage.from('idea-uploads').remove([fileRecord.file_path]);
 
       console.log(`File ${fileRecord.file_name} watermarked and processed.`);
     }
