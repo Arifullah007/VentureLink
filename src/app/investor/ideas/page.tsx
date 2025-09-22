@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NdaModal } from "@/components/ui/nda-modal";
 import Link from "next/link";
+import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 
 type Idea = {
   id: string;
@@ -46,17 +47,38 @@ export default function BrowseIdeasPage() {
                     )
                 `);
 
+            let allIdeas: Idea[] = [];
+
             if (error) {
                 console.error('Error fetching ideas:', error);
             } else if (data) {
-                // Supabase returns an array of matching rows, join with users table might result in array of users
-                // We need to flatten it.
-                const ideasWithUsers = data.map(idea => ({
+                const liveIdeas = data.map(idea => ({
                     ...idea,
                     users: Array.isArray(idea.users) ? idea.users[0] : idea.users
-                }));
-                setIdeas(ideasWithUsers as Idea[]);
+                })) as Idea[];
+                allIdeas = [...allIdeas, ...liveIdeas];
             }
+
+            // Map predefined ideas to the Idea type and add entrepreneur info
+            const mappedPredefinedIdeas = predefinedIdeas.map(idea => {
+                const entrepreneur = predefinedEntrepreneurs.find(e => e.id === idea.entrepreneurId);
+                return {
+                    id: idea.id,
+                    title: idea.title,
+                    summary: idea.summary,
+                    field: idea.field,
+                    required_investment: idea.requiredInvestment,
+                    estimated_returns: idea.estimatedGuaranteedReturns,
+                    prototype_url: idea.prototypeImageUrl,
+                    entrepreneur_id: idea.entrepreneurId,
+                    users: entrepreneur ? { full_name: entrepreneur.name, avatar_url: entrepreneur.avatarUrl } : null
+                };
+            });
+            
+            allIdeas = [...mappedPredefinedIdeas, ...allIdeas];
+
+
+            setIdeas(allIdeas);
             setLoading(false);
         };
 
@@ -89,7 +111,7 @@ export default function BrowseIdeasPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {loading ? (
-            Array.from({ length: 3 }).map((_, index) => (
+            Array.from({ length: 6 }).map((_, index) => (
                 <Card key={index} className="flex flex-col overflow-hidden">
                     <CardHeader className="p-0">
                         <Skeleton className="h-48 w-full" />

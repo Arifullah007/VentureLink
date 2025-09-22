@@ -65,7 +65,39 @@ export const entrepreneurs: Entrepreneur[] = [
 ];
 
 export const ideas: Idea[] = [
- 
+ {
+    id: 'idea1',
+    title: 'Eco-Friendly Packaging Solution',
+    summary: 'A biodegradable and compostable packaging alternative to plastics, made from agricultural waste. Aims to reduce plastic pollution and provide a sustainable solution for businesses.',
+    field: 'Sustainability',
+    requiredInvestment: '5L-25L',
+    estimatedGuaranteedReturns: 'Medium',
+    prototypeImageUrl: 'https://picsum.photos/seed/prototype1/600/400',
+    prototypeImageHint: 'eco packaging',
+    entrepreneurId: 'e2',
+  },
+  {
+    id: 'idea2',
+    title: 'AI-Powered Health Monitoring App',
+    summary: 'A mobile application that uses AI to monitor vital signs through the phone\'s camera, providing real-time health insights and alerts. Connects users with doctors for virtual consultations.',
+    field: 'Healthcare',
+    requiredInvestment: '26L-1CR',
+    estimatedGuaranteedReturns: 'High',
+    prototypeImageUrl: 'https://picsum.photos/seed/prototype2/600/400',
+    prototypeImageHint: 'health app',
+    entrepreneurId: 'e1',
+  },
+  {
+    id: 'idea3',
+    title: 'Smart Logistics Platform',
+    summary: 'An integrated platform that optimizes supply chain management using IoT and machine learning. Features real-time tracking, predictive analytics for delivery times, and automated warehousing solutions.',
+    field: 'Tech',
+    requiredInvestment: '1CR+',
+    estimatedGuaranteedReturns: 'High',
+    prototypeImageUrl: 'https://picsum.photos/seed/prototype3/600/400',
+    prototypeImageHint: 'logistics platform',
+    entrepreneurId: 'e3',
+  },
 ];
 
 export const subscriptionPlans: SubscriptionPlan[] = [
