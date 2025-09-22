@@ -1,4 +1,4 @@
--- Enable Row Level Security (RLS) on all sensitive tables
+-- Enable Row Level Security (RLS) for all tables
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pitches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE pitch_files ENABLE ROW LEVEL SECURITY;
@@ -11,84 +11,84 @@ ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE events ENABLE ROW LEVEL SECURITY;
 
--- Clear existing policies to prevent conflicts
-DROP POLICY IF EXISTS "Users can view their own profile" ON profiles;
-DROP POLICY IF EXISTS "Users can update their own profile" ON profiles;
-DROP POLICY IF EXISTS "Entrepreneurs can manage their own pitches" ON pitches;
-DROP POLICY IF EXISTS "Users can view anonymized pitches" ON pitches;
-DROP POLICY IF EXISTS "Authenticated users can manage their own files" ON pitch_files;
-DROP POLICY IF EXISTS "Investors can manage their own subscriptions" ON investor_subscriptions;
-DROP policy IF EXISTS "Participants can view their own deal rooms" ON deal_rooms;
-DROP policy IF EXISTS "Participants can manage their own participation" ON deal_room_participants;
-DROP POLICY IF EXISTS "Participants can view messages in their deal rooms" ON messages;
-DROP POLICY IF EXISTS "Users can only insert messages in their deal rooms" ON messages;
-DROP POLICY IF EXISTS "Users can view and manage their own NDAs" ON ndas;
-DROP POLICY IF EXISTS "Users can view their own transactions" ON transactions;
-DROP POLICY IF EXISTS "Admins can manage all reports (placeholder)" ON reports;
-DROP POLICY IF EXISTS "Admins can manage all events (placeholder)" ON events;
+-- Clear existing policies to prevent duplicates during re-deployment
+DROP POLICY IF EXISTS "Users can view their own profile." ON profiles;
+DROP POLICY IF EXISTS "Users can update their own profile." ON profiles;
+DROP POLICY IF EXISTS "Entrepreneurs can create pitches." ON pitches;
+DROP POLICY IF EXISTS "Entrepreneurs can view their own pitches." ON pitches;
+DROP POLICY IF EXISTS "Investors can view anonymized pitches." ON pitches;
+DROP POLICY IF EXISTS "Entrepreneurs can edit their own pitches." ON pitches;
+DROP POLICY IF EXISTS "Entrepreneurs can manage their own pitch files." ON pitch_files;
+DROP POLICY IF EXISTS "Investors can view their own subscriptions." ON investor_subscriptions;
+DROP POLICY IF EXISTS "Users can view deal rooms they are part of." ON deal_rooms;
+DROP POLICY IF EXISTS "Users can view participants of their own deal rooms." ON deal_room_participants;
+DROP POLICY IF EXISTS "Participants can view messages in their own deal rooms." ON messages;
+DROP POLICY IF EXISTS "Participants can send messages in their own deal rooms." ON messages;
+DROP POLICY IF EXISTS "Users can manage their own NDAs." ON ndas;
+DROP POLICY IF EXISTS "Investors can view their own transactions." ON transactions;
 
--- 1. PROFILES Table Policies
-CREATE POLICY "Users can view their own profile"
-ON profiles FOR SELECT
-USING (auth.uid() = id);
+-- RLS Policies for `profiles` table
+CREATE POLICY "Users can view their own profile." ON profiles
+  FOR SELECT USING (auth.uid() = id);
 
-CREATE POLICY "Users can update their own profile"
-ON profiles FOR UPDATE
-USING (auth.uid() = id);
+CREATE POLICY "Users can update their own profile." ON profiles
+  FOR UPDATE USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
 
--- 2. PITCHES Table Policies
-CREATE POLICY "Entrepreneurs can manage their own pitches"
-ON pitches FOR ALL
-USING (auth.uid() = entrepreneur_id);
+-- RLS Policies for `pitches` table
+CREATE POLICY "Entrepreneurs can create pitches." ON pitches
+  FOR INSERT WITH CHECK (auth.uid() = entrepreneur_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'entrepreneur');
 
-CREATE POLICY "Users can view anonymized pitches"
-ON pitches FOR SELECT
-USING (true); -- This is intentionally public, but the view/RPC function will select only anonymized columns.
+CREATE POLICY "Entrepreneurs can view their own pitches." ON pitches
+  FOR SELECT USING (auth.uid() = entrepreneur_id);
 
--- 3. PITCH_FILES Table Policies
-CREATE POLICY "Authenticated users can manage their own files"
-ON pitch_files FOR ALL
-USING (EXISTS (SELECT 1 FROM pitches WHERE pitches.id = pitch_files.pitch_id AND pitches.entrepreneur_id = auth.uid()));
+CREATE POLICY "Investors can view anonymized pitches." ON pitches
+  FOR SELECT USING ((SELECT role FROM profiles WHERE id = auth.uid()) = 'investor');
 
--- 4. INVESTOR_SUBSCRIPTIONS Table Policies
-CREATE POLICY "Investors can manage their own subscriptions"
-ON investor_subscriptions FOR ALL
-USING (auth.uid() = user_id);
+CREATE POLICY "Entrepreneurs can edit their own pitches." ON pitches
+  FOR UPDATE USING (auth.uid() = entrepreneur_id)
+  WITH CHECK (auth.uid() = entrepreneur_id);
 
--- 5. DEAL_ROOMS & PARTICIPANTS Table Policies
-CREATE POLICY "Participants can view their own deal rooms"
-ON deal_rooms FOR SELECT
-USING (id IN (SELECT deal_room_id FROM deal_room_participants WHERE user_id = auth.uid()));
+-- RLS Policies for `pitch_files` table
+CREATE POLICY "Entrepreneurs can manage their own pitch files." ON pitch_files
+  FOR ALL USING (
+    (SELECT role FROM profiles WHERE id = auth.uid()) = 'entrepreneur' AND
+    pitch_id IN (SELECT id FROM pitches WHERE entrepreneur_id = auth.uid())
+  );
 
-CREATE POLICY "Participants can manage their own participation"
-ON deal_room_participants FOR ALL
-USING (user_id = auth.uid());
+-- RLS Policies for `investor_subscriptions` table
+CREATE POLICY "Investors can view their own subscriptions." ON investor_subscriptions
+  FOR SELECT USING (auth.uid() = user_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'investor');
 
--- 6. MESSAGES Table Policies
-CREATE POLICY "Participants can view messages in their deal rooms"
-ON messages FOR SELECT
-USING (deal_room_id IN (SELECT deal_room_id FROM deal_room_participants WHERE user_id = auth.uid()));
+-- RLS Policies for `deal_rooms` and `deal_room_participants`
+CREATE POLICY "Users can view deal rooms they are part of." ON deal_rooms
+  FOR SELECT USING (id IN (
+    SELECT room_id FROM deal_room_participants WHERE user_id = auth.uid()
+  ));
 
-CREATE POLICY "Users can only insert messages in their deal rooms"
-ON messages FOR INSERT
-WITH CHECK (deal_room_id IN (SELECT deal_room_id FROM deal_room_participants WHERE user_id = auth.uid()));
+CREATE POLICY "Users can view participants of their own deal rooms." ON deal_room_participants
+  FOR SELECT USING (room_id IN (
+    SELECT room_id FROM deal_room_participants WHERE user_id = auth.uid()
+  ));
 
--- 7. NDAS Table Policies
-CREATE POLICY "Users can view and manage their own NDAs"
-ON ndas FOR ALL
-USING (investor_id = auth.uid() OR EXISTS (SELECT 1 FROM pitches WHERE pitches.id = ndas.pitch_id AND pitches.entrepreneur_id = auth.uid()));
+-- RLS Policies for `messages` table
+CREATE POLICY "Participants can view messages in their own deal rooms." ON messages
+  FOR SELECT USING (room_id IN (
+    SELECT room_id FROM deal_room_participants WHERE user_id = auth.uid()
+  ));
 
--- 8. TRANSACTIONS Table Policies
-CREATE POLICY "Users can view their own transactions"
-ON transactions FOR SELECT
-USING (user_id = auth.uid());
+CREATE POLICY "Participants can send messages in their own deal rooms." ON messages
+  FOR INSERT WITH CHECK (room_id IN (
+    SELECT room_id FROM deal_room_participants WHERE user_id = auth.uid()
+  ));
 
--- 9 & 10. REPORTS and EVENTS (Admin-only, placeholder for now)
--- For now, no one can access these directly. In a real app, you'd have an 'admin' role.
-CREATE POLICY "Admins can manage all reports (placeholder)"
-ON reports FOR ALL
-USING (false);
+-- RLS Policies for `ndas` table
+CREATE POLICY "Users can manage their own NDAs." ON ndas
+  FOR ALL USING (investor_id = auth.uid() OR entrepreneur_id = auth.uid());
 
-CREATE POLICY "Admins can manage all events (placeholder)"
-ON events FOR ALL
-USING (false);
+-- RLS Policies for `transactions` table
+CREATE POLICY "Investors can view their own transactions." ON transactions
+  FOR SELECT USING (user_id = auth.uid() AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'investor');
+
+-- Note: Policies for `reports` and `events` are intentionally omitted.
+-- These tables should likely only be accessible by a service role key from the backend.
