@@ -127,7 +127,7 @@ export default function InvestorProfilePage() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Jane Smith" {...field} />
+                    <Input placeholder="e.g., Priya Patel" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

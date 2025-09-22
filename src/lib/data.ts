@@ -3,17 +3,17 @@ import type { Investor, Entrepreneur, Idea, SubscriptionPlan } from './types';
 export const investors: Investor[] = [
   {
     id: '1',
-    name: 'Sarah Connor',
+    name: 'Aanya Sharma',
     avatarUrl: 'https://picsum.photos/seed/investor1/100/100',
     dataAiHint: 'woman portrait',
     sector: 'Tech',
     investmentRange: '5L-25L',
     expectedReturns: 'Medium',
-    bio: 'Early-stage tech investor with a focus on SaaS and AI. Former product manager at a FAANG company.',
+    bio: 'Early-stage tech investor with a focus on SaaS and AI. Former product manager at a top tech company.',
   },
   {
     id: '2',
-    name: 'John Paul',
+    name: 'Vikram Singh',
     avatarUrl: 'https://picsum.photos/seed/investor2/100/100',
     dataAiHint: 'man portrait',
     sector: 'Healthcare',
@@ -23,7 +23,7 @@ export const investors: Investor[] = [
   },
   {
     id: '3',
-    name: 'Anika Singh',
+    name: 'Neha Gupta',
     avatarUrl: 'https://picsum.photos/seed/investor3/100/100',
     dataAiHint: 'woman professional',
     sector: 'Consumer Goods',
@@ -33,7 +33,7 @@ export const investors: Investor[] = [
   },
   {
     id: '4',
-    name: 'Mike Chen',
+    name: 'Rohan Mehta',
     avatarUrl: 'https://picsum.photos/seed/investor4/100/100',
     dataAiHint: 'man casual',
     sector: 'Fintech',
@@ -46,19 +46,19 @@ export const investors: Investor[] = [
 export const entrepreneurs: Entrepreneur[] = [
     {
         id: 'e1',
-        name: 'Alex Ray',
+        name: 'Aditya Verma',
         avatarUrl: 'https://picsum.photos/seed/e1/100/100',
         dataAiHint: 'person smiling'
     },
     {
         id: 'e2',
-        name: 'Priya Sharma',
+        name: 'Isha Reddy',
         avatarUrl: 'https://picsum.photos/seed/e2/100/100',
         dataAiHint: 'woman professional'
     },
     {
         id: 'e3',
-        name: 'Kenji Tanaka',
+        name: 'Arjun Kumar',
         avatarUrl: 'https://picsum.photos/seed/e3/100/100',
         dataAiHint: 'man thinking'
     }

@@ -111,7 +111,7 @@ export default function EntrepreneurProfilePage() {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., John Doe" {...field} />
+                    <Input placeholder="e.g., Rohan Kumar" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

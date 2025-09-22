@@ -61,7 +61,7 @@ export default function EntrepreneurSignUpPage() {
         <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="full-name">Full Name</Label>
-              <Input id="full-name" type="text" placeholder="John Doe" required value={fullName} onChange={e => setFullName(e.target.value)} />
+              <Input id="full-name" type="text" placeholder="Rohan Kumar" required value={fullName} onChange={e => setFullName(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email Address</Label>
