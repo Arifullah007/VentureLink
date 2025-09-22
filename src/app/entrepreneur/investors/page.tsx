@@ -20,7 +20,6 @@ export default function BrowseInvestorsPage() {
           <Card key={investor.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarImage src={investor.avatarUrl} alt={investor.name} data-ai-hint={investor.dataAiHint} />
                 <AvatarFallback>{investor.name.charAt(0)}</AvatarFallback>
               </Avatar>
               <CardTitle>{investor.name}</CardTitle>

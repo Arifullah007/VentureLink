@@ -180,7 +180,6 @@ export default function BrowseIdeasPage() {
                           {idea.users ? (
                           <>
                               <Avatar className="h-8 w-8">
-                              <AvatarImage src={idea.users.avatar_url || undefined} alt={idea.users.full_name || ''} />
                               <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <span className="text-sm font-medium">{idea.users.full_name}</span>

@@ -81,7 +81,6 @@ export default function InvestorLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                     <AvatarImage src="https://picsum.photos/seed/user-sharad-investor/100/100" alt="@sharad" data-ai-hint="man professional" />
                      <AvatarFallback>S</AvatarFallback>
                   </Avatar>
                 </Button>
