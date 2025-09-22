@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,7 +72,7 @@ export default function BrowseIdeasPage() {
                     estimated_returns: idea.estimatedGuaranteedReturns,
                     prototype_url: idea.prototypeImageUrl,
                     entrepreneur_id: idea.entrepreneurId,
-                    users: entrepreneur ? { full_name: entrepreneur.name, avatar_url: entrepreneur.avatarUrl } : null
+                    users: entrepreneur ? { full_name: entrepreneur.name, avatar_url: null } : null
                 };
             });
             
@@ -180,7 +180,7 @@ export default function BrowseIdeasPage() {
                           {idea.users ? (
                           <>
                               <Avatar className="h-8 w-8">
-                              <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{idea.users.full_name?.charAt(0)}</AvatarFallback>
                               </Avatar>
                               <span className="text-sm font-medium">{idea.users.full_name}</span>
                           </>
