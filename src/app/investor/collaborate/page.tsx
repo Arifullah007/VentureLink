@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Handshake, PlusCircle, Users } from "lucide-react";
 
 const investmentGroups = [
@@ -62,11 +62,9 @@ export default function CombineInvestPage() {
                 </div>
                 <div className="flex -space-x-2 overflow-hidden mt-4">
                   <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                    <AvatarImage src="https://picsum.photos/seed/c-user1/100/100" />
                     <AvatarFallback>A</AvatarFallback>
                   </Avatar>
                   <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
-                    <AvatarImage src="https://picsum.photos/seed/c-user2/100/100" />
                     <AvatarFallback>B</AvatarFallback>
                   </Avatar>
                    {group.members > 2 && <Avatar className="inline-block h-8 w-8 rounded-full ring-2 ring-background">
