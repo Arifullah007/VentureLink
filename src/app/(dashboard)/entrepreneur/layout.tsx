@@ -43,7 +43,7 @@ export default function EntrepreneurLayout({
               <span className="text-xl font-bold">VentureLink</span>
             </Link>
             <Link
-                href="/"
+                href="/entrepreneur/dashboard"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
                 Home
