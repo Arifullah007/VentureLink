@@ -101,8 +101,7 @@ export default function AiMatcherPage() {
                   name="investmentRange"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Investment Range</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>Investment Range</FormLabel>                      <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a range" />
