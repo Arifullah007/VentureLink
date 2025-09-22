@@ -6,19 +6,17 @@ import { Settings } from 'lucide-react';
 
 export default function EntrepreneurSettingsPage() {
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center gap-3">
-          <Settings className="h-6 w-6 text-primary" />
-          <CardTitle>Settings</CardTitle>
+    <div className="space-y-6">
+       <div className="flex items-center gap-3">
+          <Settings className="h-8 w-8 text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold">Settings</h1>
+            <p className="text-muted-foreground">
+              Manage your account settings, notifications, and preferences here.
+            </p>
+          </div>
         </div>
-        <CardDescription>
-          Manage your account settings, notifications, and preferences here.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
         <SettingsForm />
-      </CardContent>
-    </Card>
+    </div>
   );
 }
