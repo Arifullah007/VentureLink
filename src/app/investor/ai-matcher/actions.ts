@@ -2,52 +2,48 @@
 
 import { matchInvestorToEntrepreneur } from "@/ai/flows/match-investor-to-entrepreneur";
 import { supabase } from "@/lib/supabase";
-import type { MatchResult, InvestorPreferences, Idea } from './types';
+import type { MatchResult, InvestorPreferences, Pitch } from './types';
 
 
 export async function getAiMatches(investorPrefs: InvestorPreferences): Promise<MatchResult[]> {
   try {
-    const { data: allIdeas, error } = await supabase.from('ideas').select('*');
+    const { data: allPitches, error } = await supabase.from('pitches').select('*');
 
     if (error) throw error;
     
-    const matchPromises = (allIdeas as Idea[]).map(async (idea) => {
+    const matchPromises = (allPitches as Pitch[]).map(async (pitch) => {
       try {
         const input = {
           investorSector: investorPrefs.investorSector,
           investmentRange: investorPrefs.investmentRange,
           expectedReturns: investorPrefs.expectedReturns,
-          entrepreneurIdeaSummary: idea.summary,
-          entrepreneurField: idea.field,
-          requiredInvestment: idea.required_investment,
-          estimatedGuaranteedReturns: idea.estimated_returns,
+          entrepreneurIdeaSummary: pitch.anonymized_summary,
+          entrepreneurField: pitch.sector,
+          requiredInvestment: pitch.investment_required,
+          estimatedGuaranteedReturns: pitch.estimated_returns,
         };
         const match = await matchInvestorToEntrepreneur(input);
         
-        // Construct a serializable idea object. We are assuming the 'idea' has serializable fields.
-        const serializableIdea: Idea = {
-            id: idea.id,
-            title: idea.title,
-            summary: idea.summary,
-            field: idea.field,
-            required_investment: idea.required_investment,
-            estimated_returns: idea.estimated_returns,
-            prototype_url: idea.prototype_url,
-            entrepreneur_id: idea.entrepreneur_id,
+        // In a real app, prototype_url would come from the 'pitch_files' table.
+        const serializablePitch: Pitch = {
+            id: pitch.id,
+            pitch_title: pitch.pitch_title,
+            anonymized_summary: pitch.anonymized_summary,
+            sector: pitch.sector,
+            investment_required: pitch.investment_required,
+            estimated_returns: pitch.estimated_returns,
+            prototype_url: 'https://picsum.photos/seed/' + pitch.id + '/600/400',
+            entrepreneur_id: pitch.entrepreneur_id,
         };
 
-        return { ...match, idea: serializableIdea };
+        return { ...match, idea: serializablePitch };
       } catch (error) {
-        console.error(`Error matching idea ${idea.id}:`, error);
-        return { 
-          matchScore: 0,
-          matchReason: "An error occurred while processing this match.",
-          idea: idea as Idea
-        };
+        console.error(`Error matching pitch ${pitch.id}:`, error);
+        return null;
       }
     });
 
-    const results = await Promise.all(matchPromises);
+    const results = (await Promise.all(matchPromises)).filter(Boolean) as MatchResult[];
     
     results.sort((a, b) => b.matchScore - a.matchScore);
     

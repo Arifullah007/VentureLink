@@ -13,10 +13,10 @@ import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } fr
 
 type Idea = {
   id: string;
-  title: string;
-  summary: string;
-  field: string;
-  prototype_url: string;
+  pitch_title: string;
+  anonymized_summary: string;
+  sector: string;
+  prototype_url: string; // This might need to be constructed or fetched differently
 };
 
 export default function InvestorDashboard() {
@@ -27,32 +27,31 @@ export default function InvestorDashboard() {
     const fetchIdeas = async () => {
       setLoading(true);
       
-      // Fetch live ideas from Supabase
-      const { data: liveIdeas, error } = await supabase
-        .from('ideas')
-        .select('id, title, summary, field, prototype_url');
+      const { data: livePitches, error } = await supabase
+        .from('pitches')
+        .select('id, pitch_title, anonymized_summary, sector')
+        .limit(2);
 
       if (error) {
         console.error('Error fetching featured ideas:', error);
-      }
-      
-      // Map predefined ideas to the correct type
-      const mappedPredefinedIdeas = predefinedIdeas.map(idea => ({
+        // Fallback to predefined ideas if fetch fails
+        const mappedPredefinedIdeas = predefinedIdeas.map(idea => ({
           id: idea.id,
-          title: idea.title,
-          summary: idea.summary,
-          field: idea.field,
+          pitch_title: idea.title,
+          anonymized_summary: idea.summary,
+          sector: idea.field,
           prototype_url: idea.prototypeImageUrl,
-      }));
-
-      // Combine live and predefined ideas
-      let allIdeas: Idea[] = [...mappedPredefinedIdeas];
-      if (liveIdeas) {
-        allIdeas = [...allIdeas, ...(liveIdeas as Idea[])];
+        }));
+        setFeaturedIdeas(mappedPredefinedIdeas.slice(0, 2));
+      } else if (livePitches) {
+         const liveIdeasWithImages = livePitches.map((pitch, index) => ({
+          ...pitch,
+          // Assigning a placeholder image. In a real app, you'd fetch this from pitch_files.
+          prototype_url: `https://picsum.photos/seed/live${index}/600/400`,
+        }));
+        setFeaturedIdeas(liveIdeasWithImages);
       }
 
-      // Set the first 2 as featured
-      setFeaturedIdeas(allIdeas.slice(0, 2));
       setLoading(false);
     };
 
@@ -150,7 +149,7 @@ export default function InvestorDashboard() {
                   <Watermark text="VentureLink">
                     <Image
                       src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                      alt={`Prototype for ${idea.title}`}
+                      alt={`Prototype for ${idea.pitch_title}`}
                       width={600}
                       height={400}
                       className="aspect-video w-full object-cover"
@@ -158,10 +157,10 @@ export default function InvestorDashboard() {
                   </Watermark>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold truncate">{idea.title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.summary}</p>
+                  <h3 className="font-semibold truncate">{idea.pitch_title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.anonymized_summary}</p>
                   <div className="flex justify-between items-center mt-4">
-                      <Badge variant="secondary">{idea.field}</Badge>
+                      <Badge variant="secondary">{idea.sector}</Badge>
                       <Button variant="link" size="sm" asChild>
                           <Link href={`/investor/ideas`}>View Details</Link>
                       </Button>

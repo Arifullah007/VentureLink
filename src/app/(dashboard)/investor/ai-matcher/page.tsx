@@ -168,8 +168,8 @@ export default function AiMatcherPage() {
                         <CardHeader>
                             <div className="flex justify-between items-start gap-4">
                                 <div>
-                                    <CardTitle>{idea.title}</CardTitle>
-                                    <CardDescription>Field: {idea.field}</CardDescription>
+                                    <CardTitle>{idea.pitch_title}</CardTitle>
+                                    <CardDescription>Field: {idea.sector}</CardDescription>
                                 </div>
                                 <div className="text-right flex-shrink-0">
                                     <p className="text-sm font-medium text-muted-foreground">Match Score</p>
@@ -195,7 +195,7 @@ export default function AiMatcherPage() {
                         <Watermark text="VentureLink">
                            <Image
                                 src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                                alt={`Prototype for ${idea.title}`}
+                                alt={`Prototype for ${idea.pitch_title}`}
                                 width={600}
                                 height={400}
                                 className="aspect-video w-full object-cover rounded-lg"
