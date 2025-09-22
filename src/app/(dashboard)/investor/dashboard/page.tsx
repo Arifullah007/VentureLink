@@ -9,22 +9,21 @@ import { supabase } from "@/lib/supabase";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 
-type Idea = {
+type Pitch = {
   id: string;
   pitch_title: string;
   anonymized_summary: string;
   sector: string;
-  prototype_url: string; // This might need to be constructed or fetched differently
+  prototype_url: string; 
 };
 
 export default function InvestorDashboard() {
-  const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
+  const [featuredPitches, setFeaturedPitches] = useState<Pitch[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchIdeas = async () => {
+    const fetchPitches = async () => {
       setLoading(true);
       
       const { data: livePitches, error } = await supabase
@@ -33,29 +32,20 @@ export default function InvestorDashboard() {
         .limit(2);
 
       if (error) {
-        console.error('Error fetching featured ideas:', error);
-        // Fallback to predefined ideas if fetch fails
-        const mappedPredefinedIdeas = predefinedIdeas.map(idea => ({
-          id: idea.id,
-          pitch_title: idea.title,
-          anonymized_summary: idea.summary,
-          sector: idea.field,
-          prototype_url: idea.prototypeImageUrl,
-        }));
-        setFeaturedIdeas(mappedPredefinedIdeas.slice(0, 2));
+        console.error('Error fetching featured pitches:', error);
       } else if (livePitches) {
-         const liveIdeasWithImages = livePitches.map((pitch, index) => ({
+         const livePitchesWithImages = livePitches.map((pitch, index) => ({
           ...pitch,
           // Assigning a placeholder image. In a real app, you'd fetch this from pitch_files.
           prototype_url: `https://picsum.photos/seed/live${index}/600/400`,
         }));
-        setFeaturedIdeas(liveIdeasWithImages);
+        setFeaturedPitches(livePitchesWithImages);
       }
 
       setLoading(false);
     };
 
-    fetchIdeas();
+    fetchPitches();
   }, []);
 
   return (
@@ -142,14 +132,14 @@ export default function InvestorDashboard() {
                   </div>
               </div>
             </>
-          ) : featuredIdeas.length > 0 ? (
-            featuredIdeas.map((idea) => (
-              <Card key={idea.id} className="overflow-hidden">
+          ) : featuredPitches.length > 0 ? (
+            featuredPitches.map((pitch) => (
+              <Card key={pitch.id} className="overflow-hidden">
                 <div className="relative">
                   <Watermark text="VentureLink">
                     <Image
-                      src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                      alt={`Prototype for ${idea.pitch_title}`}
+                      src={pitch.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
+                      alt={`Prototype for ${pitch.pitch_title}`}
                       width={600}
                       height={400}
                       className="aspect-video w-full object-cover"
@@ -157,10 +147,10 @@ export default function InvestorDashboard() {
                   </Watermark>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold truncate">{idea.pitch_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.anonymized_summary}</p>
+                  <h3 className="font-semibold truncate">{pitch.pitch_title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{pitch.anonymized_summary}</p>
                   <div className="flex justify-between items-center mt-4">
-                      <Badge variant="secondary">{idea.sector}</Badge>
+                      <Badge variant="secondary">{pitch.sector}</Badge>
                       <Button variant="link" size="sm" asChild>
                           <Link href={`/investor/ideas`}>View Details</Link>
                       </Button>

@@ -70,8 +70,7 @@ export default function CombineGrowPage() {
                 </div>
               </CardContent>
               <div className="border-t p-4">
-                <Button className="w-full">Request to Join Group</Button>
-              </div>
+                <Button className="w-full">Request to Join Group</Button>              </div>
             </Card>
           ))}
         </div>

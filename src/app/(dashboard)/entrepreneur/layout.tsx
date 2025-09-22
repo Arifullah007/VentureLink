@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { Home, Lightbulb, Users, LogOut, Settings, User, Plus } from 'lucide-react';
+import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
 import { AuthGuard } from '@/components/auth-guard';
@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/entrepreneur/dashboard', label: 'Dashboard' },
   { href: '/entrepreneur/investors', label: 'Browse Investors' },
+  { href: '/entrepreneur/collaborate', label: 'Combine & Grow' },
 ];
 
 export default function EntrepreneurLayout({
@@ -32,7 +33,7 @@ export default function EntrepreneurLayout({
   return (
     <AuthGuard role="entrepreneur">
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
           <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
             <Link
               href="/entrepreneur/dashboard"

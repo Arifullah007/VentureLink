@@ -73,8 +73,7 @@ export default function CombineInvestPage() {
                 </div>
               </CardContent>
               <div className="border-t p-4">
-                <Button className="w-full">Request to Join</Button>
-              </div>
+                <Button className="w-full">Request to Join</Button>              </div>
             </Card>
           ))}
         </div>
