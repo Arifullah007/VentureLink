@@ -42,12 +42,6 @@ export default function EntrepreneurLayout({
               <Logo className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">VentureLink</span>
             </Link>
-            <Link
-                href="/entrepreneur/dashboard"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Home
-            </Link>
             {navItems.map((item) => (
               <Link
                 key={item.href}
