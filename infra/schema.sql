@@ -1,203 +1,205 @@
--- VentureLink DB Schema
--- This script is idempotent and can be run multiple times.
-
--- -----------------------------------------------------------------------------
--- 1. Create a function to execute arbitrary SQL.
---    This is used by the seed script to run seed.sql.
--- -----------------------------------------------------------------------------
-create or replace function execute_sql(sql text)
-returns void
-language plpgsql
-as $$
-begin
-  execute sql;
-end;
-$$;
-
-
--- -----------------------------------------------------------------------------
--- 2. Create the main tables for the application.
--- -----------------------------------------------------------------------------
-
--- Create profiles table to store public user data
+--
+-- Create a table for public profiles
+--
 create table if not exists profiles (
-  id uuid references auth.users on delete cascade not null primary key,
+  id uuid references auth.users not null primary key,
   updated_at timestamp with time zone,
   full_name text,
   avatar_url text,
   website_url text,
   linkedin_url text,
   bio text,
-  role text
+  -- The role of the user, can be 'investor' or 'entrepreneur'
+  "role" text not null
 );
--- Comment on table and columns
-comment on table profiles is 'Public profile information for each user.';
-comment on column profiles.id is 'References the internal Supabase auth user.';
-comment on column profiles.role is 'Can be ''investor'' or ''entrepreneur''.';
 
-
--- Create ideas table for entrepreneurs to submit their ventures
+--
+-- Create a table for startup ideas
+--
 create table if not exists ideas (
-  id uuid primary key default gen_random_uuid(),
-  entrepreneur_id uuid references public.profiles not null,
+  id uuid default gen_random_uuid() primary key,
+  entrepreneur_id uuid references auth.users not null,
   created_at timestamp with time zone default now() not null,
   updated_at timestamp with time zone,
-  idea_title text,
-  anonymized_summary text,
+  idea_title text not null,
+  anonymized_summary text not null,
   full_text text,
-  sector text,
-  investment_required text,
-  estimated_returns text,
-  views integer default 0
+  sector text not null,
+  investment_required text not null,
+  estimated_returns text not null,
+  prototype_url text,
+  views integer default 0,
+  -- Add other relevant fields for an idea
+  constraint title_length check (char_length(idea_title) >= 5)
 );
--- Comment on table and columns
-comment on table ideas is 'Stores the business ideas submitted by entrepreneurs.';
-comment on column ideas.anonymized_summary is 'A short, public-facing summary without sensitive details.';
-comment on column ideas.full_text is 'The full, detailed description of the idea, accessible after NDA.';
 
-
--- Create idea_files table to link ideas to their stored documents
-create table if not exists idea_files (
-    id uuid primary key default gen_random_uuid(),
-    idea_id uuid references public.ideas on delete cascade not null,
-    created_at timestamp with time zone default now() not null,
-    file_path text not null,
-    file_name text,
-    processed boolean default false,
-    watermarked_url text
+--
+-- Create a table for investment interests
+--
+create table if not exists investment_interests (
+  id uuid default gen_random_uuid() primary key,
+  investor_id uuid references auth.users not null,
+  idea_id uuid references ideas not null,
+  created_at timestamp with time zone default now() not null,
+  status text default 'pending' -- e.g., pending, accepted, rejected
 );
--- Comment on table and columns
-comment on table idea_files is 'Tracks files associated with an idea, e.g., prototypes, business plans.';
-comment on column idea_files.processed is 'Indicates if the file has been processed (e.g., watermarked).';
 
 
--- -----------------------------------------------------------------------------
--- 3. Create a function to automatically create a public profile for new users.
--- -----------------------------------------------------------------------------
+--
+-- Set up Row Level Security (RLS)
+--
+-- This is the most important part of the schema. It ensures that users can only
+-- access their own data.
+--
+-- For more information, see:
+-- https://supabase.com/docs/guides/auth/row-level-security
+
+-- 1. Enable RLS for all relevant tables
+alter table profiles enable row level security;
+alter table ideas enable row level security;
+alter table investment_interests enable row level security;
+
+-- 2. Create policies for the 'profiles' table
+drop policy if exists "Public profiles are viewable by everyone." on profiles;
+create policy "Public profiles are viewable by everyone." on profiles
+  for select using (true);
+
+drop policy if exists "Users can insert their own profile." on profiles;
+create policy "Users can insert their own profile." on profiles
+  for insert with check (auth.uid() = id);
+
+drop policy if exists "Users can update their own profile." on profiles;
+create policy "Users can update their own profile." on profiles
+  for update using (auth.uid() = id);
+
+-- 3. Create policies for the 'ideas' table
+drop policy if exists "Ideas are viewable by investors." on ideas;
+create policy "Ideas are viewable by investors." on ideas
+  for select to authenticated
+  using (
+    (get_user_role(auth.uid()) = 'investor')
+  );
+
+drop policy if exists "Entrepreneurs can view their own ideas." on ideas;
+create policy "Entrepreneurs can view their own ideas." on ideas
+  for select to authenticated
+  using (
+    (get_user_role(auth.uid()) = 'entrepreneur' and auth.uid() = entrepreneur_id)
+  );
+
+drop policy if exists "Entrepreneurs can insert their own ideas." on ideas;
+create policy "Entrepreneurs can insert their own ideas." on ideas
+  for insert to authenticated
+  with check (
+    (get_user_role(auth.uid()) = 'entrepreneur' and auth.uid() = entrepreneur_id)
+  );
+
+drop policy if exists "Entrepreneurs can update their own ideas." on ideas;
+create policy "Entrepreneurs can update their own ideas." on ideas
+  for update to authenticated
+  using (
+    (get_user_role(auth.uid()) = 'entrepreneur' and auth.uid() = entrepreneur_id)
+  );
+  
+drop policy if exists "Ideas can be deleted by their owners." on ideas;
+create policy "Ideas can be deleted by their owners." on ideas
+  for delete to authenticated
+  using (
+    (get_user_role(auth.uid()) = 'entrepreneur' and auth.uid() = entrepreneur_id)
+  );
+
+
+-- 4. Create policies for 'investment_interests'
+drop policy if exists "Investors can manage their interests." on investment_interests;
+create policy "Investors can manage their interests." on investment_interests
+  for all to authenticated
+  using ( (get_user_role(auth.uid()) = 'investor' and auth.uid() = investor_id) );
+  
+drop policy if exists "Entrepreneurs can view interests in their ideas." on investment_interests;
+create policy "Entrepreneurs can view interests in their ideas." on investment_interests
+  for select to authenticated
+  using (
+    (get_user_role(auth.uid()) = 'entrepreneur' and exists (
+      select 1 from ideas where ideas.id = investment_interests.idea_id and ideas.entrepreneur_id = auth.uid()
+    ))
+  );
+
+
+--
+-- Set up Storage
+--
+insert into storage.buckets (id, name, public)
+values ('idea_prototypes', 'idea_prototypes', true)
+on conflict (id) do nothing;
+
+-- Create policies for storage
+drop policy if exists "Prototype images are publicly accessible." on storage.objects;
+create policy "Prototype images are publicly accessible." on storage.objects
+  for select using (bucket_id = 'idea_prototypes');
+
+drop policy if exists "Anyone can upload a prototype." on storage.objects;
+create policy "Anyone can upload a prototype." on storage.objects
+  for insert with check (bucket_id = 'idea_prototypes');
+  
+drop policy if exists "Owner can update their prototype." on storage.objects;
+create policy "Owner can update their prototype." on storage.objects
+    for update using (
+        auth.uid() = owner and bucket_id = 'idea_prototypes'
+    );
+
+drop policy if exists "Owner can delete their prototype." on storage.objects;
+create policy "Owner can delete their prototype." on storage.objects
+    for delete using (
+        auth.uid() = owner and bucket_id = 'idea_prototypes'
+    );
+
+
+--
+-- Helper Functions
+--
+
+-- Function to get user role from metadata
+create or replace function get_user_role(user_id uuid)
+returns text as $$
+declare
+  user_role text;
+begin
+  select raw_user_meta_data->>'role'
+  into user_role
+  from auth.users
+  where id = user_id;
+  return user_role;
+end;
+$$ language plpgsql stable;
+
+--
+-- This trigger automatically creates a profile entry when a new user signs up.
+--
 create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
+returns trigger as $$
 begin
   insert into public.profiles (id, full_name, role)
   values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
   return new;
 end;
-$$;
+$$ language plpgsql security definer;
 
--- Drop the trigger if it already exists, then create it
+-- Drop trigger if it exists, then create it
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
--- -----------------------------------------------------------------------------
--- 4. Set up Storage buckets and policies.
--- -----------------------------------------------------------------------------
 
--- Create a bucket for 'avatars' with public read access
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
-on conflict (id) do nothing;
-
--- Create a bucket for 'prototypes' (private by default)
-insert into storage.buckets (id, name, public)
-values ('prototypes', 'prototypes', false)
-on conflict (id) do nothing;
-
-
--- -----------------------------------------------------------------------------
--- 5. Set up Row-Level Security (RLS) policies for all tables.
---    This is crucial for securing user data.
--- -----------------------------------------------------------------------------
-
--- Enable RLS for all tables
-alter table profiles enable row level security;
-alter table ideas enable row level security;
-alter table idea_files enable row level security;
-
--- Drop existing policies to ensure a clean slate
-drop policy if exists "Public profiles are viewable by everyone." on profiles;
-drop policy if exists "Users can insert their own profile." on profiles;
-drop policy if exists "Users can update own profile." on profiles;
-drop policy if exists "Ideas are public and viewable by everyone" on ideas;
-drop policy if exists "Entrepreneurs can insert their own ideas." on ideas;
-drop policy if exists "Entrepreneurs can update their own ideas." on ideas;
-drop policy if exists "Idea files are visible to the owner and subscribed investors" on idea_files;
-drop policy if exists "Owners can insert their own idea files" on idea_files;
-
-
--- Policies for 'profiles' table
-create policy "Public profiles are viewable by everyone." on profiles
-  for select using (true);
-
-create policy "Users can insert their own profile." on profiles
-  for insert with check (auth.uid() = id);
-
-create policy "Users can update own profile." on profiles
-  for update using (auth.uid() = id) with check (auth.uid() = id);
-
-
--- Policies for 'ideas' table
-create policy "Ideas are public and viewable by everyone" on ideas
-  for select using (true);
-
-create policy "Entrepreneurs can insert their own ideas." on ideas
-  for insert with check (auth.uid() = entrepreneur_id);
-
-create policy "Entrepreneurs can update their own ideas." on ideas
-  for update using (auth.uid() = entrepreneur_id) with check (auth.uid() = entrepreneur_id);
-
-
--- Policies for 'idea_files' table
-create policy "Idea files are visible to the owner and subscribed investors" on idea_files
-  for select using (auth.uid() = (select entrepreneur_id from ideas where id = idea_id)); -- Placeholder, needs subscription logic
-
-create policy "Owners can insert their own idea files" on idea_files
-  for insert with check (auth.uid() = (select entrepreneur_id from ideas where id = idea_id));
-
-
--- -----------------------------------------------------------------------------
--- 6. Set up Storage security policies.
--- -----------------------------------------------------------------------------
-
--- Drop existing policies to ensure a clean slate
-drop policy if exists "Avatar images are publicly accessible." on storage.objects;
-drop policy if exists "Anyone can upload an avatar." on storage.objects;
-drop policy if exists "Allow authenticated read access" on storage.objects;
-drop policy if exists "Allow idea owner to upload to their folder" on storage.objects;
-drop policy if exists "Allow idea owner to update their own files" on storage.objects;
-
-
--- Policies for 'avatars' bucket
-create policy "Avatar images are publicly accessible."
-  on storage.objects for select
-  using ( bucket_id = 'avatars' );
-
-create policy "Anyone can upload an avatar."
-  on storage.objects for insert
-  with check ( bucket_id = 'avatars' );
-
-
--- Policies for 'prototypes' bucket
-create policy "Allow authenticated read access"
-  on storage.objects for select
-  to authenticated
-  using (bucket_id = 'prototypes');
-
--- Allow idea owner to upload to their folder
-create policy "Allow idea owner to upload to their folder"
-  on storage.objects for insert
-  with check (
-    bucket_id = 'prototypes' and
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
-
--- Allow idea owner to update their own files
-create policy "Allow idea owner to update their files"
-  on storage.objects for update
-  using (
-    bucket_id = 'prototypes' and
-    auth.uid()::text = (storage.foldername(name))[1]
-  );
+--
+-- RPC for seeding script
+--
+-- This function allows the seeding script to bypass RLS to insert demo data.
+-- It should only be callable by the service_role key.
+--
+create or replace function execute_sql(sql text)
+returns void as $$
+begin
+  execute sql;
+end;
+$$ language plpgsql;
