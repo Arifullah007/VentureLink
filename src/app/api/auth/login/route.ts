@@ -26,17 +26,18 @@ export async function POST(request: Request) {
     );
   }
 
-  // Then, verify their role
+  // Then, verify their role from the successful sign-in data
   const userRole = data.user.user_metadata?.role;
 
   if (userRole !== role) {
     // If the role doesn't match, sign the user out immediately
     await supabase.auth.signOut();
     return NextResponse.json(
-      { error: `This account is not registered as a(n) ${role}.` },
+      { error: `This account is not registered as a(n) ${role}. Access denied.` },
       { status: 403 }
     );
   }
 
+  // If we are here, the login and role check were successful.
   return NextResponse.json({ message: 'Login successful' }, { status: 200 });
 }
