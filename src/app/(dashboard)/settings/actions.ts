@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
 const passwordSchema = z.object({
@@ -10,6 +10,7 @@ const passwordSchema = z.object({
 
 export async function updatePasswordAction(payload: z.infer<typeof passwordSchema>): Promise<{ error: Error | null }> {
   try {
+    const supabase = createClient();
     const { data, error } = passwordSchema.safeParse(payload);
     if (!error) {
       // First, check if the current password is correct by trying to sign in with it.
@@ -45,15 +46,13 @@ export async function updatePasswordAction(payload: z.infer<typeof passwordSchem
 
 export async function deleteAccountAction(): Promise<{ error: Error | null }> {
     try {
+        const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
             throw new Error('User not authenticated.');
         }
 
-        const supabaseAdmin = createClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.SUPABASE_SERVICE_ROLE_KEY!
-        );
+        const supabaseAdmin = createAdminClient();
 
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
         
@@ -69,4 +68,11 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
 
 // We need to import createClient here because this is a server action
 // and we need the admin client for account deletion.
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createAdminClientSupa } from '@supabase/supabase-js';
+
+function createAdminClient() {
+    return createAdminClientSupa(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+}

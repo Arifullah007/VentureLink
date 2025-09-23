@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, MapPin, Zap, EyeIcon, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/lib/supabase/client';
 import { Skeleton } from "@/components/ui/skeleton";
 
 type Idea = {
@@ -32,6 +32,7 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
+    const supabase = createClient();
 
     useEffect(() => {
         const fetchIdeasAndStats = async () => {
@@ -59,7 +60,7 @@ export default function EntrepreneurDashboard() {
         };
 
         fetchIdeasAndStats();
-    }, []);
+    }, [supabase]);
 
 
   return (

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NdaModal } from "@/components/ui/nda-modal";
@@ -34,6 +34,7 @@ export default function BrowseIdeasPage() {
     const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
     const [isNdaOpen, setNdaOpen] = useState(false);
     const [unlockedIdeas, setUnlockedIdeas] = useState<Set<string>>(new Set());
+    const supabase = createClient();
 
     useEffect(() => {
         const fetchIdeas = async () => {
@@ -63,7 +64,7 @@ export default function BrowseIdeasPage() {
         };
 
         fetchIdeas();
-    }, []);
+    }, [supabase]);
 
     const handleUnlockDetails = (idea: Idea) => {
         setSelectedIdea(idea);

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { FilePenLine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -36,6 +36,7 @@ export default function EditIdeaPage() {
     const params = useParams();
     const ideaId = params.id as string;
     const [loading, setLoading] = useState(true);
+    const supabase = createClient();
 
     const form = useForm<IdeaFormValues>({
         resolver: zodResolver(ideaSchema),
@@ -72,7 +73,7 @@ export default function EditIdeaPage() {
             setLoading(false);
         };
         fetchIdea();
-    }, [ideaId, form, router, toast]);
+    }, [ideaId, form, router, toast, supabase]);
 
     async function onSubmit(data: IdeaFormValues) {
         try {

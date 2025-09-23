@@ -29,7 +29,7 @@ import { Label } from './ui/label';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 
 const passwordSchema = z.object({
     currentPassword: z.string().min(1, 'Current password is required.'),
@@ -53,6 +53,7 @@ export function SettingsForm() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState('');
+  const supabase = createClient();
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -71,9 +72,9 @@ export function SettingsForm() {
   useEffect(() => {
     async function loadProfile() {
       setLoading(true);
-      const { data: user, error: authError } = await supabase.auth.getUser();
-      if(user.user?.email) {
-        setEmail(user.user.email);
+      const { data: userData, error: authError } = await supabase.auth.getUser();
+      if(userData.user?.email) {
+        setEmail(userData.user.email);
       }
 
       const { data, error } = await getProfileAction();
@@ -85,7 +86,7 @@ export function SettingsForm() {
       setLoading(false);
     }
     loadProfile();
-  }, [profileForm, toast]);
+  }, [profileForm, toast, supabase]);
 
 
   async function onPasswordSubmit(data: PasswordFormValues) {

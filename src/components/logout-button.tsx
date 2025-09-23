@@ -1,13 +1,14 @@
 'use client';
 import { LogOut } from "lucide-react";
 import { SidebarMenuButton } from "./ui/sidebar";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 export function LogoutButton({ isDropdown }: { isDropdown?: boolean }) {
     const router = useRouter();
     const { toast } = useToast();
+    const supabase = createClient();
 
     const handleLogout = async () => {
         const { error } = await supabase.auth.signOut();

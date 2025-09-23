@@ -1,6 +1,6 @@
 'use server';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 
 export type Profile = {
@@ -12,6 +12,7 @@ export type Profile = {
 };
 
 export async function getProfileAction(): Promise<{ data: Profile | null; error: Error | null; }> {
+  const supabase = createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
   if (authError || !user) {
@@ -39,6 +40,7 @@ type UpdateProfilePayload = {
 }
 
 export async function updateProfileAction(payload: UpdateProfilePayload): Promise<{ error: Error | null; }> {
+    const supabase = createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {

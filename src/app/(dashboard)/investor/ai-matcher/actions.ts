@@ -1,12 +1,13 @@
 "use server";
 
 import { matchInvestorToEntrepreneur } from "@/ai/flows/match-investor-to-entrepreneur";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/lib/supabase/server';
 import type { MatchResult, InvestorPreferences, Idea } from './types';
 
 
 export async function getAiMatches(investorPrefs: InvestorPreferences): Promise<MatchResult[]> {
   try {
+    const supabase = createClient();
     const { data: allIdeas, error } = await supabase.from('ideas').select('*');
 
     if (error) throw error;

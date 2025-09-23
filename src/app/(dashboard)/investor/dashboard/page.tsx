@@ -5,7 +5,7 @@ import { ArrowRight, Bot, Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
-import { supabase } from "@/lib/supabase";
+import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +21,7 @@ type Idea = {
 export default function InvestorDashboard() {
   const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const fetchIdeas = async () => {
@@ -45,7 +46,7 @@ export default function InvestorDashboard() {
     };
 
     fetchIdeas();
-  }, []);
+  }, [supabase]);
 
   return (
     <div className="space-y-6">

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -16,6 +16,7 @@ export default function InvestorSignUpPage() {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const supabase = createClient();
 
   const handleSignUp = async (e: FormEvent) => {
     e.preventDefault();

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -15,6 +15,7 @@ export default function InvestorLoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const supabase = createClient();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();

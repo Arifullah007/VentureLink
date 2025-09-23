@@ -1,6 +1,6 @@
 'use client';
 
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Skeleton } from './ui/skeleton';
@@ -13,6 +13,7 @@ type AuthGuardProps = {
 export function AuthGuard({ children, role }: AuthGuardProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
   useEffect(() => {
     const checkSession = async () => {
@@ -35,7 +36,20 @@ export function AuthGuard({ children, role }: AuthGuardProps) {
     };
 
     checkSession();
-  }, [router, role]);
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!session) {
+          router.replace(`/${role}/login`);
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+
+  }, [router, role, supabase]);
 
   if (isLoading) {
     return (

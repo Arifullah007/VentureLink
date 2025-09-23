@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Lightbulb, UploadCloud, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/client';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -35,6 +35,7 @@ const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainabili
 export default function NewIdeaPage() {
     const { toast } = useToast();
     const router = useRouter();
+    const supabase = createClient();
 
     const form = useForm<IdeaFormValues>({
         resolver: zodResolver(ideaSchema),
