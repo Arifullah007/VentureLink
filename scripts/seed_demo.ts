@@ -42,26 +42,16 @@ const ideas = [
     },
 ];
 
-async function createOrUpdateUser(user: typeof demoUsers[0]) {
-    // Check if user exists by email
-    const { data: { users }, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ email: user.email } as any);
-
-    if (listUsersError) {
-        console.error(`Error checking for user ${user.email}:`, listUsersError.message);
-        throw listUsersError;
-    }
-    
-    const existingUser = users && users.length > 0 ? users[0] : null;
+async function createOrUpdateUser(user: typeof demoUsers[0], allAuthUsers: any[]) {
+    const existingUser = allAuthUsers.find(u => u.email === user.email);
 
     if (existingUser) {
         console.log(`User ${user.email} already exists. Updating metadata...`);
         const { data: updatedUser, error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
             existingUser.id,
             {
-                // We no longer update the password if the user exists.
-                // We only update the metadata to ensure role and name are correct.
                 user_metadata: user.metadata,
-                email_confirm: true, // Ensure the email is always confirmed for demo purposes.
+                email_confirm: true,
             }
         );
         if (updateUserError) {
@@ -90,10 +80,18 @@ async function createOrUpdateUser(user: typeof demoUsers[0]) {
 
 async function seedDatabase() {
   try {
-    console.log('--- Step 1: Creating or updating demo users in Supabase Auth ---');
+    console.log('--- Step 1: Fetching all users from Supabase Auth ---');
+    const { data: { users: allAuthUsers }, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers();
+
+    if (listUsersError) {
+      console.error('Error fetching users:', listUsersError.message);
+      throw listUsersError;
+    }
+    console.log(`--- Found ${allAuthUsers.length} total users. Proceeding to create or update demo users. ---`);
+
     const createdUsers: { [email: string]: any } = {};
     for (const user of demoUsers) {
-      const createdUser = await createOrUpdateUser(user);
+      const createdUser = await createOrUpdateUser(user, allAuthUsers);
       createdUsers[user.email] = createdUser;
     }
     console.log('--- Finished creating/updating users. ---');
@@ -109,10 +107,10 @@ async function seedDatabase() {
     const userIds = Object.values(createdUsers).map(u => u.id);
     const { error: deleteProfilesError } = await supabaseAdmin.from('profiles').delete().in('id', userIds);
     if (deleteProfilesError) {
-        console.error('Error deleting old profiles:', deleteProfilesError.message);
-        throw deleteProfilesError;
+        console.warn('Warning deleting old profiles (this is safe if it\'s the first run):', deleteProfilesError.message);
+    } else {
+        console.log('--- Old profiles cleared successfully. ---');
     }
-    console.log('--- Old profiles cleared successfully. ---');
 
     console.log('\n--- Step 3: Seeding new profiles ---');
     const profilesToInsert = demoUsers.map(u => ({
@@ -147,8 +145,11 @@ async function seedDatabase() {
 
     console.log('\n--- Step 5: Clearing old notifications ---');
     const { error: deleteNotificationsError } = await supabaseAdmin.from('notifications').delete().in('recipient_id', [investor.id]);
-    if (deleteNotificationsError) throw deleteNotificationsError;
-    console.log('--- Old notifications cleared. ---');
+    if (deleteNotificationsError) {
+      console.warn('Warning clearing old notifications:', deleteNotificationsError.message);
+    } else {
+      console.log('--- Old notifications cleared. ---');
+    }
 
     console.log('\n--- Database seeding successful! ---');
     console.log('\n✅ Demo mode setup is complete. You can now start the application.');
@@ -167,5 +168,3 @@ async function seedDatabase() {
 }
 
 seedDatabase();
-
-    
