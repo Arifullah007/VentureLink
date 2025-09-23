@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { motion } from "framer-motion";
 import { useMemo } from "react";
+import { useParams } from "next/navigation";
 
 const generateRandomData = (numDays: number) => {
   return Array.from({ length: numDays }, (_, i) => {
@@ -36,7 +37,8 @@ const StatCard = ({ title, value, icon, color, delay }: { title: string, value: 
   </motion.div>
 );
 
-export default function AnalyticsPage({ params }: { params: { id: string }}) {
+export default function AnalyticsPage() {
+  const params = useParams<{ id: string }>();
   const dailyData = useMemo(() => generateRandomData(7), []);
   const monthlyData = useMemo(() => generateRandomData(30), []);
 
