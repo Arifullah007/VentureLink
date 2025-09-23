@@ -52,8 +52,8 @@ export default function EntrepreneurLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
     
-    router.refresh();
-    router.push('/entrepreneur/dashboard');
+    // Use window.location.href for a full page reload to ensure session is picked up by middleware
+    window.location.href = '/entrepreneur/dashboard';
   };
 
   return (

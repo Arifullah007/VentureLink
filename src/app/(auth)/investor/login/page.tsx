@@ -52,8 +52,8 @@ export default function InvestorLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
     
-    router.refresh();
-    router.push('/investor/dashboard');
+    // Use window.location.href for a full page reload to ensure session is picked up by middleware
+    window.location.href = '/investor/dashboard';
   };
 
   return (
