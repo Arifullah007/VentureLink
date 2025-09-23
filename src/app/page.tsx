@@ -32,14 +32,15 @@ const homeFeatures = [
 export default function Home() {
   const [year, setYear] = useState<number | null>(null);
   const featuresRef = useRef<HTMLElement>(null);
+  const howItWorksRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
 
-  const handleFeaturesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleScrollClick = (ref: React.RefObject<HTMLElement>) => (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+    ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
@@ -52,8 +53,8 @@ export default function Home() {
             </div>
             <nav className="hidden md:flex items-center gap-6 text-sm">
                 <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">Home</Link>
-                <Link href="#features" onClick={handleFeaturesClick} className="text-muted-foreground hover:text-primary">Features</Link>
-                <Link href="#" className="text-muted-foreground hover:text-primary">How It Works</Link>
+                <Link href="#features" onClick={handleScrollClick(featuresRef)} className="text-muted-foreground hover:text-primary">Features</Link>
+                <Link href="#how-it-works" onClick={handleScrollClick(howItWorksRef)} className="text-muted-foreground hover:text-primary">How It Works</Link>
             </nav>
             <div className="flex items-center gap-2">
             <Button asChild>
@@ -111,7 +112,7 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-20 md:py-24 bg-muted/40">
+        <section id="how-it-works" ref={howItWorksRef} className="py-20 md:py-24 bg-muted/40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h3 className="text-3xl md:text-4xl font-bold tracking-tight">How It Works</h3>
