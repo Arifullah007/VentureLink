@@ -3,8 +3,10 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
-    request,
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
   })
 
   const supabase = createServerClient(
@@ -21,10 +23,12 @@ export async function updateSession(request: NextRequest) {
             value,
             ...options,
           })
-          supabaseResponse = NextResponse.next({
-            request,
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
-          supabaseResponse.cookies.set({
+          response.cookies.set({
             name,
             value,
             ...options,
@@ -36,10 +40,12 @@ export async function updateSession(request: NextRequest) {
             value: '',
             ...options,
           })
-          supabaseResponse = NextResponse.next({
-            request,
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
           })
-          supabaseResponse.cookies.set({
+          response.cookies.set({
             name,
             value: '',
             ...options,
@@ -49,9 +55,7 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  // This will refresh session if expired - required for Server Components
-  // https://supabase.com/docs/guides/auth/server-side/nextjs
-  await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  return supabaseResponse
+  return { response, supabase, user };
 }

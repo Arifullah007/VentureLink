@@ -1,7 +1,6 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
-import { createServerClient } from '@supabase/ssr';
 
 const PROTECTED_ROUTES = {
   ENTREPRENEUR: '/entrepreneur',
@@ -11,25 +10,9 @@ const PUBLIC_ROUTES = ['/login', '/verify-otp', '/'];
 
 export async function middleware(request: NextRequest) {
   // This will refresh the session and make it available to all Supabase server clients.
-  const response = await updateSession(request);
-
-  // We are creating a new client here because we need to get the user to check their role.
-  // The `updateSession` function above doesn't return the user.
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-      },
-    }
-  );
+  const { response, supabase, user } = await updateSession(request);
 
   const { pathname } = request.nextUrl;
-
-  const { data: { user } } = await supabase.auth.getUser();
 
   // If no user and trying to access a protected route, redirect to login
   if (!user && (pathname.startsWith(PROTECTED_ROUTES.ENTREPRENEUR) || pathname.startsWith(PROTECTED_ROUTES.INVESTOR))) {
@@ -49,16 +32,16 @@ export async function middleware(request: NextRequest) {
     return response;
   }
   
-  const role = user?.user_metadata.role;
-
-  // If user is logged in, and tries to go to home, redirect to their dashboard
-  if (user && pathname === '/') {
-    const redirectTo = role === 'investor' ? PROTECTED_ROUTES.INVESTOR + '/dashboard' : PROTECTED_ROUTES.ENTREPRENEUR + '/dashboard';
-    return NextResponse.redirect(new URL(redirectTo, request.url));
-  }
-
-  // If user is trying to access a role-specific route, but has the wrong role, redirect
   if (user) {
+    const role = user.user_metadata.role;
+
+    // If user is logged in, and tries to go to home, redirect to their dashboard
+    if (pathname === '/') {
+      const redirectTo = role === 'investor' ? PROTECTED_ROUTES.INVESTOR + '/dashboard' : PROTECTED_ROUTES.ENTREPRENEUR + '/dashboard';
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
+
+    // If user is trying to access a role-specific route, but has the wrong role, redirect
     if (pathname.startsWith(PROTECTED_ROUTES.ENTREPRENEUR) && role !== 'entrepreneur') {
       return NextResponse.redirect(new URL('/investor/dashboard', request.url));
     }
