@@ -66,17 +66,18 @@ function AuthForm() {
         description: result.error.message,
         variant: 'destructive',
       });
-    } else {
+    } else if (result.redirectTo) {
       toast({
         title: 'Login Successful!',
         description: 'Redirecting to your dashboard...',
       });
-      if (result.redirectTo) {
-        router.push(result.redirectTo);
-      } else {
-         // Fallback refresh, though the direct push should work
-        router.refresh();
-      }
+      router.push(result.redirectTo);
+    } else {
+        toast({
+            title: 'Login Error',
+            description: 'Could not determine redirection path. Please try again.',
+            variant: 'destructive',
+        });
     }
   };
 
@@ -94,9 +95,10 @@ function AuthForm() {
     } else {
         toast({
             title: 'Account Created!',
-            description: 'Please check your email to verify your account with the OTP.',
+            description: 'Please check your email to verify your account.',
         });
-        router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+        // You might want to redirect to a page informing the user to check their email
+        setIsLogin(true);
     }
   };
 

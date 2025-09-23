@@ -144,7 +144,8 @@ async function seedDatabase() {
 
 
     console.log('\n--- Step 5: Clearing old notifications ---');
-    const { error: deleteNotificationsError } = await supabaseAdmin.from('notifications').delete().in('recipient_id', [investor.id]);
+    const recipientIds = Object.values(createdUsers).map(u => u.id);
+    const { error: deleteNotificationsError } = await supabaseAdmin.from('notifications').delete().in('recipient_id', recipientIds);
     if (deleteNotificationsError) {
       console.warn('Warning clearing old notifications:', deleteNotificationsError.message);
     } else {

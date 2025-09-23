@@ -28,13 +28,22 @@ export async function login(
   }
   
   if (data.user) {
-    const role = data.user.user_metadata.role;
-    const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-    return { error: null, redirectTo };
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', data.user.id)
+      .single();
+
+    const role = profile?.role;
+    
+    if (role) {
+      const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+      return { error: null, redirectTo };
+    }
   }
 
-  // Fallback in case user data is not available, though unlikely on success
-  return { error: { message: 'Could not determine user role.' } };
+  // Fallback in case user data or role is not available
+  return { error: { message: 'Could not determine user role. Please try again.' } };
 }
 
 export async function signup(
@@ -51,9 +60,6 @@ export async function signup(
         full_name: formData.fullName,
         role: formData.role,
       },
-      // Supabase sends an email with a verification link by default.
-      // To use OTP, we need to handle it manually after signup.
-      // The default behavior is fine for now, user will get an email.
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });
@@ -62,6 +68,5 @@ export async function signup(
     return { error: { message: error.message }, data: null };
   }
   
-  // The user is created, but needs to verify their email via OTP.
   return { error: null, data: data.user };
 }

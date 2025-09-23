@@ -17,10 +17,19 @@ export async function middleware(request: NextRequest) {
   
   if (user) {
     if (isPublicRoute && url.pathname !== '/') {
-        const role = user.user_metadata.role;
-        const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-        url.pathname = redirectTo;
-        return NextResponse.redirect(url);
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .single();
+        
+        const role = profile?.role;
+        
+        if (role) {
+            const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+            url.pathname = redirectTo;
+            return NextResponse.redirect(url);
+        }
     }
   }
 
