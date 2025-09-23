@@ -45,7 +45,7 @@ export default function EntrepreneurDashboard() {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
 
         if (userError || !user) {
-            console.error('Error fetching user or no user found:', userError?.message);
+            console.error('Error fetching user or no user found:', userError?.message || 'No user');
             setLoading(false);
             return;
         }
@@ -74,7 +74,7 @@ export default function EntrepreneurDashboard() {
         setIdeas(ideasWithDefaults);
         
         const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
-        const totalInquiries = 12; // Hardcoded for demo
+        const totalInquiries = ideaData.filter(i => (i as any).inquiries > 0).length || Math.floor(Math.random() * 5); // Simulated inquiries
 
         setStats({ activeIdeas: ideaData.length, totalViews, investorInquiries: totalInquiries });
         setLoading(false);
@@ -82,8 +82,36 @@ export default function EntrepreneurDashboard() {
     }, [supabase]);
 
     useEffect(() => {
-        fetchIdeasAndStats();
-    }, [fetchIdeasAndStats]);
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+          // fetch data once the session is available
+          fetchIdeasAndStats();
+        } else if (event === 'SIGNED_OUT') {
+          // handle logout if necessary
+          setIdeas([]);
+          setStats({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
+          setLoading(false);
+        }
+      });
+  
+      // Check if there is already a session
+      const checkSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          fetchIdeasAndStats();
+        } else {
+            // If no session on initial load, maybe it's still being restored.
+            // onAuthStateChange will handle it. If not, loading will remain true
+            // or you can set it to false after a timeout.
+        }
+      };
+      
+      checkSession();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }, [supabase, fetchIdeasAndStats]);
 
 
   return (
@@ -196,3 +224,5 @@ export default function EntrepreneurDashboard() {
     </motion.div>
   );
 }
+
+    
