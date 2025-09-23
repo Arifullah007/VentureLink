@@ -15,10 +15,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // Define demo users
 const demoUsers = [
   // Entrepreneurs
-  { email: 'shaikarifullah06@gmail.com', password: 'Arif_007', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
+  { email: 'shaikarifullah06@gmail.com', password: 'password123', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
   
   // Investors
-  { email: 'injarapusharad2017@gmail.com', password: 'Sharad_007', metadata: { role: 'investor', full_name: 'Injarapu Sharad', preferred_sector: 'Tech', investment_range: '5L-25L', expected_returns: 'Medium', bio: 'Seasoned investor in emerging technologies.' } },
+  { email: 'injarapusharad2017@gmail.com', password: 'password123', metadata: { role: 'investor', full_name: 'Injarapu Sharad', preferred_sector: 'Tech', investment_range: '5L-25L', expected_returns: 'Medium', bio: 'Seasoned investor in emerging technologies.' } },
 ];
 
 const ideas = [
