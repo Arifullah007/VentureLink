@@ -52,6 +52,9 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
             throw new Error('User not authenticated.');
         }
 
+        // For user deletion, we need to use the admin client.
+        // It's important to create this client only when needed and ensure the
+        // service role key is securely stored in environment variables.
         const supabaseAdmin = createAdminClient();
 
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
@@ -71,8 +74,12 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
 import { createClient as createAdminClientSupa } from '@supabase/supabase-js';
 
 function createAdminClient() {
-    return createAdminClientSupa(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+        throw new Error('Supabase admin credentials are not configured.');
+    }
+
+    return createAdminClientSupa(supabaseUrl, supabaseServiceKey);
 }

@@ -58,54 +58,35 @@ export default function NewIdeaPage() {
             const fileName = `${uuidv4()}.${fileExtension}`;
             const filePath = `${user.id}/${fileName}`;
 
-            // 1. Get a signed URL from our Edge Function
-            const { data: signedUrlData, error: signedUrlError } = await supabase.functions.invoke('get-signed-upload-url', {
-                body: { filePath },
-            });
-            if (signedUrlError) throw new Error(`Failed to get signed URL: ${signedUrlError.message}`);
-            
-            const { signedUrl } = signedUrlData;
+            // This flow is simplified for demo purposes. 
+            // In a real app, you would want a server-side flow to get a signed URL
+            // for a more secure upload.
+            const { error: uploadError } = await supabase.storage
+                .from('idea_prototypes')
+                .upload(filePath, file);
 
-            // 2. Upload the file to Supabase Storage using the signed URL
-            const { error: uploadError } = await fetch(signedUrl, {
-                method: 'PUT',
-                headers: { 'Content-Type': file.type },
-                body: file,
-            });
-            if (uploadError) throw new Error(`File upload failed: ${(uploadError as any).message}`);
-            
-            // 3. Create the idea in the database
+            if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
+
             const { data: ideaData, error: ideaError } = await supabase
                 .from('ideas')
                 .insert({
                     entrepreneur_id: user.id,
                     idea_title: data.title,
                     anonymized_summary: data.summary,
-                    full_text: data.summary,
+                    full_text: data.summary, // In a real app, this might be different
                     sector: data.field,
                     investment_required: data.requiredInvestment,
                     estimated_returns: data.estimatedReturns,
+                    prototype_url: filePath,
                 })
                 .select()
                 .single();
 
             if (ideaError) throw ideaError;
-            if (!ideaData) throw new Error("Failed to create idea record.");
-
-            // 4. Create a record in idea_files to trigger the processing webhook
-            const { error: fileRecordError } = await supabase
-                .from('idea_files')
-                .insert({
-                    idea_id: ideaData.id,
-                    file_path: filePath,
-                    file_name: file.name,
-                });
-            
-            if (fileRecordError) throw fileRecordError;
             
             toast({
                 title: 'Idea Submitted!',
-                description: 'Your idea is being processed and will be available to investors shortly.',
+                description: 'Your idea is now available for investors to review.',
             });
             router.push('/entrepreneur/dashboard');
 
