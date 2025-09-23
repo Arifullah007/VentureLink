@@ -1,7 +1,7 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Briefcase, Lightbulb, Bot, Shield, Layers, Handshake } from 'lucide-react';
+import { ArrowRight, Briefcase, Lightbulb, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { useEffect, useState, useRef } from 'react';
@@ -140,9 +140,51 @@ export default function Home() {
         </section>
 
       </main>
-      <footer className="bg-card border-t">
-        <div className="container mx-auto py-6 px-4 sm:px-6 lg:px-8 text-center text-muted-foreground">
-          <p>&copy; {year || new Date().getFullYear()} VentureLink. All rights reserved.</p>
+      <footer className="bg-[#242933] text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            <div className="space-y-4">
+              <h5 className="font-bold uppercase text-gray-400">Company</h5>
+              <ul className="space-y-2">
+                <li><Link href="#" className="text-gray-300 hover:text-white">About</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Careers</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Contact</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h5 className="font-bold uppercase text-gray-400">Legal</h5>
+              <ul className="space-y-2">
+                <li><Link href="#" className="text-gray-300 hover:text-white">Privacy</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Terms</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Cookie Policy</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h5 className="font-bold uppercase text-gray-400">Resources</h5>
+              <ul className="space-y-2">
+                <li><Link href="#" className="text-gray-300 hover:text-white">Blog</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Guides</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Help Center</Link></li>
+              </ul>
+            </div>
+            <div className="space-y-4">
+              <h5 className="font-bold uppercase text-gray-400">Connect</h5>
+              <ul className="space-y-2">
+                <li><Link href="#" className="text-gray-300 hover:text-white">Twitter</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">LinkedIn</Link></li>
+                <li><Link href="#" className="text-gray-300 hover:text-white">Instagram</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="mt-8 border-t border-gray-700 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-sm text-gray-400">&copy; {year || new Date().getFullYear()} Venture Link. All rights reserved.</p>
+            <div className="flex space-x-4 mt-4 md:mt-0">
+              <Link href="#" className="text-gray-400 hover:text-white"><Twitter className="h-5 w-5" /></Link>
+              <Link href="#" className="text-gray-400 hover:text-white"><Facebook className="h-5 w-5" /></Link>
+              <Link href="#" className="text-gray-400 hover:text-white"><Instagram className="h-5 w-5" /></Link>
+              <Link href="#" className="text-gray-400 hover:text-white"><Linkedin className="h-5 w-5" /></Link>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
