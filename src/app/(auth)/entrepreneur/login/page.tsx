@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 export default function EntrepreneurLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,7 +41,7 @@ export default function EntrepreneurLoginPage() {
         description: 'Redirecting to your dashboard...',
       });
       
-      window.location.href = '/entrepreneur/dashboard';
+      router.push('/entrepreneur/dashboard');
 
     } catch (error: any) {
       toast({
