@@ -104,7 +104,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   {
     title: 'Small Scale',
     description: 'For investors looking for promising small businesses with lower investment needs.',
-    price: '₹X',
+    price: '₹3X',
     pricePeriod: '',
     features: ['Investment range: 70K-5L', 'Less expected returns', 'Full idea details', 'Direct contact with entrepreneur'],
     cta: 'Choose Small Scale',
