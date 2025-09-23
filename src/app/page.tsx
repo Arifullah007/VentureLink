@@ -4,6 +4,7 @@ import { ArrowRight, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagra
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { useEffect, useState, useRef } from 'react';
+import { NdaModal } from '@/components/ui/nda-modal';
 
 const homeFeatures = [
   {
@@ -30,6 +31,7 @@ const homeFeatures = [
 
 export default function Home() {
   const [year, setYear] = useState<number | null>(null);
+  const [isNdaOpen, setIsNdaOpen] = useState(false);
   const featuresRef = useRef<HTMLElement>(null);
   const howItWorksRef = useRef<HTMLElement>(null);
 
@@ -41,6 +43,11 @@ export default function Home() {
     e.preventDefault();
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
+  
+  const handlePrivacyModalOpen = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsNdaOpen(true);
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background font-body">
@@ -153,8 +160,8 @@ export default function Home() {
             <div className="space-y-4">
               <h5 className="font-bold uppercase text-gray-400">Legal</h5>
               <ul className="space-y-2">
-                <li><Link href="#" className="text-gray-300 hover:text-white">Privacy</Link></li>
-                <li><Link href="#" className="text-gray-300 hover:text-white">Terms</Link></li>
+                <li><Link href="#" onClick={handlePrivacyModalOpen} className="text-gray-300 hover:text-white">Privacy</Link></li>
+                <li><Link href="#" onClick={handlePrivacyModalOpen} className="text-gray-300 hover:text-white">Terms</Link></li>
                 <li><Link href="#" className="text-gray-300 hover:text-white">Cookie Policy</Link></li>
               </ul>
             </div>
@@ -186,6 +193,16 @@ export default function Home() {
           </div>
         </div>
       </footer>
+        <NdaModal
+            isOpen={isNdaOpen}
+            onClose={() => setIsNdaOpen(false)}
+            onAccept={() => {
+                setIsNdaOpen(false);
+                alert("Thank you for accepting the terms.");
+            }}
+            ideaTitle="General"
+            entrepreneurName="the platform"
+      />
     </div>
   );
 }
