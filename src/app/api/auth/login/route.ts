@@ -1,10 +1,9 @@
 'use server';
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/middleware';
+import { createClient } from '@/lib/supabase/server';
 
 export async function POST(request: NextRequest) {
-  const { supabase, response: supabaseMiddlewareResponse } = createClient(request);
   const { email, password, role } = await request.json();
 
   if (!email || !password || !role) {
@@ -14,6 +13,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Use the server client for API routes
+  const supabase = createClient();
+
   // Sign in the user
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -21,13 +23,15 @@ export async function POST(request: NextRequest) {
   });
 
   if (error || !data.user) {
+    // Manually sign out to clear any partial session state on error
+    await supabase.auth.signOut();
     return NextResponse.json(
       { error: error?.message || 'Invalid login credentials' },
       { status: 401 }
     );
   }
 
-  // Verify their role from the successful sign-in data
+  // On successful sign-in, the returned user object contains the metadata
   const userRole = data.user.user_metadata?.role;
 
   if (userRole !== role) {
@@ -39,14 +43,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // On success, return a JSON response along with the response object
-  // that has the session cookie set on it.
-  const response = NextResponse.json({ message: 'Login successful' });
-
-  // Transfer cookies from the Supabase middleware response to the final response
-  supabaseMiddlewareResponse.cookies.getAll().forEach((cookie) => {
-    response.cookies.set(cookie.name, cookie.value, cookie);
-  });
-
-  return response;
+  // On success, return a JSON response. The session cookie is automatically
+  // handled by the server client when using `signInWithPassword`.
+  return NextResponse.json({ message: 'Login successful' });
 }
