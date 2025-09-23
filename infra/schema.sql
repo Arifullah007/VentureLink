@@ -1,138 +1,215 @@
--- VentureLink DB Schema
-
--- Drop existing tables and types if they exist to ensure a clean slate
-drop table if exists public.ideas cascade;
-drop table if exists public.profiles cascade;
-drop table if exists public.notifications cascade;
-drop type if exists public.user_role cascade;
-drop extension if exists "uuid-ossp" cascade;
-
--- Extensions
-create extension if not exists "uuid-ossp" with schema public;
-
--- Create a custom type for user roles
-create type public.user_role as enum ('entrepreneur', 'investor');
-
+--
 -- Create a table for public profiles
-create table public.profiles (
-  id uuid references auth.users not null primary key,
-  created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone,
-  full_name text,
-  avatar_url text,
-  website_url text,
-  linkedin_url text,
-  role user_role, -- This will be 'entrepreneur' or 'investor'
-  
-  -- Investor-specific fields
-  bio text,
-  preferred_sector text,
-  investment_range text,
-  expected_returns text
-);
+--
+CREATE TABLE
+  IF NOT EXISTS profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+    updated_at TIMESTAMPTZ,
+    full_name TEXT,
+    avatar_url TEXT,
+    website_url TEXT,
+    linkedin_url TEXT,
+    role TEXT NOT NULL CHECK (role IN ('entrepreneur', 'investor')),
+    -- Investor-specific fields
+    bio TEXT,
+    preferred_sector TEXT,
+    investment_range TEXT,
+    expected_returns TEXT
+  );
 
--- Create a table for startup ideas
-create table public.ideas (
-    id uuid primary key default uuid_generate_v4(),
-    entrepreneur_id uuid references public.profiles(id) not null,
-    created_at timestamp with time zone default now(),
-    updated_at timestamp with time zone,
-    idea_title text not null,
-    anonymized_summary text not null,
-    full_text text, -- Revealed after NDA
-    sector text,
-    investment_required text,
-    estimated_returns text,
-    prototype_url text,
-    views integer default 0
-);
+--
+-- Create a table for ideas
+--
+CREATE TABLE
+  IF NOT EXISTS ideas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
+    entrepreneur_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    idea_title TEXT NOT NULL,
+    anonymized_summary TEXT NOT NULL,
+    full_text TEXT,
+    sector TEXT,
+    investment_required TEXT,
+    estimated_returns TEXT,
+    prototype_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ
+  );
 
+--
 -- Create a table for notifications
-create table public.notifications (
-    id uuid primary key default uuid_generate_v4(),
-    recipient_id uuid references public.profiles(id) not null,
-    sender_id uuid references public.profiles(id) not null,
-    idea_id uuid references public.ideas(id),
-    type text not null, -- e.g., 'APPROACH', 'NDA_REQUEST', 'MESSAGE'
-    content text not null,
-    is_read boolean default false,
-    created_at timestamp with time zone default now(),
-    updated_at timestamp with time zone
-);
+--
+CREATE TABLE
+  IF NOT EXISTS notifications (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    recipient_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES auth.users (id) ON DELETE CASCADE, -- Can be null for system notifications
+    idea_id UUID REFERENCES ideas (id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- e.g., 'nda_request', 'nda_accepted', 'group_invite'
+    content JSONB,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
 
--- Set up Row Level Security (RLS)
+--
+-- Create a table for NDA records
+--
+CREATE TABLE
+  IF NOT EXISTS nda_signatures (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    idea_id UUID NOT NULL REFERENCES ideas (id) ON DELETE CASCADE,
+    investor_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+    signature TEXT NOT NULL,
+    signed_at TIMESTAMPTZ DEFAULT NOW(),
+    access_logs JSONB,
+    UNIQUE (idea_id, investor_id) -- An investor can only sign an NDA for an idea once
+  );
 
--- Allow public access to profiles, but with restrictions
-alter table public.profiles enable row level security;
-create policy "Public profiles are viewable by everyone." on public.profiles for select using (true);
-create policy "Users can insert their own profile." on public.profiles for insert with check (auth.uid() = id);
-create policy "Users can update own profile." on public.profiles for update using (auth.uid() = id);
-
--- Allow authenticated users to see ideas, but with restrictions
-alter table public.ideas enable row level security;
-create policy "Ideas are viewable by authenticated users." on public.ideas for select using (auth.role() = 'authenticated');
-create policy "Entrepreneurs can insert their own ideas." on public.ideas for insert with check (
-    auth.uid() = entrepreneur_id and 
-    (select role from public.profiles where id = auth.uid()) = 'entrepreneur'
-);
-create policy "Entrepreneurs can update their own ideas." on public.ideas for update using (
-    auth.uid() = entrepreneur_id and
-    (select role from public.profiles where id = auth.uid()) = 'entrepreneur'
-);
-create policy "Users can delete their own ideas." on public.ideas for delete using (auth.uid() = entrepreneur_id);
-
--- Secure notifications table
-alter table public.notifications enable row level security;
-create policy "Users can see their own notifications." on public.notifications for select using (auth.uid() = recipient_id);
-create policy "Users can send notifications." on public.notifications for insert with check (auth.uid() = sender_id);
-create policy "Users can update their own notifications (e.g., mark as read)." on public.notifications for update using (auth.uid() = recipient_id);
-
-
--- This trigger automatically creates a profile entry when a new user signs up.
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, full_name, role, avatar_url)
-  values (new.id, new.raw_user_meta_data->>'full_name', (new.raw_user_meta_data->>'role')::user_role, new.raw_user_meta_data->>'avatar_url');
-  return new;
-end;
-$$ language plpgsql security definer;
-
--- Drop trigger if it exists, then create it
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+--
+-- HELPER FUNCTION: Get user role
+--
+CREATE OR REPLACE FUNCTION get_user_role (user_id UUID) RETURNS TEXT AS $$
+DECLARE
+    role_name TEXT;
+BEGIN
+    SELECT role INTO role_name FROM profiles WHERE id = user_id;
+    RETURN role_name;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- Storage policies
--- Create a bucket for idea prototypes
-insert into storage.buckets (id, name, public)
-values ('idea_prototypes', 'idea_prototypes', false)
-on conflict (id) do nothing;
+--
+-- AUTH: Set up Row Level Security (RLS)
+--
+-- 1. Enable RLS for all tables
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ideas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE nda_signatures ENABLE ROW LEVEL SECURITY;
 
--- Policies for idea_prototypes bucket
--- 1. Allow authenticated users to view files
-create policy "Authenticated users can see prototypes" on storage.objects for select
-using ( bucket_id = 'idea_prototypes' and auth.role() = 'authenticated' );
+--
+-- RLS POLICIES: PROFILES
+--
+DROP POLICY IF EXISTS "Profiles are viewable by everyone." ON profiles;
+CREATE POLICY "Profiles are viewable by everyone." ON profiles FOR
+SELECT
+  USING (TRUE);
 
--- 2. Allow entrepreneurs to upload files into their own folder
-create policy "Entrepreneurs can upload to their folder" on storage.objects for insert
-with check ( bucket_id = 'idea_prototypes' and auth.uid()::text = (storage.foldername(name))[1] );
+DROP POLICY IF EXISTS "Users can create their own profile." ON profiles;
+CREATE POLICY "Users can create their own profile." ON profiles FOR INSERT
+WITH
+  CHECK (auth.uid () = id);
 
--- 3. Allow entrepreneurs to update files in their own folder
-create policy "Entrepreneurs can update their own files" on storage.objects for update
-using ( bucket_id = 'idea_prototypes' and auth.uid()::text = (storage.foldername(name))[1] );
+DROP POLICY IF EXISTS "Users can update their own profile." ON profiles;
+CREATE POLICY "Users can update their own profile." ON profiles FOR
+UPDATE
+  USING (auth.uid () = id)
+  WITH
+  CHECK (auth.uid () = id);
 
--- 4. Allow entrepreneurs to delete files from their own folder
-create policy "Entrepreneurs can delete their own files" on storage.objects for delete
-using ( bucket_id = 'idea_prototypes' and auth.uid()::text = (storage.foldername(name))[1] );
+--
+-- RLS POLICIES: IDEAS
+--
+DROP POLICY IF EXISTS "Ideas are visible to investors." ON ideas;
+CREATE POLICY "Ideas are visible to investors." ON ideas FOR
+SELECT
+  USING (get_user_role(auth.uid()) = 'investor');
 
--- Enable real-time updates on the 'ideas' table
-begin;
-  drop publication if exists supabase_realtime;
-  create publication supabase_realtime;
-commit;
+DROP POLICY IF EXISTS "Entrepreneurs can view their own ideas." ON ideas;
+CREATE POLICY "Entrepreneurs can view their own ideas." ON ideas FOR
+SELECT
+  USING (auth.uid () = entrepreneur_id);
 
-alter publication supabase_realtime add table public.ideas;
-alter publication supabase_realtime add table public.notifications;
+DROP POLICY IF EXISTS "Entrepreneurs can create ideas." ON ideas;
+CREATE POLICY "Entrepreneurs can create ideas." ON ideas FOR INSERT
+WITH
+  CHECK (
+    auth.uid () = entrepreneur_id
+    AND get_user_role(auth.uid()) = 'entrepreneur'
+  );
+
+DROP POLICY IF EXISTS "Entrepreneurs can update their own ideas." ON ideas;
+CREATE POLICY "Entrepreneurs can update their own ideas." ON ideas FOR
+UPDATE
+  USING (auth.uid () = entrepreneur_id)
+  WITH
+  CHECK (auth.uid () = entrepreneur_id);
+
+DROP POLICY IF EXISTS "Entrepreneurs can delete their own ideas." ON ideas;
+CREATE POLICY "Entrepreneurs can delete their own ideas." ON ideas FOR DELETE USING (auth.uid () = entrepreneur_id);
+
+--
+-- RLS POLICIES: NOTIFICATIONS
+--
+DROP POLICY IF EXISTS "Users can view their own notifications." ON notifications;
+CREATE POLICY "Users can view their own notifications." ON notifications FOR
+SELECT
+  USING (auth.uid () = recipient_id);
+
+DROP POLICY IF EXISTS "Users can create notifications for others." ON notifications;
+CREATE POLICY "Users can create notifications for others." ON notifications FOR INSERT
+WITH
+  CHECK (auth.uid () = sender_id);
+
+DROP POLICY IF EXISTS "Users can mark their notifications as read." ON notifications;
+CREATE POLICY "Users can mark their notifications as read." ON notifications FOR
+UPDATE
+  USING (auth.uid () = recipient_id)
+  WITH
+  CHECK (auth.uid () = recipient_id);
+
+--
+-- RLS POLICIES: NDA SIGNATURES
+--
+DROP POLICY IF EXISTS "Investors can see their own signed NDAs." ON nda_signatures;
+CREATE POLICY "Investors can see their own signed NDAs." ON nda_signatures FOR
+SELECT
+  USING (auth.uid () = investor_id);
+
+DROP POLICY IF EXISTS "Entrepreneurs can see who signed NDAs for their ideas." ON nda_signatures;
+CREATE POLICY "Entrepreneurs can see who signed NDAs for their ideas." ON nda_signatures FOR
+SELECT
+  USING (
+    EXISTS (
+      SELECT
+        1
+      FROM
+        ideas
+      WHERE
+        ideas.id = nda_signatures.idea_id
+        AND ideas.entrepreneur_id = auth.uid ()
+    )
+  );
+
+DROP POLICY IF EXISTS "Investors can sign an NDA." ON nda_signatures;
+CREATE POLICY "Investors can sign an NDA." ON nda_signatures FOR INSERT
+WITH
+  CHECK (
+    auth.uid () = investor_id
+    AND get_user_role(auth.uid()) = 'investor'
+  );
+
+--
+-- DB TRIGGERS: Create a profile for new users
+--
+CREATE OR REPLACE FUNCTION public.handle_new_user () RETURNS TRIGGER AS $$
+DECLARE
+    user_role TEXT;
+BEGIN
+    -- Extract the role from the user's metadata
+    user_role := NEW.raw_user_meta_data ->> 'role';
+
+    -- Create a corresponding profile
+    INSERT INTO public.profiles (id, full_name, role)
+    VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name', user_role);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+--
+-- Trigger to execute the function after a new user is created
+--
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users FOR EACH ROW
+EXECUTE FUNCTION public.handle_new_user ();
