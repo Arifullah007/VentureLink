@@ -71,9 +71,12 @@ function AuthForm() {
         title: 'Login Successful!',
         description: 'Redirecting to your dashboard...',
       });
-      // The middleware will handle the redirection.
-      // We trigger a router refresh to ensure the middleware runs.
-      router.refresh();
+      if (result.redirectTo) {
+        router.push(result.redirectTo);
+      } else {
+         // Fallback refresh, though the direct push should work
+        router.refresh();
+      }
     }
   };
 

@@ -19,16 +19,22 @@ const signupSchema = z.object({
 
 export async function login(
   formData: z.infer<typeof loginSchema>
-): Promise<{ error: { message: string } | null; }> {
+): Promise<{ error: { message: string } | null; redirectTo?: string }> {
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword(formData);
+  const { data, error } = await supabase.auth.signInWithPassword(formData);
 
   if (error) {
     return { error: { message: error.message } };
   }
+  
+  if (data.user) {
+    const role = data.user.user_metadata.role;
+    const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+    return { error: null, redirectTo };
+  }
 
-  // No redirect here, middleware will handle it
-  return { error: null };
+  // Fallback in case user data is not available, though unlikely on success
+  return { error: { message: 'Could not determine user role.' } };
 }
 
 export async function signup(
