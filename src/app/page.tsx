@@ -32,35 +32,39 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Logo className="h-8 w-8 text-primary" />
-          <h1 className="text-2xl font-bold text-foreground">VentureLink</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" asChild>
-            <Link href="/entrepreneur/dashboard">Entrepreneur Dashboard</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/investor/dashboard">Investor Dashboard</Link>
-          </Button>
+      <header className="absolute top-0 left-0 right-0 z-10 bg-transparent text-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+            <Logo className="h-8 w-8" />
+            <h1 className="text-2xl font-bold">VentureLink</h1>
+            </div>
+            <div className="flex items-center gap-2">
+            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white">
+                <Link href="/entrepreneur/dashboard">Entrepreneur Dashboard</Link>
+            </Button>
+            <Button asChild className="bg-white/90 text-primary hover:bg-white">
+                <Link href="/investor/dashboard">Investor Dashboard</Link>
+            </Button>
+            </div>
         </div>
       </header>
       <main className="flex-grow">
-        <section className="py-20 md:py-32">
+        <section className="relative flex items-center justify-center h-screen bg-gradient-to-r from-primary to-accent text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-foreground">
-              Connecting Visionaries with Capital
+            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
+              Connect. Invest. Grow.
+              <br />
+              <span className="text-white/90">With Venture Link</span>
             </h2>
-            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground">
-              VentureLink is the premier platform where innovative entrepreneurs and strategic investors forge the future of business.
+            <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-white/80">
+              The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
-            <div className="mt-8 flex justify-center gap-4">
-              <Button size="lg" asChild>
-                <Link href="/investor/dashboard">I'm an Investor</Link>
-              </Button>
-              <Button size="lg" variant="secondary" asChild>
+            <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+              <Button size="lg" variant="secondary" asChild className="bg-white text-primary hover:bg-gray-200">
                 <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
+              </Button>
+              <Button size="lg" asChild className="bg-white/20 hover:bg-white/30 border border-white/50">
+                <Link href="/investor/dashboard">I'm an Investor</Link>
               </Button>
             </div>
           </div>
