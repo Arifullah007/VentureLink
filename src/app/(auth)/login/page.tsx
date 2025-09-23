@@ -57,40 +57,38 @@ function AuthForm() {
 
   const handleLogin = async (data: LoginFormValues) => {
     setLoading(true);
-    const result = await login(data);
-    if (result.error) {
-      toast({
-        title: 'Login Failed',
-        description: result.error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Login Successful!',
-        description: 'Redirecting to your dashboard...',
-      });
-      // The middleware will handle redirection
-      window.location.href = result.redirectTo || '/';
-    }
+
+    // Simulate login
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    toast({
+      title: 'Login Successful!',
+      description: 'Redirecting to your dashboard...',
+    });
+    
+    const role = data.email.includes('investor') || searchParams.get('role') === 'investor' ? 'investor' : 'entrepreneur';
+    const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+    
+    // The middleware would normally handle this, but for simulation we'll do it here.
+    window.location.href = redirectTo;
+
     setLoading(false);
   };
 
   const handleSignup = async (data: SignupFormValues) => {
     setLoading(true);
-    const result = await signup(data);
-    if (result.error) {
-      toast({
-        title: 'Signup Failed',
-        description: result.error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Account Created!',
-        description: 'Please check your email to verify your account.',
-      });
-      router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
-    }
+    // Simulate signup
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    toast({
+      title: 'Account Created! (Simulation)',
+      description: 'Please check your email to verify your account.',
+    });
+    
+    // In a real app, you'd get a user object back.
+    // For simulation, we'll just go to a simulated OTP page.
+    router.push(`/verify-otp?email=${encodeURIComponent(data.email)}`);
+
     setLoading(false);
   };
 

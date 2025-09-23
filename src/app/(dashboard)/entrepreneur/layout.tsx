@@ -14,7 +14,6 @@ import { LogOut, Plus, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: '/entrepreneur/dashboard', label: 'Dashboard' },
@@ -31,9 +30,7 @@ export default function EntrepreneurLayout({
   const router = useRouter();
 
   const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/');
+    router.push('/login');
   }
 
   return (

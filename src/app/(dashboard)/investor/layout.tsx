@@ -23,7 +23,6 @@ import {
 import Link from 'next/link';
 import { Home, Search, Bot, Crown, Handshake, LogOut, Bell, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -42,48 +41,21 @@ export default function InvestorLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const supabase = createClient();
   const [hasNotifications, setHasNotifications] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string | null>('Investor');
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
     router.push('/login');
   }
 
   useEffect(() => {
-    const fetchUserAndNotifications = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUserName(user.user_metadata.full_name || 'Investor');
-
-        const { count } = await supabase
-          .from('notifications')
-          .select('*', { count: 'exact', head: true })
-          .eq('recipient_id', user.id)
-          .eq('is_read', false);
-        
-        setHasNotifications((count || 0) > 0);
-      }
-    };
-    fetchUserAndNotifications();
-
-    const channel = supabase
-      .channel('notifications')
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'notifications' 
-      }, (payload) => {
-        // This is a simplified listener. In a real app, you'd check if the notification is for the current user.
+    // Simulate fetching user and notification status
+    const timer = setTimeout(() => {
         setHasNotifications(true);
-      })
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    }
-  }, [supabase]);
+        setUserName('Priya S.');
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
 
   return (

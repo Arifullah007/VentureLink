@@ -7,70 +7,34 @@ import { Badge } from "@/components/ui/badge";
 import { Send, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { investors as predefinedInvestors } from "@/lib/data";
+import type { Investor } from "@/lib/types";
 
-type Investor = {
-  id: string;
-  full_name: string | null;
-  bio: string | null;
-  preferred_sector: string | null;
-  investment_range: string | null;
-  expected_returns: string | null;
-}
 
 export default function BrowseInvestorsPage() {
   const { toast } = useToast();
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(true);
   const [approached, setApproached] = useState<Set<string>>(new Set());
-  const supabase = createClient();
-
+  
   useEffect(() => {
-    const fetchInvestors = async () => {
+    const fetchInvestors = () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, bio, preferred_sector, investment_range, expected_returns')
-        .eq('role', 'investor');
-
-      if (error) {
-        toast({ title: "Error", description: "Could not fetch investors.", variant: "destructive" });
-      } else {
-        setInvestors(data as Investor[]);
-      }
+      setInvestors(predefinedInvestors);
       setLoading(false);
     }
     fetchInvestors();
-  }, [supabase, toast]);
+  }, []);
 
   const handleApproach = async (investor: Investor) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({ title: "Authentication Error", description: "You must be logged in to approach an investor.", variant: "destructive" });
-      return;
-    }
-
-    const { error } = await supabase.from('notifications').insert({
-      recipient_id: investor.id,
-      sender_id: user.id,
-      type: 'APPROACH',
-      content: `An entrepreneur has shown interest in connecting with you.`,
+     await new Promise(resolve => setTimeout(resolve, 500));
+    
+    toast({
+      title: "Approach Initiated (Simulation)",
+      description: `Your interest has been sent to ${investor.name}. You'll be notified if they accept.`,
     });
-
-    if (error) {
-      toast({
-        title: "Failed to Send",
-        description: `Could not send approach to ${investor.full_name}. ${error.message}`,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Approach Initiated",
-        description: `Your interest has been sent to ${investor.full_name}. You'll be notified if they accept.`,
-      });
-      setApproached(prev => new Set(prev).add(investor.id));
-    }
+    setApproached(prev => new Set(prev).add(investor.id));
   };
 
   return (
@@ -91,13 +55,13 @@ export default function BrowseInvestorsPage() {
           <Card key={investor.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
-                <AvatarFallback>{investor.full_name?.charAt(0) || 'I'}</AvatarFallback>
+                <AvatarFallback>{investor.name?.charAt(0) || 'I'}</AvatarFallback>
               </Avatar>
-              <CardTitle>{investor.full_name}</CardTitle>
+              <CardTitle>{investor.name}</CardTitle>
               <div className="flex flex-wrap justify-center gap-2 mt-2">
-                {investor.preferred_sector && <Badge>{investor.preferred_sector}</Badge>}
-                {investor.investment_range && <Badge variant="secondary">{investor.investment_range}</Badge>}
-                {investor.expected_returns && <Badge variant="outline">{investor.expected_returns} Returns</Badge>}
+                {investor.sector && <Badge>{investor.sector}</Badge>}
+                {investor.investmentRange && <Badge variant="secondary">{investor.investmentRange}</Badge>}
+                {investor.expectedReturns && <Badge variant="outline">{investor.expectedReturns} Returns</Badge>}
               </div>
             </CardHeader>
             <CardContent className="flex-grow">
