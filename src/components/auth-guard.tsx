@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Skeleton } from './ui/skeleton';
+import { Logo } from './icons';
 
 type AuthGuardProps = {
   children: ReactNode;
@@ -18,9 +19,11 @@ export function AuthGuard({ children, role }: AuthGuardProps) {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session }, error } = await supabase.auth.getSession();
+      
+      let targetLoginPage = `/${role}/login`;
 
       if (error || !session) {
-        router.replace(`/${role}/login`);
+        router.replace(targetLoginPage);
         return;
       }
 
@@ -28,7 +31,7 @@ export function AuthGuard({ children, role }: AuthGuardProps) {
       if (userRole !== role) {
         // If wrong role, sign them out and redirect to the correct login page
         await supabase.auth.signOut();
-        router.replace(`/${role}/login`);
+        router.replace(targetLoginPage);
         return;
       }
 
@@ -53,12 +56,12 @@ export function AuthGuard({ children, role }: AuthGuardProps) {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-            <Skeleton className="h-12 w-12 rounded-full" />
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+            <Logo className="h-12 w-12 text-primary animate-pulse" />
+            <div className="space-y-2 text-center">
+                <p className="text-lg font-medium text-muted-foreground">Verifying your credentials...</p>
+                <Skeleton className="h-4 w-48 mx-auto" />
             </div>
         </div>
       </div>
