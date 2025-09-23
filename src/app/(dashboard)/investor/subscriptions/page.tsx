@@ -12,7 +12,7 @@ export default function SubscriptionsPage() {
         <p className="mt-2 text-lg text-muted-foreground">Choose the right plan to unlock opportunities and connect with innovators.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start justify-center">
         {subscriptionPlans.map((plan) => (
           <Card key={plan.title} className={cn(
             "flex flex-col h-full transition-all",

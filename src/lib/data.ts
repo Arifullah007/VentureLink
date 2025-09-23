@@ -102,14 +102,6 @@ export const ideas: Idea[] = [
 
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
-    title: 'Contact Access',
-    description: 'Get contact information for entrepreneurs that catch your eye.',
-    price: '₹4,000',
-    pricePeriod: '/ contact',
-    features: ['Access entrepreneur contact details', 'Direct messaging capabilities', 'Limited to 5 contacts per month'],
-    cta: 'Get Started',
-  },
-  {
     title: 'Small Scale',
     description: 'For investors looking for promising small businesses with lower investment needs.',
     price: '₹8,000',
