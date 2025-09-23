@@ -10,7 +10,6 @@ import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NdaModal } from "@/components/ui/nda-modal";
 import Link from "next/link";
-import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 
 type Idea = {
   id: string;
@@ -35,6 +34,25 @@ export default function BrowseIdeasPage() {
     const [isNdaOpen, setNdaOpen] = useState(false);
     const [unlockedIdeas, setUnlockedIdeas] = useState<Set<string>>(new Set());
     const supabase = createClient();
+
+    const handleNewOrUpdatedIdea = (payload: any) => {
+        const updatedIdea = {
+            ...payload.new,
+            prototype_url: 'https://picsum.photos/seed/' + payload.new.id + '/400/250',
+        }
+        setIdeas(currentIdeas => {
+            const ideaIndex = currentIdeas.findIndex(idea => idea.id === updatedIdea.id);
+            if (ideaIndex !== -1) {
+                // Update existing idea
+                const newIdeas = [...currentIdeas];
+                newIdeas[ideaIndex] = {...newIdeas[ideaIndex], ...updatedIdea};
+                return newIdeas;
+            } else {
+                // Add new idea (less common for this page, but good practice)
+                return [updatedIdea, ...currentIdeas];
+            }
+        });
+    };
 
     useEffect(() => {
         const fetchIdeas = async () => {
@@ -64,6 +82,19 @@ export default function BrowseIdeasPage() {
         };
 
         fetchIdeas();
+
+        const channel = supabase
+            .channel('ideas-feed')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas' }, (payload) => {
+                if (payload.eventType === 'UPDATE') {
+                    handleNewOrUpdatedIdea(payload);
+                }
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
     }, [supabase]);
 
     const handleUnlockDetails = (idea: Idea) => {

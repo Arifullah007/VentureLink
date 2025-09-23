@@ -21,10 +21,12 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Search, Bot, Crown, Handshake, LogOut } from 'lucide-react';
+import { Home, Search, Bot, Crown, Handshake, LogOut, Bell } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 
 const navItems = [
     { href: "/investor/dashboard", icon: <Home />, label: "Dashboard" },
@@ -40,12 +42,49 @@ export default function InvestorLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const supabase = createClient();
+  const [hasNotifications, setHasNotifications] = useState(false);
+  const [userName, setUserName] = useState<string | null>(null);
 
   const handleLogout = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
-    router.push('/');
+    router.push('/login');
   }
+
+  useEffect(() => {
+    const fetchUserAndNotifications = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserName(user.user_metadata.full_name || 'Investor');
+
+        const { count } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('recipient_id', user.id)
+          .eq('is_read', false);
+        
+        setHasNotifications((count || 0) > 0);
+      }
+    };
+    fetchUserAndNotifications();
+
+    const channel = supabase
+      .channel('notifications')
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'notifications' 
+      }, (payload) => {
+        // This is a simplified listener. In a real app, you'd check if the notification is for the current user.
+        setHasNotifications(true);
+      })
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    }
+  }, [supabase]);
+
 
   return (
       <SidebarProvider>
@@ -77,18 +116,27 @@ export default function InvestorLayout({
             <div className="flex-1">
               <h1 className="font-semibold text-lg">Investor Dashboard</h1>
             </div>
+             <Button variant="ghost" size="icon" className="relative">
+                <Bell className="h-5 w-5" />
+                {hasNotifications && (
+                    <span className="absolute top-1 right-1 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+                    </span>
+                )}
+            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                     <AvatarFallback>I</AvatarFallback>
+                     <AvatarFallback>{userName?.charAt(0) || 'I'}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Investor</p>
+                    <p className="text-sm font-medium leading-none">{userName}</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />

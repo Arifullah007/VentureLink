@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin, Briefcase } from "lucide-react";
+import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from '@/lib/supabase/client';
@@ -63,7 +63,8 @@ export default function EntrepreneurDashboard() {
                 setIdeas(ideasWithDefaults);
                 
                 const totalViews = ideasWithDefaults.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
-                const totalInquiries = ideasWithDefaults.reduce((acc, idea: any) => acc + (idea.inquiries || 0), 12);
+                // Hardcoded for demo
+                const totalInquiries = 12;
 
                 setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
             } else if (error) {
