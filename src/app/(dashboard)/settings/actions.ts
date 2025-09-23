@@ -2,6 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
+// This import is needed for the admin client
+import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 const passwordSchema = z.object({
   currentPassword: z.string(),
@@ -55,7 +57,14 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
         // For user deletion, we need to use the admin client.
         // It's important to create this client only when needed and ensure the
         // service role key is securely stored in environment variables.
-        const supabaseAdmin = createAdminClient();
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error('Supabase admin credentials are not configured.');
+        }
+    
+        const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey);
 
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
         
@@ -67,19 +76,4 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
     } catch (error: any) {
         return { error: new Error(error.message || 'Failed to delete account.') };
     }
-}
-
-// We need to import createClient here because this is a server action
-// and we need the admin client for account deletion.
-import { createClient as createAdminClientSupa } from '@supabase/supabase-js';
-
-function createAdminClient() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-    if (!supabaseUrl || !supabaseServiceKey) {
-        throw new Error('Supabase admin credentials are not configured.');
-    }
-
-    return createAdminClientSupa(supabaseUrl, supabaseServiceKey);
 }
