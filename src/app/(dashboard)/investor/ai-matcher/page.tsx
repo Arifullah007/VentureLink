@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { InvestorPreferences, MatchResult } from './types';
 import { investorPreferencesSchema } from './types';
-import { getAiMatches } from './actions';
+import { getAiMatches } from '@/app/(dashboard)/investor/ai-matcher/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
