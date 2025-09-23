@@ -54,8 +54,6 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
         }
 
         // For user deletion, we need to use the admin client.
-        // It's important to create this client only when needed and ensure the
-        // service role key is securely stored in environment variables.
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -65,6 +63,18 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
     
         const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey);
 
+        // First, delete the user's profile to satisfy foreign key constraints.
+        const { error: profileError } = await supabaseAdmin
+            .from('profiles')
+            .delete()
+            .eq('id', user.id);
+
+        if (profileError) {
+            // We can choose to log this, but we'll proceed to attempt user deletion anyway.
+            console.error('Could not delete user profile:', profileError.message);
+        }
+
+        // Now, delete the user from auth.
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
         
         if (deleteError) {
