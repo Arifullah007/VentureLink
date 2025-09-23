@@ -1,29 +1,31 @@
---
--- Create a table for public profiles
---
-CREATE TABLE
-  IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
-    updated_at TIMESTAMPTZ,
+-- This script is idempotent, so it can be run multiple times without causing errors.
+
+-- 1. Create Profiles Table
+-- This table stores public user data.
+CREATE TABLE IF NOT EXISTS profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id),
     full_name TEXT,
-    avatar_url TEXT,
-    website_url TEXT,
-    linkedin_url TEXT,
-    role TEXT NOT NULL CHECK (role IN ('entrepreneur', 'investor')),
-    -- Investor-specific fields
+    role TEXT CHECK (role IN ('investor', 'entrepreneur')),
     bio TEXT,
     preferred_sector TEXT,
     investment_range TEXT,
-    expected_returns TEXT
-  );
+    expected_returns TEXT,
+    website_url TEXT,
+    linkedin_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- RLS for profiles
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update their own profile." ON profiles FOR UPDATE USING (auth.uid() = id);
 
---
--- Create a table for ideas
---
-CREATE TABLE
-  IF NOT EXISTS ideas (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid (),
-    entrepreneur_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+-- 2. Create Ideas Table
+-- Stores the business ideas submitted by entrepreneurs.
+CREATE TABLE IF NOT EXISTS ideas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entrepreneur_id UUID REFERENCES auth.users(id),
     idea_title TEXT NOT NULL,
     anonymized_summary TEXT NOT NULL,
     full_text TEXT,
@@ -32,184 +34,84 @@ CREATE TABLE
     estimated_returns TEXT,
     prototype_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ
-  );
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+-- RLS for ideas
+ALTER TABLE ideas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Ideas are viewable by authenticated users." ON ideas FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "Entrepreneurs can insert their own ideas." ON ideas FOR INSERT WITH CHECK (auth.uid() = entrepreneur_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'entrepreneur');
+CREATE POLICY "Entrepreneurs can update their own ideas." ON ideas FOR UPDATE USING (auth.uid() = entrepreneur_id);
 
---
--- Create a table for notifications
---
-CREATE TABLE
-  IF NOT EXISTS notifications (
+-- 3. Create Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
     id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    recipient_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
-    sender_id UUID REFERENCES auth.users (id) ON DELETE CASCADE, -- Can be null for system notifications
-    idea_id UUID REFERENCES ideas (id) ON DELETE CASCADE,
-    type TEXT NOT NULL, -- e.g., 'nda_request', 'nda_accepted', 'group_invite'
-    content JSONB,
+    recipient_id UUID REFERENCES auth.users(id),
+    sender_id UUID REFERENCES auth.users(id),
+    idea_id UUID REFERENCES ideas(id),
+    type TEXT NOT NULL, -- e.g., 'nda_request', 'nda_signed', 'contact_unlock'
+    message TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
-  );
-
---
--- Create a table for NDA records
---
-CREATE TABLE
-  IF NOT EXISTS nda_signatures (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    idea_id UUID NOT NULL REFERENCES ideas (id) ON DELETE CASCADE,
-    investor_id UUID NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
-    signature TEXT NOT NULL,
-    signed_at TIMESTAMPTZ DEFAULT NOW(),
-    access_logs JSONB,
-    UNIQUE (idea_id, investor_id) -- An investor can only sign an NDA for an idea once
-  );
-
---
--- HELPER FUNCTION: Get user role
---
-CREATE OR REPLACE FUNCTION get_user_role (user_id UUID) RETURNS TEXT AS $$
-DECLARE
-    role_name TEXT;
-BEGIN
-    SELECT role INTO role_name FROM profiles WHERE id = user_id;
-    RETURN role_name;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
---
--- AUTH: Set up Row Level Security (RLS)
---
--- 1. Enable RLS for all tables
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE ideas ENABLE ROW LEVEL SECURITY;
+);
+-- RLS for notifications
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE nda_signatures ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own notifications." ON notifications FOR SELECT USING (auth.uid() = recipient_id);
+CREATE POLICY "Users can create notifications." ON notifications FOR INSERT WITH CHECK (auth.uid() = sender_id);
+CREATE POLICY "Users can mark their notifications as read." ON notifications FOR UPDATE USING (auth.uid() = recipient_id);
 
---
--- RLS POLICIES: PROFILES
---
-DROP POLICY IF EXISTS "Profiles are viewable by everyone." ON profiles;
-CREATE POLICY "Profiles are viewable by everyone." ON profiles FOR
-SELECT
-  USING (TRUE);
 
-DROP POLICY IF EXISTS "Users can create their own profile." ON profiles;
-CREATE POLICY "Users can create their own profile." ON profiles FOR INSERT
-WITH
-  CHECK (auth.uid () = id);
+-- 4. Create NDAs Table
+-- Tracks Non-Disclosure Agreements signed by investors for specific ideas.
+CREATE TABLE IF NOT EXISTS ndas (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    investor_id UUID REFERENCES auth.users(id),
+    idea_id UUID REFERENCES ideas(id),
+    signed_at TIMESTAMPTZ DEFAULT NOW(),
+    signature TEXT NOT NULL,
+    UNIQUE(investor_id, idea_id)
+);
+-- RLS for ndas
+ALTER TABLE ndas ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Investors can view NDAs they have signed." ON ndas FOR SELECT USING (auth.uid() = investor_id);
+CREATE POLICY "Investors can sign NDAs." ON ndas FOR INSERT WITH CHECK (auth.uid() = investor_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'investor');
 
-DROP POLICY IF EXISTS "Users can update their own profile." ON profiles;
-CREATE POLICY "Users can update their own profile." ON profiles FOR
-UPDATE
-  USING (auth.uid () = id)
-  WITH
-  CHECK (auth.uid () = id);
 
---
--- RLS POLICIES: IDEAS
---
-DROP POLICY IF EXISTS "Ideas are visible to investors." ON ideas;
-CREATE POLICY "Ideas are visible to investors." ON ideas FOR
-SELECT
-  USING (get_user_role(auth.uid()) = 'investor');
-
-DROP POLICY IF EXISTS "Entrepreneurs can view their own ideas." ON ideas;
-CREATE POLICY "Entrepreneurs can view their own ideas." ON ideas FOR
-SELECT
-  USING (auth.uid () = entrepreneur_id);
-
-DROP POLICY IF EXISTS "Entrepreneurs can create ideas." ON ideas;
-CREATE POLICY "Entrepreneurs can create ideas." ON ideas FOR INSERT
-WITH
-  CHECK (
-    auth.uid () = entrepreneur_id
-    AND get_user_role(auth.uid()) = 'entrepreneur'
-  );
-
-DROP POLICY IF EXISTS "Entrepreneurs can update their own ideas." ON ideas;
-CREATE POLICY "Entrepreneurs can update their own ideas." ON ideas FOR
-UPDATE
-  USING (auth.uid () = entrepreneur_id)
-  WITH
-  CHECK (auth.uid () = entrepreneur_id);
-
-DROP POLICY IF EXISTS "Entrepreneurs can delete their own ideas." ON ideas;
-CREATE POLICY "Entrepreneurs can delete their own ideas." ON ideas FOR DELETE USING (auth.uid () = entrepreneur_id);
-
---
--- RLS POLICIES: NOTIFICATIONS
---
-DROP POLICY IF EXISTS "Users can view their own notifications." ON notifications;
-CREATE POLICY "Users can view their own notifications." ON notifications FOR
-SELECT
-  USING (auth.uid () = recipient_id);
-
-DROP POLICY IF EXISTS "Users can create notifications for others." ON notifications;
-CREATE POLICY "Users can create notifications for others." ON notifications FOR INSERT
-WITH
-  CHECK (auth.uid () = sender_id);
-
-DROP POLICY IF EXISTS "Users can mark their notifications as read." ON notifications;
-CREATE POLICY "Users can mark their notifications as read." ON notifications FOR
-UPDATE
-  USING (auth.uid () = recipient_id)
-  WITH
-  CHECK (auth.uid () = recipient_id);
-
---
--- RLS POLICIES: NDA SIGNATURES
---
-DROP POLICY IF EXISTS "Investors can see their own signed NDAs." ON nda_signatures;
-CREATE POLICY "Investors can see their own signed NDAs." ON nda_signatures FOR
-SELECT
-  USING (auth.uid () = investor_id);
-
-DROP POLICY IF EXISTS "Entrepreneurs can see who signed NDAs for their ideas." ON nda_signatures;
-CREATE POLICY "Entrepreneurs can see who signed NDAs for their ideas." ON nda_signatures FOR
-SELECT
-  USING (
-    EXISTS (
-      SELECT
-        1
-      FROM
-        ideas
-      WHERE
-        ideas.id = nda_signatures.idea_id
-        AND ideas.entrepreneur_id = auth.uid ()
-    )
-  );
-
-DROP POLICY IF EXISTS "Investors can sign an NDA." ON nda_signatures;
-CREATE POLICY "Investors can sign an NDA." ON nda_signatures FOR INSERT
-WITH
-  CHECK (
-    auth.uid () = investor_id
-    AND get_user_role(auth.uid()) = 'investor'
-  );
-
---
--- DB TRIGGERS: Create a profile for new users
---
-CREATE OR REPLACE FUNCTION public.handle_new_user () RETURNS TRIGGER AS $$
-DECLARE
-    user_role TEXT;
+-- 5. Create a function to automatically create a profile for a new user.
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
 BEGIN
-    -- Extract the role from the user's metadata
-    user_role := NEW.raw_user_meta_data ->> 'role';
-
-    -- Create a corresponding profile
-    INSERT INTO public.profiles (id, full_name, role)
-    VALUES (NEW.id, NEW.raw_user_meta_data ->> 'full_name', user_role);
-
-    RETURN NEW;
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
+  RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
---
--- Trigger to execute the function after a new user is created
---
+-- 6. Create a trigger to call the function when a new user signs up.
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
-AFTER INSERT ON auth.users FOR EACH ROW
-EXECUTE FUNCTION public.handle_new_user ();
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+
+-- 7. Create a function to automatically delete all user-related data.
+CREATE OR REPLACE FUNCTION public.delete_user_data()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Delete from profiles
+  DELETE FROM public.profiles WHERE id = old.id;
+  -- Delete from ideas where the user is the entrepreneur
+  DELETE FROM public.ideas WHERE entrepreneur_id = old.id;
+  -- Delete notifications sent to or from the user
+  DELETE FROM public.notifications WHERE recipient_id = old.id OR sender_id = old.id;
+  -- Delete NDAs signed by the user
+  DELETE FROM public.ndas WHERE investor_id = old.id;
+  RETURN old;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 8. Create a trigger to call the cleanup function before a user is deleted.
+DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
+CREATE TRIGGER on_auth_user_deleted
+  BEFORE DELETE ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.delete_user_data();
+

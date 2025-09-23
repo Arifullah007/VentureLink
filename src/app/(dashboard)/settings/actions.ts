@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 
 const passwordSchema = z.object({
   currentPassword: z.string(),
@@ -63,24 +65,16 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
     
         const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey);
 
-        // First, delete the user's profile to satisfy foreign key constraints.
-        const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .delete()
-            .eq('id', user.id);
-
-        if (profileError) {
-            // We can choose to log this, but we'll proceed to attempt user deletion anyway.
-            console.error('Could not delete user profile:', profileError.message);
-        }
-
-        // Now, delete the user from auth.
+        // The database trigger `on_auth_user_deleted` will now handle cleaning up
+        // all associated data in profiles, ideas, etc.
+        // So we can just delete the user directly.
         const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user.id);
         
         if (deleteError) {
             throw deleteError;
         }
 
+        revalidatePath('/');
         return { error: null };
     } catch (error: any) {
         return { error: new Error(error.message || 'Failed to delete account.') };
