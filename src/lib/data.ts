@@ -121,7 +121,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   {
     title: 'High Return',
     description: 'Exclusive access to high-growth ventures with significant return potential.',
-    price: '₹X',
+    price: '₹5X',
     pricePeriod: '',
     features: ['Investment range: 26L-1CR', 'High expected returns', 'Complete due diligence package', 'Dedicated account manager'],
     cta: 'Choose High Return',
