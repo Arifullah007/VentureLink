@@ -51,8 +51,9 @@ export default function InvestorLoginPage() {
       title: 'Login Successful',
       description: 'Redirecting to your dashboard...',
     });
-    setLoading(false);
+    
     router.refresh();
+    router.push('/investor/dashboard');
   };
 
   return (

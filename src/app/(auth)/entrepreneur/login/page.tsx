@@ -51,8 +51,9 @@ export default function EntrepreneurLoginPage() {
       title: 'Login Successful',
       description: 'Redirecting to your dashboard...',
     });
-    setLoading(false);
+    
     router.refresh();
+    router.push('/entrepreneur/dashboard');
   };
 
   return (
