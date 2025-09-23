@@ -1,150 +1,142 @@
 
--- 1. Create Tables
--- Note: Supabase automatically created a 'profiles' table with the old Auth system.
--- We will drop it if it exists to ensure a clean slate, then create our own.
-drop table if exists public.profiles;
-create table public.profiles (
-  id uuid references auth.users(id) on delete cascade not null primary key,
-  updated_at timestamp with time zone,
-  full_name text,
-  avatar_url text,
-  website_url text,
-  linkedin_url text,
-  bio text
+-- 1. Create Profiles Table
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    role TEXT,
+    full_name TEXT,
+    bio TEXT,
+    website_url TEXT,
+    linkedin_url TEXT,
+    avatar_url TEXT,
+    updated_at TIMESTAMPTZ
 );
 
-create table public.ideas (
-  id uuid default gen_random_uuid() not null primary key,
-  created_at timestamp with time zone default now() not null,
-  updated_at timestamp with time zone,
-  entrepreneur_id uuid references public.profiles(id) on delete cascade not null,
-  idea_title text not null,
-  anonymized_summary text not null,
-  full_text text,
-  sector text not null,
-  investment_required text not null,
-  estimated_returns text not null,
-  prototype_url text
+-- 2. Create Ideas Table
+CREATE TABLE IF NOT EXISTS public.ideas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    entrepreneur_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    idea_title TEXT NOT NULL,
+    anonymized_summary TEXT NOT NULL,
+    full_text TEXT,
+    sector TEXT,
+    investment_required TEXT,
+    estimated_returns TEXT,
+    prototype_url TEXT,
+    views INT DEFAULT 0,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- 3. Helper Functions & Triggers
 
--- 2. Helper Functions & Triggers
--- This function will be triggered every time a new user signs up.
-create or replace function public.handle_new_user()
-returns trigger
-language plpgsql
-security definer set search_path = public
-as $$
-begin
-  insert into public.profiles (id, full_name, avatar_url)
-  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url');
-  return new;
-end;
-$$;
+-- Function to get the user's role from their metadata
+CREATE OR REPLACE FUNCTION get_user_role()
+RETURNS TEXT AS $$
+DECLARE
+    user_role TEXT;
+BEGIN
+    SELECT auth.jwt()->>'user_role' INTO user_role;
+    RETURN user_role;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- This trigger calls the function when a user is created.
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+-- Function to create a profile for a new user
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, role, full_name)
+    VALUES (new.id, new.raw_user_meta_data->>'role', new.raw_user_meta_data->>'full_name');
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Trigger to call handle_new_user on new user signup
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Utility function to get a user's role from their metadata.
-create or replace function get_user_role()
-returns text
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  if auth.uid() is null then
-    return 'anon';
-  else
-    return (select raw_user_meta_data->>'role' from auth.users where id = auth.uid())::text;
-  end if;
-end;
-$$;
-
--- Function to allow running raw SQL for seeding.
-create or replace function execute_sql(sql text)
-returns void as $$
-begin
-  execute sql;
-end;
-$$ language plpgsql;
+-- Function for seeding script to bypass RLS
+CREATE OR REPLACE FUNCTION execute_sql(sql text)
+RETURNS void AS $$
+BEGIN
+    EXECUTE sql;
+END;
+$$ LANGUAGE plpgsql;
 
 
--- 3. Row Level Security (RLS) Policies
--- Enable RLS for all tables.
-alter table public.profiles enable row level security;
-alter table public.ideas enable row level security;
+-- 4. Row Level Security (RLS)
 
--- Drop existing policies to ensure a clean state
-drop policy if exists "Users can see all profiles" on public.profiles;
-drop policy if exists "Users can insert their own profile." on public.profiles;
-drop policy if exists "Users can update own profile." on public.profiles;
-drop policy if exists "Investors can view all ideas" on public.ideas;
-drop policy if exists "Entrepreneurs can view their own ideas" on public.ideas;
-drop policy if exists "Entrepreneurs can insert their own ideas" on public.ideas;
-drop policy if exists "Entrepreneurs can update their own ideas" on public.ideas;
-drop policy if exists "Users can delete their own ideas" on public.ideas;
+-- Enable RLS on all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ideas ENABLE ROW LEVEL SECURITY;
 
+-- 5. Security Policies
 
--- Create policies for the 'profiles' table
-create policy "Users can see all profiles"
-  on public.profiles for select
-  using ( true );
+-- Profiles Policies
+DROP POLICY IF EXISTS "Users can view their own profile." ON public.profiles;
+CREATE POLICY "Users can view their own profile."
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
 
-create policy "Users can insert their own profile."
-  on public.profiles for insert
-  with check ( auth.uid() = id );
+DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
+CREATE POLICY "Users can update their own profile."
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id)
+    WITH CHECK (auth.uid() = id);
 
-create policy "Users can update own profile."
-  on public.profiles for update
-  using ( auth.uid() = id );
+-- Ideas Policies
+DROP POLICY IF EXISTS "Entrepreneurs can create ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can create ideas."
+    ON public.ideas FOR INSERT
+    WITH CHECK (get_user_role() = 'entrepreneur' AND auth.uid() = entrepreneur_id);
 
+DROP POLICY IF EXISTS "Entrepreneurs can view their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can view their own ideas."
+    ON public.ideas FOR SELECT
+    USING (get_user_role() = 'entrepreneur' AND auth.uid() = entrepreneur_id);
 
--- Create policies for the 'ideas' table
-create policy "Investors can view all ideas"
-  on public.ideas for select
-  to authenticated
-  using ( get_user_role() = 'investor' );
+DROP POLICY IF EXISTS "Investors can view all ideas." ON public.ideas;
+CREATE POLICY "Investors can view all ideas."
+    ON public.ideas FOR SELECT
+    USING (get_user_role() = 'investor');
 
-create policy "Entrepreneurs can view their own ideas"
-  on public.ideas for select
-  to authenticated
-  using ( get_user_role() = 'entrepreneur' and auth.uid() = entrepreneur_id );
+DROP POLICY IF EXISTS "Entrepreneurs can update their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can update their own ideas."
+    ON public.ideas FOR UPDATE
+    USING (get_user_role() = 'entrepreneur' AND auth.uid() = entrepreneur_id)
+    WITH CHECK (get_user_role() = 'entrepreneur' AND auth.uid() = entrepreneur_id);
 
-create policy "Entrepreneurs can insert their own ideas"
-  on public.ideas for insert
-  to authenticated
-  with check ( get_user_role() = 'entrepreneur' and auth.uid() = entrepreneur_id );
+DROP POLICY IF EXISTS "Entrepreneurs can delete their own ideas." ON public.ideas;
+CREATE POLICY "Entrepreneurs can delete their own ideas."
+    ON public.ideas FOR DELETE
+    USING (get_user_role() = 'entrepreneur' AND auth.uid() = entrepreneur_id);
 
-create policy "Entrepreneurs can update their own ideas"
-  on public.ideas for update
-  to authenticated
-  using ( get_user_role() = 'entrepreneur' and auth.uid() = entrepreneur_id );
+-- 6. Storage Buckets & Policies
+-- These policies ensure users can only access files in their own folder.
 
-create policy "Users can delete their own ideas"
-  on public.ideas for delete
-  to authenticated
-  using ( auth.uid() = entrepreneur_id );
+-- Create a bucket for idea prototypes with public read access turned OFF
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('idea_prototypes', 'idea_prototypes', false)
+ON CONFLICT (id) DO NOTHING;
 
+-- Allow authenticated users to upload to the idea_prototypes bucket
+DROP POLICY IF EXISTS "Authenticated users can upload files." ON storage.objects;
+CREATE POLICY "Authenticated users can upload files."
+    ON storage.objects FOR INSERT
+    TO authenticated
+    WITH CHECK (bucket_id = 'idea_prototypes');
 
--- 4. Storage Bucket Policies
--- Create a bucket for idea prototypes
-insert into storage.buckets (id, name, public)
-values ('idea_prototypes', 'idea_prototypes', false)
-on conflict (id) do nothing;
+-- Allow users to view files only within their own folder in the bucket
+DROP POLICY IF EXISTS "Users can read their own files." ON storage.objects;
+CREATE POLICY "Users can read their own files."
+    ON storage.objects FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'idea_prototypes' AND (storage.foldername(name))[1] = auth.uid()::text);
 
--- Drop existing policies to ensure a clean state
-drop policy if exists "Allow entrepreneurs to upload to their own folder" on storage.objects;
-drop policy if exists "Allow authenticated users to view files" on storage.objects;
-
--- Create policies for the 'idea_prototypes' bucket
-create policy "Allow entrepreneurs to upload to their own folder"
-  on storage.objects for insert to authenticated
-  with check ( bucket_id = 'idea_prototypes' and (storage.foldername(name))[1] = auth.uid()::text );
-
-create policy "Allow authenticated users to view files"
-  on storage.objects for select to authenticated
-  using ( bucket_id = 'idea_prototypes' );
+-- Allow investors to view any file in the bucket (as they need to see entrepreneur prototypes)
+DROP POLICY IF EXISTS "Investors can read all files." ON storage.objects;
+CREATE POLICY "Investors can read all files."
+    ON storage.objects FOR SELECT
+    TO authenticated
+    USING (bucket_id = 'idea_prototypes' AND get_user_role() = 'investor');
