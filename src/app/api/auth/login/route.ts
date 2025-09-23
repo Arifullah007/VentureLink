@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // If we are here, the login and role check were successful.
-  // The cookie is automatically set on the 'response' object by the Supabase client.
-  return response;
+  // On success, return a JSON response along with the response object
+  // that has the session cookie set on it.
+  return NextResponse.json({ message: 'Login successful' }, response);
 }
