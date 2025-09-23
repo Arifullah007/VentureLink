@@ -30,9 +30,8 @@ export default function EntrepreneurLoginPage() {
         body: JSON.stringify({ email, password, role: 'entrepreneur' }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
+        const result = await response.json();
         throw new Error(result.error || 'An unknown error occurred.');
       }
 
@@ -42,6 +41,7 @@ export default function EntrepreneurLoginPage() {
       });
       
       router.push('/entrepreneur/dashboard');
+      router.refresh();
 
     } catch (error: any) {
       toast({
