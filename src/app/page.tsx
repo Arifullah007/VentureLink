@@ -1,46 +1,58 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Briefcase, Lightbulb } from 'lucide-react';
+import { ArrowRight, Briefcase, Lightbulb, Bot, Shield, Layers, Handshake } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
-const features = [
+const homeFeatures = [
   {
-    icon: <Lightbulb className="h-8 w-8 text-primary" />,
-    title: 'For Entrepreneurs',
-    description: 'Submit your groundbreaking ideas, connect with investors, and find the funding you need to grow.',
-    link: '/entrepreneur/dashboard',
-    cta: 'Go to Dashboard',
+    icon: <Bot className="h-8 w-8 text-white" />,
+    title: 'AI-Powered Matching',
+    description: 'Our intelligent algorithm matches investors with entrepreneurs based on industry, investment size, and expected returns.',
   },
   {
-    icon: <Briefcase className="h-8 w-8 text-primary" />,
-    title: 'For Investors',
-    description: 'Discover promising startups, access a curated list of investment opportunities, and grow your portfolio.',
-    link: '/investor/dashboard',
-    cta: 'Go to Dashboard',
+    icon: <Shield className="h-8 w-8 text-white" />,
+    title: 'Secure Idea Sharing',
+    description: 'Entrepreneurs can share watermarked prototypes and partial summaries before revealing full details to interested investors.',
+  },
+  {
+    icon: <Layers className="h-8 w-8 text-white" />,
+    title: 'Tiered Subscriptions',
+    description: 'Investors can choose from multiple subscription tiers based on their investment capacity and risk appetite.',
+  },
+  {
+    icon: <Handshake className="h-8 w-8 text-white" />,
+    title: 'Collaboration Features',
+    description: 'Combine Invest and Combine Grow features allow multiple parties to collaborate on single ideas.',
   },
 ];
 
 export default function Home() {
   const [year, setYear] = useState<number | null>(null);
+  const featuresRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setYear(new Date().getFullYear());
   }, []);
 
+  const handleFeaturesClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-background font-body">
-      <header className="absolute top-0 left-0 right-0 z-10 bg-white shadow-sm text-foreground">
+      <header className="sticky top-0 z-50 bg-white shadow-sm text-foreground">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
             <Logo className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold tracking-wider">VentureLink</h1>
             </div>
             <nav className="hidden md:flex items-center gap-6 text-sm">
-                <Link href="/" className="font-semibold text-primary underline-offset-4 underline">Home</Link>
-                <Link href="#" className="text-muted-foreground hover:text-primary">Features</Link>
+                <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">Home</Link>
+                <Link href="#features" onClick={handleFeaturesClick} className="text-muted-foreground hover:text-primary">Features</Link>
                 <Link href="#" className="text-muted-foreground hover:text-primary">How It Works</Link>
             </nav>
             <div className="flex items-center gap-2">
@@ -54,55 +66,52 @@ export default function Home() {
         </div>
       </header>
       <main className="flex-grow">
-        <section className="relative flex items-center justify-center h-screen bg-gradient-to-r from-primary to-accent text-white">
+        <section className="relative flex items-center justify-center h-[calc(100vh-80px)] bg-gradient-to-r from-primary to-accent text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">
               Connect. Invest. Grow.
               <br />
-              <span className="text-white/90">With Venture Link</span>
+              <span className="text-white/90">With VentureLink</span>
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-white/80">
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
+              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold rounded-none">
                 <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
               </Button>
-              <Button size="lg" variant="secondary" asChild className="bg-primary/80 hover:bg-primary/90 text-white font-semibold">
+              <Button size="lg" variant="secondary" asChild className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold rounded-none">
                 <Link href="/investor/dashboard">I'm an Investor</Link>
               </Button>
             </div>
           </div>
         </section>
 
-        <section className="bg-muted/40 py-20 md:py-24">
+        <section id="features" ref={featuresRef} className="py-20 md:py-24 bg-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
              <div className="text-center mb-12">
-              <h3 className="text-3xl md:text-4xl font-bold tracking-tight">Built For You</h3>
-              <p className="mt-2 text-lg text-muted-foreground">Whether you're an innovator or an investor, we have you covered.</p>
+              <p className="text-sm font-bold uppercase text-primary tracking-wider">Features</p>
+              <h3 className="text-3xl md:text-4xl font-bold tracking-tight mt-2">A better way to connect</h3>
             </div>
-            <div className="grid md:grid-cols-2 gap-12">
-              {features.map((feature) => (
-                <Card key={feature.title} className="text-center shadow-lg hover:shadow-xl transition-shadow bg-background">
-                  <CardContent className="p-8">
-                     <div className="bg-primary/10 p-4 rounded-full inline-block mb-4">
-                      {feature.icon}
+            <div className="grid md:grid-cols-2 gap-x-12 gap-y-10 max-w-4xl mx-auto">
+              {homeFeatures.map((feature) => (
+                <div key={feature.title} className="flex items-start gap-4">
+                    <div className="bg-primary/20 p-4 rounded-lg flex-shrink-0">
+                      <div className="bg-primary p-2 rounded-md">
+                        {feature.icon}
+                      </div>
                     </div>
-                    <h3 className="text-2xl font-bold">{feature.title}</h3>
-                    <p className="mt-2 text-muted-foreground">{feature.description}</p>
-                    <Button variant="link" className="mt-4 text-primary font-semibold" asChild>
-                      <Link href={feature.link}>
-                        {feature.cta} <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <div>
+                      <h4 className="text-xl font-bold">{feature.title}</h4>
+                      <p className="mt-1 text-muted-foreground">{feature.description}</p>
+                    </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="py-20 md:py-24">
+        <section className="py-20 md:py-24 bg-muted/40">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h3 className="text-3xl md:text-4xl font-bold tracking-tight">How It Works</h3>
