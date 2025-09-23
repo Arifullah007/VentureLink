@@ -16,7 +16,7 @@ import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
-  password: z.string().min(8, 'Password must be at least 8 characters.'),
+  password: z.string().min(1, 'Password is required.'),
 });
 
 const signupSchema = z.object({
@@ -71,6 +71,7 @@ function AuthForm() {
         title: 'Login Successful!',
         description: 'Redirecting to your dashboard...',
       });
+      // Use router.push for a direct, reliable client-side redirect.
       router.push(result.redirectTo);
     } else {
         toast({
@@ -92,12 +93,19 @@ function AuthForm() {
             description: result.error.message,
             variant: 'destructive',
         });
-    } else {
+    } else if (result.requiresOtp) {
         toast({
             title: 'Account Created!',
-            description: 'Please check your email to verify your account.',
+            description: 'Please check your email for the verification code.',
         });
-        // You might want to redirect to a page informing the user to check their email
+        // Redirect to the OTP verification page, passing the email as a query parameter.
+        router.push(`/verify-otp?email=${encodeURIComponent(result.email || '')}`);
+    } else {
+        // This case is unlikely with email verification enabled, but good to have.
+        toast({
+            title: 'Account Created!',
+            description: 'You can now log in.',
+        });
         setIsLogin(true);
     }
   };

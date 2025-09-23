@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { verifyOtp } from './actions';
 import { Logo } from '@/components/icons';
 import { Loader2 } from 'lucide-react';
+import { type OtpType } from '@supabase/supabase-js';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'OTP must be 6 digits.').max(6, 'OTP must be 6 digits.'),
@@ -24,6 +25,7 @@ function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
+  const type = (searchParams.get('type') as OtpType) || 'signup';
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +43,7 @@ function VerifyOtpForm() {
       return;
     }
     setLoading(true);
-    const result = await verifyOtp({ email, otp: data.otp });
+    const result = await verifyOtp({ email, otp: data.otp, type });
     setLoading(false);
 
     if (result.error) {
@@ -53,7 +55,7 @@ function VerifyOtpForm() {
     } else {
       toast({
         title: 'Account Verified!',
-        description: 'You can now log in.',
+        description: 'You can now log in to your account.',
       });
       router.push('/login');
     }
@@ -75,7 +77,7 @@ function VerifyOtpForm() {
             </h1>
         </div>
         <p className="text-center text-sm text-muted-foreground mb-6">
-            We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Please enter it below to verify your email address.
+            We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Please enter it below to complete your signup.
         </p>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div>
@@ -98,8 +100,14 @@ function VerifyOtpForm() {
         </form>
          <p className="mt-6 text-center text-sm text-gray-600">
             Didn&apos;t get a code?{' '}
-            <button onClick={() => {}} className="font-semibold text-primary hover:underline" disabled>
-              Resend (Coming Soon)
+            <button onClick={() => {
+                // Future: Implement resend OTP logic here.
+                 toast({
+                    title: 'Info',
+                    description: 'Resend functionality is not yet implemented.',
+                });
+            }} className="font-semibold text-primary hover:underline" disabled>
+              Resend Code
             </button>
         </p>
       </motion.div>

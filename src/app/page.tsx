@@ -57,7 +57,7 @@ export default function Home() {
             </nav>
             <div className="flex items-center gap-2">
             <Button asChild>
-                <Link href="/login">Entrepreneur Login</Link>
+                <Link href="/login?role=entrepreneur">Entrepreneur Login</Link>
             </Button>
             <Button variant="secondary" asChild>
                 <Link href="/login?role=investor">Investor Login</Link>
@@ -78,7 +78,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
               <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
-                <Link href="/login">I'm an Entrepreneur</Link>
+                <Link href="/login?role=entrepreneur">I'm an Entrepreneur</Link>
               </Button>
               <Button size="lg" variant="secondary" asChild className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold">
                 <Link href="/login?role=investor">I'm an Investor</Link>

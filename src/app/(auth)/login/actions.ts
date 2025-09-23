@@ -28,6 +28,7 @@ export async function login(
   }
   
   if (data.user) {
+    // After successful login, get the user's role from the profiles table.
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
@@ -36,23 +37,24 @@ export async function login(
 
     const role = profile?.role;
     
+    // Determine the redirect path based on the role.
     if (role) {
       const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
       return { error: null, redirectTo };
     }
   }
 
-  // Fallback in case user data or role is not available
+  // Fallback in case user data or role is not available after login.
   return { error: { message: 'Could not determine user role. Please try again.' } };
 }
 
 export async function signup(
   formData: z.infer<typeof signupSchema>
-): Promise<{ error: { message: string } | null; data: any }> {
+): Promise<{ error: { message: string } | null; requiresOtp: boolean; email?: string }> {
   const supabase = createClient();
-  const origin = headers().get('origin');
-
-  const { error, data } = await supabase.auth.signUp({
+  
+  // We use OTP for email verification. The emailRedirectTo is not needed here.
+  const { data, error } = await supabase.auth.signUp({
     email: formData.email,
     password: formData.password,
     options: {
@@ -60,13 +62,17 @@ export async function signup(
         full_name: formData.fullName,
         role: formData.role,
       },
-      emailRedirectTo: `${origin}/auth/callback`,
     },
   });
 
   if (error) {
-    return { error: { message: error.message }, data: null };
+    return { error: { message: error.message }, requiresOtp: false };
+  }
+
+  // If signup is successful and the user is not yet confirmed, they need to verify with OTP.
+  if (data.user && !data.user.email_confirmed_at) {
+    return { error: null, requiresOtp: true, email: data.user.email };
   }
   
-  return { error: null, data: data.user };
+  return { error: null, requiresOtp: false };
 }

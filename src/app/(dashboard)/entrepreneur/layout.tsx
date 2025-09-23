@@ -35,8 +35,7 @@ export default function EntrepreneurLayout({
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    router.push('/');
   }
 
   useEffect(() => {
@@ -85,7 +84,7 @@ export default function EntrepreneurLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>{userName?.charAt(0) || 'E'}</AvatarFallback>
+                    <AvatarFallback>{userName?.charAt(0)?.toUpperCase() || 'E'}</AvatarFallback>
                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
