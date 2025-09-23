@@ -1,43 +1,43 @@
-import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
 
-export async function POST(request: Request) {
+import { type NextRequest } from 'next/server';
+import { createClient } from '@/lib/supabase/middleware';
+
+export async function POST(request: NextRequest) {
   const { email, password, role } = await request.json();
+  const { supabase, response } = createClient(request);
 
   if (!email || !password || !role) {
-    return NextResponse.json(
-      { error: 'Email, password, and role are required' },
-      { status: 400 }
-    );
+    response.status = 400;
+    response.statusText = JSON.stringify({ error: 'Email, password, and role are required' });
+    return response;
   }
 
-  const supabase = createClient();
-
-  // First, sign in the user
+  // Sign in the user
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error || !data.user) {
-    return NextResponse.json(
-      { error: error?.message || 'Invalid login credentials' },
-      { status: 401 }
-    );
+    response.status = 401;
+    response.statusText = JSON.stringify({ error: error?.message || 'Invalid login credentials' });
+    return response;
   }
 
-  // Then, verify their role from the successful sign-in data
+  // Verify their role from the successful sign-in data
   const userRole = data.user.user_metadata?.role;
 
   if (userRole !== role) {
-    // If the role doesn't match, sign the user out immediately
+    // If the role doesn't match, sign the user out immediately.
+    // Importantly, we still need to pass the response object along.
     await supabase.auth.signOut();
-    return NextResponse.json(
-      { error: `This account is not registered as a(n) ${role}. Access denied.` },
-      { status: 403 }
-    );
+    const errorResponse = createClient(request).response;
+    errorResponse.status = 403;
+    errorResponse.statusText = JSON.stringify({ error: `This account is not registered as a(n) ${role}. Access denied.` });
+    return errorResponse;
   }
 
   // If we are here, the login and role check were successful.
-  return NextResponse.json({ message: 'Login successful' }, { status: 200 });
+  // The cookie is automatically set on the 'response' object by the Supabase client.
+  return response;
 }
