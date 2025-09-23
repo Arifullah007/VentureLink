@@ -21,7 +21,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Search, Bot, Crown, Handshake, LogOut, Bell } from 'lucide-react';
+import { Home, Search, Bot, Crown, Handshake, LogOut, Bell, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
@@ -140,6 +140,13 @@ export default function InvestorLayout({
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                 <DropdownMenuItem asChild>
+                   <Link href="#"><User className="mr-2 h-4 w-4" />Profile</Link>
+                 </DropdownMenuItem>
+                 <DropdownMenuItem asChild>
+                   <Link href="#"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+                 </DropdownMenuItem>
+                 <DropdownMenuSeparator />
                  <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>

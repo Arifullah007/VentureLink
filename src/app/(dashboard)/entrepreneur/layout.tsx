@@ -10,11 +10,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { LogOut, Plus } from 'lucide-react';
+import { LogOut, Plus, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
@@ -30,7 +29,6 @@ export default function EntrepreneurLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -81,6 +79,13 @@ export default function EntrepreneurLayout({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="#"><User className="mr-2 h-4 w-4" />Profile</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                   <Link href="#"><Settings className="mr-2 h-4 w-4" />Settings</Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout}>
                    <LogOut className="mr-2 h-4 w-4" />
