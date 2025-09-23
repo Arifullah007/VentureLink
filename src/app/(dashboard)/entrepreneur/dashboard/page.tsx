@@ -37,25 +37,23 @@ export default function EntrepreneurDashboard() {
     useEffect(() => {
         const fetchIdeasAndStats = async () => {
             setLoading(true);
-            const { data: { user } } = await supabase.auth.getUser();
+            
+            // Bypass user check and fetch all ideas for demo
+            const { data: fetchedIdeas, error, count } = await supabase
+                .from('ideas')
+                .select('*', { count: 'exact' });
 
-            if (user) {
-                const { data: fetchedIdeas, error, count } = await supabase
-                    .from('ideas')
-                    .select('*', { count: 'exact' })
-                    .eq('entrepreneur_id', user.id);
+            if (!error && fetchedIdeas) {
+                setIdeas(fetchedIdeas);
+                
+                const totalViews = fetchedIdeas.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
+                const totalInquiries = 0;
 
-                if (!error && fetchedIdeas) {
-                    setIdeas(fetchedIdeas);
-                    
-                    const totalViews = fetchedIdeas.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
-                    const totalInquiries = 0;
-
-                    setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
-                } else if (error) {
-                    console.error("Error fetching ideas", error.message);
-                }
+                setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
+            } else if (error) {
+                console.error("Error fetching ideas", error.message);
             }
+            
             setLoading(false);
         };
 

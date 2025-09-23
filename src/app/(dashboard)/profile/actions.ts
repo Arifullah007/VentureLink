@@ -11,25 +11,19 @@ export type Profile = {
   linkedin_url: string | null;
 };
 
+// This function will return a mock profile for the demo
 export async function getProfileAction(): Promise<{ data: Profile | null; error: Error | null; }> {
-  const supabase = createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  // In a real app, you would fetch this from the database based on the logged-in user.
+  // For this demo, we return a hardcoded profile.
+  const mockProfile: Profile = {
+      id: '5a99a46a-31b3-4798-8224-74ce3585d41c', // Rohan Kumar from seed data
+      full_name: 'Rohan Kumar (Demo)',
+      bio: 'Passionate entrepreneur working on the next big thing in sustainable tech. Always open to new ideas and collaboration.',
+      website_url: 'https://example.com',
+      linkedin_url: 'https://linkedin.com/in/rohankumar-demo'
+  };
 
-  if (authError || !user) {
-    return { data: null, error: new Error('User not authenticated.') };
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-  
-  if (error) {
-    return { data: null, error: new Error(error.message) };
-  }
-
-  return { data, error: null };
+  return Promise.resolve({ data: mockProfile, error: null });
 }
 
 type UpdateProfilePayload = {
@@ -40,29 +34,11 @@ type UpdateProfilePayload = {
 }
 
 export async function updateProfileAction(payload: UpdateProfilePayload): Promise<{ error: Error | null; }> {
-    const supabase = createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-        return { error: new Error('User not authenticated.') };
-    }
+    // In a real app, this would update the database.
+    // For this demo, we will log the action and return success.
+    console.log('DEMO MODE: Profile update called with payload:', payload);
     
-    const { error } = await supabase
-        .from('profiles')
-        .update({
-            full_name: payload.fullName,
-            bio: payload.bio,
-            website_url: payload.websiteUrl,
-            linkedin_url: payload.linkedinUrl,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-    if (error) {
-        return { error: new Error(error.message) };
-    }
-    
-    // Revalidate the profile pages to show the new data
+    // We can revalidate paths to simulate a real update if needed
     revalidatePath('/entrepreneur/profile');
     revalidatePath('/investor/profile');
 

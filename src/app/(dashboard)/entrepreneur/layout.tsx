@@ -12,7 +12,6 @@ import {
 import Link from 'next/link';
 import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake, Info } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { LogoutButton } from '@/components/logout-button';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -68,7 +67,7 @@ export default function EntrepreneurLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>S</AvatarFallback>
+                    <AvatarFallback>E</AvatarFallback>
                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
@@ -89,8 +88,11 @@ export default function EntrepreneurLayout({
                     </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
-                  <LogoutButton isDropdown />
+                <DropdownMenuItem asChild>
+                   <Link href="/">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Exit</span>
+                    </Link>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

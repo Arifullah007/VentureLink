@@ -11,15 +11,15 @@ const features = [
     icon: <Lightbulb className="h-8 w-8 text-primary" />,
     title: 'For Entrepreneurs',
     description: 'Submit your groundbreaking ideas, connect with investors, and find the funding you need to grow.',
-    link: '/entrepreneur/login',
-    cta: 'Start Your Journey',
+    link: '/entrepreneur/dashboard',
+    cta: 'Go to Dashboard',
   },
   {
     icon: <Briefcase className="h-8 w-8 text-primary" />,
     title: 'For Investors',
     description: 'Discover promising startups, access a curated list of investment opportunities, and grow your portfolio.',
-    link: '/investor/login',
-    cta: 'Find Opportunities',
+    link: '/investor/dashboard',
+    cta: 'Go to Dashboard',
   },
 ];
 
@@ -39,10 +39,10 @@ export default function Home() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" asChild>
-            <Link href="/entrepreneur/signup">Entrepreneur Sign Up</Link>
+            <Link href="/entrepreneur/dashboard">Entrepreneur Dashboard</Link>
           </Button>
           <Button asChild>
-            <Link href="/investor/signup">Investor Sign Up</Link>
+            <Link href="/investor/dashboard">Investor Dashboard</Link>
           </Button>
         </div>
       </header>
@@ -57,10 +57,10 @@ export default function Home() {
             </p>
             <div className="mt-8 flex justify-center gap-4">
               <Button size="lg" asChild>
-                <Link href="/investor/login">I'm an Investor</Link>
+                <Link href="/investor/dashboard">I'm an Investor</Link>
               </Button>
               <Button size="lg" variant="secondary" asChild>
-                <Link href="/entrepreneur/login">I'm an Entrepreneur</Link>
+                <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
               </Button>
             </div>
           </div>

@@ -22,9 +22,8 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Search, Bot, Crown, Handshake, Settings, User, Info } from 'lucide-react';
+import { Home, Search, Bot, Crown, Handshake, Settings, User, Info, LogOut } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { LogoutButton } from '@/components/logout-button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const navItems = [
@@ -69,7 +68,12 @@ export default function InvestorLayout({
           <SidebarFooter>
               <SidebarMenu>
                   <SidebarMenuItem>
-                      <LogoutButton />
+                      <SidebarMenuButton asChild>
+                          <Link href="/">
+                            <LogOut />
+                            <span>Exit</span>
+                          </Link>
+                      </SidebarMenuButton>
                   </SidebarMenuItem>
               </SidebarMenu>
           </SidebarFooter>
@@ -84,16 +88,16 @@ export default function InvestorLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                   <Avatar className="h-8 w-8">
-                     <AvatarFallback>P</AvatarFallback>
+                     <AvatarFallback>I</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Priya Patel</p>
+                    <p className="text-sm font-medium leading-none">Investor</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      investor@venturelink.com
+                      investor@venturelink.demo
                     </p>
                   </div>
                 </DropdownMenuLabel>
@@ -111,8 +115,11 @@ export default function InvestorLayout({
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem>
-                    <LogoutButton isDropdown />
+                 <DropdownMenuItem asChild>
+                    <Link href="/">
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Exit</span>
+                    </Link>
                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
