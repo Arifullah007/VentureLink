@@ -25,7 +25,6 @@ import Link from 'next/link';
 import { Home, Search, Bot, Crown, Handshake, Settings, User, Info } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
-import { AuthGuard } from '@/components/auth-guard';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const navItems = [
@@ -45,7 +44,6 @@ export default function InvestorLayout({
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   return (
-    <AuthGuard role="investor">
       <SidebarProvider>
         <Sidebar>
           <SidebarHeader>
@@ -132,6 +130,5 @@ export default function InvestorLayout({
           </main>
         </SidebarInset>
       </SidebarProvider>
-    </AuthGuard>
   );
 }

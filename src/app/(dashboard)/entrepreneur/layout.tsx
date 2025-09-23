@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake, Info } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
-import { AuthGuard } from '@/components/auth-guard';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -33,7 +32,6 @@ export default function EntrepreneurLayout({
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   return (
-    <AuthGuard role="entrepreneur">
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
         <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-50">
           <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
@@ -110,6 +108,5 @@ export default function EntrepreneurLayout({
           {children}
         </main>
       </div>
-    </AuthGuard>
   );
 }
