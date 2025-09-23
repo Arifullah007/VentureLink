@@ -23,48 +23,49 @@ const demoUsers = [
 ];
 
 async function createOrUpdateUser(user: typeof demoUsers[0]) {
-  // Check if user exists
-  const { data: existingUser, error: getUserError } = await supabaseAdmin.auth.admin.getUserById(user.id);
-  
-  if (getUserError && getUserError.message !== 'User not found') {
-    console.error(`Error checking user ${user.email}:`, getUserError.message);
-    return;
-  }
+    // Check if user exists by email, as ID might change.
+    const { data: { users }, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ email: user.email } as any);
 
-  if (existingUser.user) {
-    // User exists, update them
-    console.log(`User ${user.email} already exists. Updating...`);
-    const { data: updatedUser, error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
-      user.id,
-      {
+    if (listUsersError) {
+        console.error(`Error checking for user ${user.email}:`, listUsersError.message);
+        return;
+    }
+    
+    const existingUser = users && users.length > 0 ? users[0] : null;
+
+    if (existingUser) {
+        // User exists, update them
+        console.log(`User ${user.email} already exists. Updating...`);
+        const { data: updatedUser, error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
+        existingUser.id,
+        {
+            email: user.email,
+            password: user.password,
+            user_metadata: user.metadata,
+            email_confirm: true, // Auto-confirm email for demo users
+        }
+        );
+        if (updateUserError) {
+        console.error(`Error updating user ${user.email}:`, updateUserError.message);
+        } else {
+        console.log(`Successfully updated user ${updatedUser.user.email}`);
+        }
+    } else {
+        // User does not exist, create them
+        console.log(`User ${user.email} not found. Creating...`);
+        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
         email: user.email,
         password: user.password,
         user_metadata: user.metadata,
-        email_confirm: true, // Auto-confirm email for demo users
-      }
-    );
-    if (updateUserError) {
-      console.error(`Error updating user ${user.email}:`, updateUserError.message);
-    } else {
-      console.log(`Successfully updated user ${updatedUser.user.email}`);
-    }
-  } else {
-    // User does not exist, create them
-    console.log(`User ${user.email} not found. Creating...`);
-    const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-      id: user.id,
-      email: user.email,
-      password: user.password,
-      user_metadata: user.metadata,
-      email_confirm: true,
-    });
+        email_confirm: true,
+        });
 
-    if (createUserError) {
-      console.error(`Error creating user ${user.email}:`, createUserError.message);
-    } else if (newUser.user) {
-      console.log(`Successfully created user ${newUser.user.email}`);
+        if (createUserError) {
+        console.error(`Error creating user ${user.email}:`, createUserError.message);
+        } else if (newUser.user) {
+        console.log(`Successfully created user ${newUser.user.email}`);
+        }
     }
-  }
 }
 
 async function seedDatabase() {
