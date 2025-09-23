@@ -113,7 +113,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   {
     title: 'Medium Scale',
     description: 'Ideal for those looking to invest in growing businesses with medium return potential.',
-    price: '₹X',
+    price: '₹3X',
     pricePeriod: '',
     features: ['Investment range: 5L-25L', 'Medium expected returns', 'Full idea details & financial projections', 'Priority support'],
     cta: 'Choose Medium Scale',
