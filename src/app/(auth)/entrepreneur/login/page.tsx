@@ -51,7 +51,7 @@ export default function EntrepreneurLoginPage() {
       title: 'Login Successful',
       description: 'Redirecting to your dashboard...',
     });
-
+    setLoading(false);
     router.refresh();
   };
 
