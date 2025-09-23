@@ -49,26 +49,29 @@ export default function EntrepreneurDashboard() {
                 return;
             }
             
+            // Explicitly type the data returned from Supabase
             const { data: fetchedIdeas, error, count } = await supabase
                 .from('ideas')
                 .select('*', { count: 'exact' })
-                .eq('entrepreneur_id', user.id);
+                .eq('entrepreneur_id', user.id) as { data: Idea[] | null; error: any; count: number | null };
 
             if (!error && fetchedIdeas) {
                 const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
                     ...idea,
                     views: idea.views || Math.floor(Math.random() * 200),
                     location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
-                }))
+                }));
                 setIdeas(ideasWithDefaults);
                 
-                const totalViews = ideasWithDefaults.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
-                // Hardcoded for demo
-                const totalInquiries = 12;
+                const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
+                const totalInquiries = 12; // Hardcoded for demo
 
                 setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
             } else if (error) {
                 console.error("Error fetching ideas", error.message);
+                setIdeas([]); // Ensure ideas array is empty on error
+            } else {
+                setIdeas([]); // Ensure ideas array is empty if no ideas are fetched
             }
             
             setLoading(false);
