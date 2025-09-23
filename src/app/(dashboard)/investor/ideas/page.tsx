@@ -5,99 +5,41 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NdaModal } from "@/components/ui/nda-modal";
 import Link from "next/link";
+import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
+import type { Idea as IdeaType, Entrepreneur } from "@/lib/types";
 
-type Idea = {
-  id: string;
-  idea_title: string;
-  anonymized_summary: string;
-  sector: string;
-  investment_required: string;
-  estimated_returns: string;
-  prototype_url: string; 
-  entrepreneur_id: string;
-  profiles: { 
-      avatar_url: string | null;
-      full_name: string | null;
-  } | null
+type EnrichedIdea = IdeaType & {
+  entrepreneur: Entrepreneur | undefined;
 };
 
 
 export default function BrowseIdeasPage() {
-    const [ideas, setIdeas] = useState<Idea[]>([]);
+    const [ideas, setIdeas] = useState<EnrichedIdea[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedIdea, setSelectedIdea] = useState<Idea | null>(null);
+    const [selectedIdea, setSelectedIdea] = useState<EnrichedIdea | null>(null);
     const [isNdaOpen, setNdaOpen] = useState(false);
     const [unlockedIdeas, setUnlockedIdeas] = useState<Set<string>>(new Set());
-    const supabase = createClient();
-
-    const handleNewOrUpdatedIdea = (payload: any) => {
-        const updatedIdea = {
-            ...payload.new,
-            prototype_url: 'https://picsum.photos/seed/' + payload.new.id + '/400/250',
-        }
-        setIdeas(currentIdeas => {
-            const ideaIndex = currentIdeas.findIndex(idea => idea.id === updatedIdea.id);
-            if (ideaIndex !== -1) {
-                // Update existing idea
-                const newIdeas = [...currentIdeas];
-                newIdeas[ideaIndex] = {...newIdeas[ideaIndex], ...updatedIdea};
-                return newIdeas;
-            } else {
-                // Add new idea (less common for this page, but good practice)
-                return [updatedIdea, ...currentIdeas];
-            }
-        });
-    };
 
     useEffect(() => {
-        const fetchIdeas = async () => {
+        const fetchIdeas = () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('ideas')
-                .select(`
-                    *,
-                    profiles (
-                        full_name,
-                        avatar_url
-                    )
-                `);
-
-            if (error) {
-                console.error('Error fetching ideas:', error);
-            }
-
-            const allIdeas = (data || []).map(idea => ({
+            const allIdeas = predefinedIdeas.map(idea => ({
               ...idea,
-              prototype_url: 'https://picsum.photos/seed/' + idea.id + '/400/250',
-              profiles: Array.isArray(idea.profiles) ? idea.profiles[0] : idea.profiles
-            })) as Idea[];
+              entrepreneur: predefinedEntrepreneurs.find(e => e.id === idea.entrepreneurId),
+            }));
             
             setIdeas(allIdeas);
             setLoading(false);
         };
 
         fetchIdeas();
+    }, []);
 
-        const channel = supabase
-            .channel('ideas-feed')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'ideas' }, (payload) => {
-                if (payload.eventType === 'UPDATE') {
-                    handleNewOrUpdatedIdea(payload);
-                }
-            })
-            .subscribe();
-
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [supabase]);
-
-    const handleUnlockDetails = (idea: Idea) => {
+    const handleUnlockDetails = (idea: EnrichedIdea) => {
         setSelectedIdea(idea);
         setNdaOpen(true);
     };
@@ -106,7 +48,7 @@ export default function BrowseIdeasPage() {
         if (!selectedIdea) return;
         setNdaOpen(false);
         setUnlockedIdeas(prev => new Set(prev).add(selectedIdea.id));
-        alert(`NDA Accepted! You have now unlocked the details for "${selectedIdea.idea_title}".`);
+        alert(`NDA Accepted! You have now unlocked the details for "${selectedIdea.title}".`);
         setSelectedIdea(null);
     }
 
@@ -149,10 +91,10 @@ export default function BrowseIdeasPage() {
             <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <CardHeader className="p-0">
                    {isUnlocked ? (
-                     <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">
+                     <Link href={idea.prototypeImageUrl || '#'} target="_blank" rel="noopener noreferrer">
                        <Image
-                          src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
-                          alt={`Prototype for ${idea.idea_title}`}
+                          src={idea.prototypeImageUrl || 'https://picsum.photos/seed/placeholder/400/250'}
+                          alt={`Prototype for ${idea.title}`}
                           width={400}
                           height={250}
                           className="rounded-t-lg aspect-video w-full object-cover"
@@ -161,8 +103,8 @@ export default function BrowseIdeasPage() {
                    ) : (
                     <Watermark text="VentureLink">
                       <Image
-                        src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/400/250'}
-                        alt={`Prototype for ${idea.idea_title}`}
+                        src={idea.prototypeImageUrl || 'https://picsum.photos/seed/placeholder/400/250'}
+                        alt={`Prototype for ${idea.title}`}
                         width={400}
                         height={250}
                         className="rounded-t-lg aspect-video w-full object-cover"
@@ -171,24 +113,24 @@ export default function BrowseIdeasPage() {
                    )}
                 </CardHeader>
                 <CardContent className="p-4 flex-grow">
-                  <Badge variant="secondary" className="mb-2">{idea.sector}</Badge>
-                  <h3 className="text-lg font-bold">{idea.idea_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.anonymized_summary}</p>
+                  <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
+                  <h3 className="text-lg font-bold">{idea.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-2 line-clamp-3 flex-grow">{idea.summary}</p>
                 </CardContent>
                 <CardFooter className="p-4 pt-0 flex flex-col items-start gap-4">
                   <div className="flex justify-between w-full text-sm">
-                      <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.investment_required}</span></div>
-                      <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimated_returns}</span></div>
+                      <div className="font-semibold text-muted-foreground">Investment: <span className="text-foreground">{idea.requiredInvestment}</span></div>
+                      <div className="font-semibold text-muted-foreground">Returns: <span className="text-foreground">{idea.estimatedGuaranteedReturns}</span></div>
                   </div>
                   <div className="border-t pt-4 w-full">
                       <div className="flex justify-between items-center w-full">
                       <div className="flex items-center gap-2">
-                          {idea.profiles ? (
+                          {idea.entrepreneur ? (
                           <>
                               <Avatar className="h-8 w-8">
-                                <AvatarFallback>{idea.profiles.full_name?.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{idea.entrepreneur.name?.charAt(0)}</AvatarFallback>
                               </Avatar>
-                              <span className="text-sm font-medium">{idea.profiles.full_name}</span>
+                              <span className="text-sm font-medium">{idea.entrepreneur.name}</span>
                           </>
                           ) : (
                               <div className="flex items-center gap-2">
@@ -199,7 +141,7 @@ export default function BrowseIdeasPage() {
                       </div>
                        {isUnlocked ? (
                          <Button asChild variant="secondary">
-                           <Link href={idea.prototype_url || '#'} target="_blank" rel="noopener noreferrer">View Prototype</Link>
+                           <Link href={idea.prototypeImageUrl || '#'} target="_blank" rel="noopener noreferrer">View Prototype</Link>
                          </Button>
                        ) : (
                          <Button onClick={() => handleUnlockDetails(idea)}>
@@ -226,8 +168,8 @@ export default function BrowseIdeasPage() {
             isOpen={isNdaOpen}
             onClose={() => setNdaOpen(false)}
             onAccept={handleNdaAccept}
-            ideaTitle={selectedIdea.idea_title}
-            entrepreneurName={selectedIdea.profiles?.full_name || 'the entrepreneur'}
+            ideaTitle={selectedIdea.title}
+            entrepreneurName={selectedIdea.entrepreneur?.name || 'the entrepreneur'}
         />
       )}
     </div>

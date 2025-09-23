@@ -11,9 +11,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Lightbulb, UploadCloud, ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useState } from 'react';
 
 const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -35,7 +34,7 @@ const fields = ['Tech', 'Healthcare', 'Consumer Goods', 'Fintech', 'Sustainabili
 export default function NewIdeaPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const supabase = createClient();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<IdeaFormValues>({
         resolver: zodResolver(ideaSchema),
@@ -49,54 +48,18 @@ export default function NewIdeaPage() {
     });
 
     async function onSubmit(data: IdeaFormValues) {
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) throw new Error("User not authenticated.");
+        setIsSubmitting(true);
+        
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
 
-            const file = data.prototype[0];
-            const fileExtension = file.name.split('.').pop();
-            const fileName = `${uuidv4()}.${fileExtension}`;
-            const filePath = `${user.id}/${fileName}`;
-
-            // This flow is simplified for demo purposes. 
-            // In a real app, you would want a server-side flow to get a signed URL
-            // for a more secure upload.
-            const { error: uploadError } = await supabase.storage
-                .from('idea_prototypes')
-                .upload(filePath, file);
-
-            if (uploadError) throw new Error(`File upload failed: ${uploadError.message}`);
-
-            const { data: ideaData, error: ideaError } = await supabase
-                .from('ideas')
-                .insert({
-                    entrepreneur_id: user.id,
-                    idea_title: data.title,
-                    anonymized_summary: data.summary,
-                    full_text: data.summary, // In a real app, this might be different
-                    sector: data.field,
-                    investment_required: data.requiredInvestment,
-                    estimated_returns: data.estimatedReturns,
-                    prototype_url: filePath,
-                })
-                .select()
-                .single();
-
-            if (ideaError) throw ideaError;
-            
-            toast({
-                title: 'Idea Submitted!',
-                description: 'Your idea is now available for investors to review.',
-            });
-            router.push('/entrepreneur/dashboard');
-
-        } catch (error: any) {
-             toast({
-                title: 'Submission Failed',
-                description: error.message,
-                variant: 'destructive'
-            });
-        }
+        toast({
+            title: 'Idea Submitted! (Simulation)',
+            description: 'Your idea has been successfully submitted for review.',
+        });
+        
+        setIsSubmitting(false);
+        router.push('/entrepreneur/dashboard');
     }
 
   return (
@@ -247,8 +210,8 @@ export default function NewIdeaPage() {
               )}}
             />
             
-            <Button type="submit" size="lg" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? (
+            <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...
                     </>

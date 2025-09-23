@@ -11,9 +11,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { FilePenLine, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from 'react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ideas as predefinedIdeas } from '@/lib/data';
 
 const ideaSchema = z.object({
   title: z.string().min(5, 'Title must be at least 5 characters.'),
@@ -36,7 +36,6 @@ export default function EditIdeaPage() {
     const params = useParams();
     const ideaId = params.id as string;
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     const form = useForm<IdeaFormValues>({
         resolver: zodResolver(ideaSchema),
@@ -45,18 +44,14 @@ export default function EditIdeaPage() {
     useEffect(() => {
         if (!ideaId) return;
 
-        const fetchIdea = async () => {
+        const fetchIdea = () => {
             setLoading(true);
-            const { data, error } = await supabase
-                .from('ideas')
-                .select('*')
-                .eq('id', ideaId)
-                .single();
+            const data = predefinedIdeas.find(idea => idea.id === ideaId);
             
-            if (error || !data) {
+            if (!data) {
                 toast({
                     title: 'Error',
-                    description: 'Could not fetch idea details.',
+                    description: 'Could not find idea details.',
                     variant: 'destructive'
                 });
                 router.push('/entrepreneur/dashboard');
@@ -64,47 +59,29 @@ export default function EditIdeaPage() {
             }
 
             form.reset({
-                title: data.idea_title,
-                summary: data.anonymized_summary,
-                field: data.sector,
-                requiredInvestment: data.investment_required,
-                estimatedReturns: data.estimated_returns,
+                title: data.title,
+                summary: data.summary,
+                field: data.field,
+                requiredInvestment: data.requiredInvestment,
+                estimatedReturns: data.estimatedGuaranteedReturns,
             });
             setLoading(false);
         };
         fetchIdea();
-    }, [ideaId, form, router, toast, supabase]);
+    }, [ideaId, form, router, toast]);
 
     async function onSubmit(data: IdeaFormValues) {
-        try {
-            const { error } = await supabase
-                .from('ideas')
-                .update({
-                    idea_title: data.title,
-                    anonymized_summary: data.summary,
-                    full_text: data.summary, // Assuming full_text is same as summary
-                    sector: data.field,
-                    investment_required: data.requiredInvestment,
-                    estimated_returns: data.estimatedReturns,
-                    updated_at: new Date().toISOString(),
-                })
-                .eq('id', ideaId);
-
-            if (error) throw error;
+        form.formState.isSubmitting = true;
+        
+        await new Promise(resolve => setTimeout(resolve, 1000));
             
-            toast({
-                title: 'Idea Updated!',
-                description: 'Your changes have been saved successfully.',
-            });
-            router.push('/entrepreneur/dashboard');
-
-        } catch (error: any) {
-             toast({
-                title: 'Update Failed',
-                description: error.message,
-                variant: 'destructive'
-            });
-        }
+        toast({
+            title: 'Idea Updated! (Simulation)',
+            description: 'Your changes have been saved successfully.',
+        });
+        
+        form.formState.isSubmitting = false;
+        router.push('/entrepreneur/dashboard');
     }
 
   return (

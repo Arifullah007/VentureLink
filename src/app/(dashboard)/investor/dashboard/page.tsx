@@ -5,48 +5,40 @@ import { ArrowRight, Bot, Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
-import { createClient } from '@/lib/supabase/client';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { ideas as predefinedIdeas } from "@/lib/data";
 
 type Idea = {
   id: string;
-  idea_title: string;
-  anonymized_summary: string;
-  sector: string;
-  prototype_url: string; 
+  title: string;
+  summary: string;
+  field: string;
+  prototypeImageUrl: string;
 };
 
 export default function InvestorDashboard() {
   const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
-    const fetchIdeas = async () => {
+    const fetchIdeas = () => {
       setLoading(true);
-      
-      const { data: liveIdeas, error } = await supabase
-        .from('ideas')
-        .select('id, idea_title, anonymized_summary, sector')
-        .limit(2);
-
-      if (error) {
-        console.error('Error fetching featured ideas:', error);
-      } else if (liveIdeas) {
-         const liveIdeasWithImages = liveIdeas.map((idea, index) => ({
-          ...idea,
-          prototype_url: `https://picsum.photos/seed/live${index}/600/400`,
-        }));
-        setFeaturedIdeas(liveIdeasWithImages);
-      }
-
+      // Use the first 2 ideas from predefined data
+      const liveIdeasWithImages = predefinedIdeas.slice(0, 2).map((idea) => ({
+        id: idea.id,
+        title: idea.title,
+        summary: idea.summary,
+        field: idea.field,
+        prototypeImageUrl: idea.prototypeImageUrl,
+      }));
+      setFeaturedIdeas(liveIdeasWithImages);
       setLoading(false);
     };
 
     fetchIdeas();
-  }, [supabase]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -138,8 +130,8 @@ export default function InvestorDashboard() {
                 <div className="relative">
                   <Watermark text="VentureLink">
                     <Image
-                      src={idea.prototype_url || 'https://picsum.photos/seed/placeholder/600/400'}
-                      alt={`Prototype for ${idea.idea_title}`}
+                      src={idea.prototypeImageUrl || 'https://picsum.photos/seed/placeholder/600/400'}
+                      alt={`Prototype for ${idea.title}`}
                       width={600}
                       height={400}
                       className="aspect-video w-full object-cover"
@@ -147,10 +139,10 @@ export default function InvestorDashboard() {
                   </Watermark>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-semibold truncate">{idea.idea_title}</h3>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.anonymized_summary}</p>
+                  <h3 className="font-semibold truncate">{idea.title}</h3>
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.summary}</p>
                   <div className="flex justify-between items-center mt-4">
-                      <Badge variant="secondary">{idea.sector}</Badge>
+                      <Badge variant="secondary">{idea.field}</Badge>
                       <Button variant="link" size="sm" asChild>
                           <Link href={`/investor/ideas`}>View Details</Link>
                       </Button>

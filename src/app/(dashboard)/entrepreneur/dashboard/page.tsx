@@ -6,17 +6,18 @@ import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { createClient } from '@/lib/supabase/client';
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import { ideas as predefinedIdeas } from '@/lib/data';
 
 type Idea = {
   id: string;
-  idea_title: string;
-  anonymized_summary: string; 
-  investment_required: string;
-  views: number;
-  location: string;
+  title: string;
+  summary: string;
+  field: string;
+  requiredInvestment: string;
+  views?: number;
+  location?: string;
 };
 
 const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode, color: string }) => (
@@ -37,42 +38,29 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
-        const fetchIdeasAndStats = async () => {
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
+        const fetchIdeasAndStats = () => {
+            const ideasWithDefaults = predefinedIdeas.map((idea, index) => ({
+                id: idea.id,
+                title: idea.title,
+                summary: idea.summary,
+                field: idea.field,
+                requiredInvestment: idea.requiredInvestment,
+                views: Math.floor(Math.random() * 200),
+                location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
+            }));
+            setIdeas(ideasWithDefaults);
+            
+            const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
+            const totalInquiries = 12; // Hardcoded for demo
 
-            if (userError || !user) {
-                setLoading(false);
-                return;
-            }
-
-            const { data: fetchedIdeas, error: ideasError, count } = await supabase
-                .from('ideas')
-                .select('*', { count: 'exact' })
-                .eq('entrepreneur_id', user.id);
-
-            if (ideasError) {
-                setIdeas([]);
-            } else if (fetchedIdeas) {
-                 const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
-                    ...idea,
-                    views: idea.views || Math.floor(Math.random() * 200),
-                    location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
-                }));
-                setIdeas(ideasWithDefaults as Idea[]);
-                
-                const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
-                const totalInquiries = 12; // Hardcoded for demo
-
-                setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
-            }
+            setStats({ activeIdeas: predefinedIdeas.length, totalViews, investorInquiries: totalInquiries });
             setLoading(false);
         };
 
         fetchIdeasAndStats();
-    }, [supabase]);
+    }, []);
 
 
   return (
@@ -142,12 +130,12 @@ export default function EntrepreneurDashboard() {
                 transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
               >
                 <div className="flex-1 space-y-1">
-                    <p className="font-semibold text-lg">{idea.idea_title}</p>
-                    <p className="text-sm text-muted-foreground">{idea.anonymized_summary.split('. ')[0]}</p>
+                    <p className="font-semibold text-lg">{idea.title}</p>
+                    <p className="text-sm text-muted-foreground">{idea.summary.split('. ')[0]}</p>
                     <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {idea.location}</span>
                         <span className="flex items-center gap-1.5"><Eye className="h-4 w-4"/> {idea.views} views</span>
-                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
+                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.requiredInvestment}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
