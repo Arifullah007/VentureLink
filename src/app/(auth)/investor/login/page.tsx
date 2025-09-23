@@ -52,7 +52,7 @@ export default function InvestorLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
     
-    router.push('/investor/dashboard');
+    router.refresh();
   };
 
   return (

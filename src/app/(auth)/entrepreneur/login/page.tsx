@@ -52,7 +52,7 @@ export default function EntrepreneurLoginPage() {
       description: 'Redirecting to your dashboard...',
     });
 
-    router.push('/entrepreneur/dashboard');
+    router.refresh();
   };
 
   return (
