@@ -5,20 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-import { createClient } from '@/lib/supabase/client';
-
-type Idea = {
-  id: string;
-  idea_title: string;
-  anonymized_summary: string;
-  sector: string;
-  investment_required: string;
-  views?: number;
-  location?: string;
-};
+import { ideas as predefinedIdeas } from "@/lib/data";
+import type { Idea } from "@/lib/types";
 
 const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode, color: string }) => (
   <Card className="hover:shadow-lg transition-shadow">
@@ -38,67 +29,24 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
-    const fetchIdeasAndStats = useCallback(async () => {
+    useEffect(() => {
         setLoading(true);
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            console.error('Error fetching user or no user found:', userError?.message || 'No user');
-            setLoading(false);
-            return;
-        }
-
-        const { data: ideaData, error: ideaError } = await supabase
-            .from('ideas')
-            .select('*')
-            .eq('entrepreneur_id', user.id);
-        
-        if (ideaError) {
-            console.error('Error fetching ideas:', ideaError.message);
-            setLoading(false);
-            return;
-        }
-
-        const ideasWithDefaults = ideaData.map((idea: any, index: number) => ({
-            id: idea.id,
-            idea_title: idea.idea_title,
-            anonymized_summary: idea.anonymized_summary,
-            sector: idea.sector,
-            investment_required: idea.investment_required,
+        // Simulate fetching data
+        const ideasWithRandomStats = predefinedIdeas.map((idea, index) => ({
+            ...idea,
             views: Math.floor(Math.random() * 200),
             location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
         }));
-        
-        setIdeas(ideasWithDefaults);
-        
-        const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
-        const totalInquiries = ideaData.filter(i => (i as any).inquiries > 0).length || Math.floor(Math.random() * 5); // Simulated inquiries
 
-        setStats({ activeIdeas: ideaData.length, totalViews, investorInquiries: totalInquiries });
+        setIdeas(ideasWithRandomStats as any);
+        
+        const totalViews = (ideasWithRandomStats as any).reduce((acc: number, idea: any) => acc + (idea.views || 0), 0);
+        const totalInquiries = Math.floor(Math.random() * 5); // Simulated inquiries
+
+        setStats({ activeIdeas: predefinedIdeas.length, totalViews, investorInquiries: totalInquiries });
         setLoading(false);
-
-    }, [supabase]);
-
-    useEffect(() => {
-      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (session) {
-          fetchIdeasAndStats();
-        } else if (event === 'SIGNED_OUT') {
-           setIdeas([]);
-           setStats({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
-           setLoading(false);
-        } else {
-           // If there's no session, we stop loading and the UI will show the empty state.
-           setLoading(false);
-        }
-      });
-
-      return () => {
-        subscription.unsubscribe();
-      };
-    }, [supabase, fetchIdeasAndStats]);
+    }, []);
 
 
   return (
@@ -159,7 +107,7 @@ export default function EntrepreneurDashboard() {
                 </div>
             ))
         ) : ideas.length > 0 ? (
-            ideas.map((idea, index) => (
+            ideas.map((idea: any, index) => (
               <motion.div 
                 key={idea.id} 
                 className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4 hover:shadow-md transition-shadow"
@@ -168,12 +116,12 @@ export default function EntrepreneurDashboard() {
                 transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
               >
                 <div className="flex-1 space-y-1">
-                    <p className="font-semibold text-lg">{idea.idea_title}</p>
-                    <p className="text-sm text-muted-foreground">{idea.anonymized_summary.split('. ')[0]}</p>
+                    <p className="font-semibold text-lg">{idea.title}</p>
+                    <p className="text-sm text-muted-foreground">{idea.summary.split('. ')[0]}</p>
                     <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {idea.location}</span>
                         <span className="flex items-center gap-1.5"><Eye className="h-4 w-4"/> {idea.views} views</span>
-                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
+                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.requiredInvestment}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
