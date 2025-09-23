@@ -106,7 +106,7 @@ export default function Home() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
             <Logo className="h-8 w-8 text-primary" />
-            <h1 className="text-2xl font-bold tracking-wider">VentureLink</h1>
+            <h1 className="text-3xl font-bold tracking-wider">VentureLink</h1>
             </div>
             <nav className="hidden md:flex items-center gap-6 text-sm">
                 <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">Home</Link>

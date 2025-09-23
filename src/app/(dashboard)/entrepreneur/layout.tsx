@@ -64,7 +64,7 @@ export default function EntrepreneurLayout({
               className="flex items-center gap-2 text-lg font-semibold md:text-base"
             >
               <Logo className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">VentureLink</span>
+              <span className="text-xl font-bold tracking-wider">VentureLink</span>
             </Link>
             {navItems.map((item) => (
               <Link
