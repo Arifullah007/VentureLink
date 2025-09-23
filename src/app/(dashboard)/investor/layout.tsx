@@ -95,9 +95,9 @@ export default function InvestorLayout({
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Investor</p>
+                    <p className="text-sm font-medium leading-none">Investor (Demo)</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      investor@venturelink.demo
+                      priya.sharma@demo.com
                     </p>
                   </div>
                 </DropdownMenuLabel>
