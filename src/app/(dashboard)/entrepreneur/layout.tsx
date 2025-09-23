@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { LogOut, Plus, Settings, User } from 'lucide-react';
+import { Bell, LogOut, Plus, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
@@ -32,6 +32,7 @@ export default function EntrepreneurLayout({
   const router = useRouter();
   const supabase = createClient();
   const [userName, setUserName] = useState<string | null>('E');
+  const [hasNotifications, setHasNotifications] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -46,6 +47,12 @@ export default function EntrepreneurLayout({
         }
     }
     fetchUser();
+    
+    const timer = setTimeout(() => {
+        setHasNotifications(true);
+    }, 1000);
+
+    return () => clearTimeout(timer);
   }, [supabase.auth]);
 
   return (
@@ -73,11 +80,20 @@ export default function EntrepreneurLayout({
             ))}
           </nav>
           <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
-             <div className="ml-auto flex-1 sm:flex-initial">
+             <div className="ml-auto flex items-center gap-4">
                 <Button asChild>
                     <Link href="/entrepreneur/ideas/new">
                         <Plus className="mr-2 h-4 w-4" /> New Idea
                     </Link>
+                </Button>
+                <Button variant="ghost" size="icon" className="relative rounded-full">
+                    <Bell className="h-5 w-5" />
+                    {hasNotifications && (
+                        <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                        </span>
+                    )}
                 </Button>
             </div>
             <DropdownMenu>
