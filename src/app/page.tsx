@@ -39,10 +39,10 @@ export default function Home() {
             <h1 className="text-2xl font-bold tracking-wider">VentureLink</h1>
             </div>
             <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white rounded-full">
+            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white">
                 <Link href="/entrepreneur/dashboard">For Entrepreneurs</Link>
             </Button>
-            <Button asChild className="bg-white text-primary hover:bg-gray-200 rounded-full">
+            <Button asChild className="bg-white text-primary hover:bg-gray-200">
                 <Link href="/investor/dashboard">For Investors</Link>
             </Button>
             </div>
@@ -54,16 +54,16 @@ export default function Home() {
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">
               Connect. Invest. Grow.
               <br />
-              <span className="text-white/90">With Venture Link</span>
+              <span className="text-white/90">With VentureLink</span>
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-white/80">
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 rounded-full font-semibold">
+              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
                 <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-white border-white/50 hover:bg-white/10 hover:text-white rounded-full font-semibold bg-white/20">
+              <Button size="lg" variant="outline" asChild className="text-white border-white/50 hover:bg-white/10 hover:text-white font-semibold bg-white/20">
                 <Link href="/investor/dashboard">I'm an Investor</Link>
               </Button>
             </div>
