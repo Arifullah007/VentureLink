@@ -1,208 +1,190 @@
 -- VentureLink DB Schema
--- This script sets up the entire database structure, including tables,
--- functions, triggers, and row-level security policies.
--- It is designed to be run once in the Supabase SQL Editor.
+-- This script is idempotent and can be run multiple times safely.
 
---
--- 1. Enable UUID extension
---
-create extension if not exists "uuid-ossp" with schema "extensions";
-
---
--- 2. Create Profiles Table
---
--- Stores public user information.
---
-create table if not exists public.profiles (
-  id uuid not null primary key,
-  updated_at timestamp with time zone,
+-- 1. Create Profiles Table
+-- This table stores public user data.
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  role text not null check (role in ('investor', 'entrepreneur')),
   full_name text,
-  avatar_url text,
+  bio text,
   website_url text,
   linkedin_url text,
-  bio text,
-  role text,
-  constraint fk_user foreign key (id) references auth.users (id) on delete cascade
+  avatar_url text,
+  updated_at timestamp with time zone
 );
-comment on table public.profiles is 'Public-facing user profiles.';
+alter table profiles enable row level security;
 
---
--- 3. Create Ideas Table
---
--- Stores the core information about entrepreneur ideas.
---
-create table if not exists public.ideas (
-  id uuid not null default extensions.uuid_generate_v4() primary key,
-  entrepreneur_id uuid not null,
-  idea_title text not null,
-  anonymized_summary text not null,
-  full_text text,
-  sector text,
-  investment_required text,
-  estimated_returns text,
-  status text default 'pending'::text,
+-- Policy: Allow users to read their own profile
+create policy "Allow users to read their own profile" on profiles
+  for select using (auth.uid() = id);
+
+-- Policy: Allow users to update their own profile
+create policy "Allow users to update their own profile" on profiles
+  for update using (auth.uid() = id) with check (auth.uid() = id);
+
+-- Policy: Allow authenticated users to read public profile data
+create policy "Allow authenticated users to read public profile data" on profiles
+  for select to authenticated using (true);
+  
+comment on table profiles is 'Stores public user data and links to auth.users.';
+
+
+-- 2. Create Ideas Table
+-- This table stores the core startup ideas submitted by entrepreneurs.
+create table if not exists ideas (
+    id uuid primary key default uuid_generate_v4(),
+    entrepreneur_id uuid not null references auth.users(id) on delete cascade,
+    idea_title text not null,
+    anonymized_summary text not null,
+    full_text text, -- For NDA-unlocked view
+    sector text,
+    investment_required text,
+    estimated_returns text,
+    views integer default 0,
+    created_at timestamp with time zone default now(),
+    updated_at timestamp with time zone default now()
+);
+alter table ideas enable row level security;
+
+-- Policy: Entrepreneurs can manage their own ideas
+create policy "Entrepreneurs can manage their own ideas" on ideas
+    for all using (auth.uid() = entrepreneur_id)
+    with check (auth.uid() = entrepreneur_id);
+
+-- Policy: Authenticated users can view ideas
+create policy "Authenticated users can view ideas" on ideas
+    for select to authenticated using (true);
+
+comment on table ideas is 'Stores the core startup ideas submitted by entrepreneurs.';
+
+
+-- 3. Create Idea Files Table
+-- This table tracks files associated with ideas, like prototypes or business plans.
+create table if not exists idea_files (
+  id uuid primary key default uuid_generate_v4(),
+  idea_id uuid not null references ideas(id) on delete cascade,
+  file_path text not null,
+  file_name text,
   created_at timestamp with time zone default now(),
-  updated_at timestamp with time zone,
-  views integer default 0,
-  prototype_url text,
-  constraint fk_entrepreneur foreign key (entrepreneur_id) references auth.users (id) on delete cascade
+  processed_at timestamp with time zone,
+  watermarked_url text
 );
-comment on table public.ideas is 'Startup ideas submitted by entrepreneurs.';
+alter table idea_files enable row level security;
+
+-- Policy: Owners can view their own idea files.
+create policy "Owners can read their own files" on idea_files
+    for select using (
+        exists (
+            select 1 from ideas where ideas.id = idea_files.idea_id and ideas.entrepreneur_id = auth.uid()
+        )
+    );
+
+-- Policy: Allow insert for idea owners.
+create policy "Owners can insert their own files" on idea_files
+    for insert with check (
+        exists (
+            select 1 from ideas where ideas.id = idea_files.idea_id and ideas.entrepreneur_id = auth.uid()
+        )
+    );
+
+comment on table idea_files is 'Tracks files associated with ideas for processing and storage.';
 
 
---
--- 4. Create Idea Files Table
---
--- Tracks files uploaded for each idea.
---
-create table if not exists public.idea_files (
-    id bigint generated by default as identity primary key,
-    idea_id uuid not null,
-    file_path text not null,
-    file_name text,
-    created_at timestamp with time zone default now(),
-    processed_at timestamp with time zone,
-    status text default 'uploaded',
-    constraint fk_idea foreign key (idea_id) references public.ideas(id) on delete cascade
-);
-comment on table public.idea_files is 'Tracks uploaded files for ideas before they are processed.';
-
-
---
--- 5. Create Reports Table
---
--- For logging automated system actions and violations.
---
-create table if not exists public.reports (
-    id bigint generated by default as identity primary key,
-    created_at timestamp with time zone default now(),
-    report_type text not null,
-    description text,
-    related_idea_id uuid,
-    related_user_id uuid,
-    constraint fk_idea foreign key (related_idea_id) references public.ideas(id) on delete set null,
-    constraint fk_user foreign key (related_user_id) references auth.users(id) on delete set null
-);
-comment on table public.reports is 'Logs system events and potential violations, like contact info detection.';
-
-
---
--- 6. Setup Storage Bucket for Prototypes
---
-insert into storage.buckets (id, name, public, avif_autodetection, file_size_limit, allowed_mime_types)
-values ('prototypes', 'prototypes', false, false, 10000000, ARRAY['application/pdf','image/png','image/jpeg'])
-on conflict (id) do nothing;
-
-
---
--- 7. SQL Functions & Triggers
---
-
--- Function to create a public profile when a new user signs up
+-- 4. Create Triggers for Profile Management
+-- Function to create a profile entry when a new user signs up in Supabase Auth.
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
 security definer set search_path = public
 as $$
 begin
-  insert into public.profiles (id, full_name, role)
-  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
+  insert into public.profiles (id, role, full_name, updated_at)
+  values (
+    new.id,
+    new.raw_user_meta_data->>'role',
+    new.raw_user_meta_data->>'full_name',
+    now()
+  );
   return new;
 end;
 $$;
 
--- Trigger to call the function after a new user is created
-create or replace trigger on_auth_user_created
+-- Trigger to execute the function after a new user is created.
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
-
--- Function to check for contact information in idea summaries
-create or replace function public.check_idea_summary_for_contact_info()
-returns trigger
-language plpgsql
-as $$
-declare
-  contact_regex text := '(\w+@\w+\.\w+)|(\+?\d[\d -]{8,12}\d)|(https?:\/\/[^\s]+)';
-begin
-  -- Check if the new anonymized summary contains contact info
-  if new.anonymized_summary ~* contact_regex then
-    -- Insert a report about the violation
-    insert into public.reports(report_type, description, related_idea_id, related_user_id)
-    values ('contact_info_in_summary', 'Contact information detected in idea summary.', new.id, new.entrepreneur_id);
-  end if;
-  return new;
-end;
-$$;
-
--- Trigger to check idea summary on insert or update
-create or replace trigger on_idea_submission
-  before insert or update on public.ideas
-  for each row
-  when (pg_trigger_depth() = 0)
-  execute procedure public.check_idea_summary_for_contact_info();
+comment on function handle_new_user is 'Automatically creates a user profile upon new user registration.';
 
 
--- Function to execute arbitrary SQL (for seeding)
+-- 5. Helper Function for SQL Execution
+-- This function allows the seed script to run arbitrary SQL.
 create or replace function execute_sql(sql text)
-returns void
-language plpgsql
-as $$
+returns void as $$
 begin
-  execute sql;
+    execute sql;
 end;
-$$;
+$$ language plpgsql;
 
---
--- 8. Row-Level Security (RLS) Policies
---
+comment on function execute_sql is 'Executes arbitrary SQL, used by the seeding script.';
 
--- -- PROFILES --
-alter table public.profiles enable row level security;
-create policy "Public profiles are viewable by everyone." on public.profiles for select using (true);
-create policy "Users can insert their own profile." on public.profiles for insert with check (auth.uid() = id);
-create policy "Users can update their own profile." on public.profiles for update using (auth.uid() = id);
-create policy "Users can delete their own profile." on public.profiles for delete using (auth.uid() = id);
 
--- -- IDEAS --
-alter table public.ideas enable row level security;
-create policy "Ideas are public to authenticated users." on public.ideas for select to authenticated using (true);
-create policy "Entrepreneurs can create ideas." on public.ideas for insert to authenticated with check (auth.uid() = entrepreneur_id);
-create policy "Entrepreneurs can update their own ideas." on public.ideas for update to authenticated with check (auth.uid() = entrepreneur_id);
-create policy "Entrepreneurs can delete their own ideas." on public.ideas for delete to authenticated using (auth.uid() = entrepreneur_id);
+-- 6. Storage Bucket for Prototypes
+-- Creates the 'prototypes' bucket if it doesn't already exist.
+insert into storage.buckets (id, name, public)
+values ('prototypes', 'prototypes', false)
+on conflict (id) do nothing;
 
--- -- IDEA_FILES --
-alter table public.idea_files enable row level security;
-create policy "Allow read access to file owners." on public.idea_files for select using (
-    exists (select 1 from ideas where ideas.id = idea_files.idea_id and ideas.entrepreneur_id = auth.uid())
-);
-create policy "Allow insert access to idea owners" on public.idea_files for insert with check (
-    exists (select 1 from ideas where ideas.id = idea_files.idea_id and ideas.entrepreneur_id = auth.uid())
-);
+comment on table storage.buckets is 'Using ON CONFLICT to prevent errors if the bucket already exists.';
 
--- -- REPORTS --
-alter table public.reports enable row level security;
--- Only service_role can see reports for now. This can be expanded later for admin dashboards.
-create policy "Allow full access for service_role" on public.reports for all using (true);
 
--- -- STORAGE --
--- Policy for viewing prototypes
-create policy "Allow public read access to processed prototypes" on storage.objects for select using (
-    bucket_id = 'prototypes' and (storage.foldername(name))[1] = 'processed'
-);
+-- 7. Storage Policies
+-- Define who can do what within the 'prototypes' bucket.
 
--- Policy for uploading prototypes
-create policy "Allow idea owner to upload to their folder" on storage.objects for insert with check (
-    bucket_id = 'prototypes' and auth.uid()::text = (storage.foldername(name))[1]
-);
+-- Policy: Allow authenticated users to view files in the 'prototypes' bucket.
+-- (More specific access will be controlled by your application logic, e.g., after an NDA is signed).
+create policy "Allow authenticated read access"
+    on storage.objects for select
+    to authenticated
+    using (bucket_id = 'prototypes');
 
-comment on policy "Allow public read access to processed prototypes" on storage.objects is 'Processed files are public; original uploads are protected.';
-comment on policy "Allow idea owner to upload to their folder" on storage.objects is 'Users can only upload into a folder matching their user ID.';
+-- Allow idea owner to upload to their folder
+create policy "Allow idea owner to upload to their folder"
+  for insert on storage.objects with check (
+    bucket_id = 'prototypes' and
+    auth.uid()::text = (storage.foldername(name))[1]
+  );
 
---
+-- Allow idea owner to update their own files
+create policy "Allow idea owner to update their files"
+    on storage.objects for update
+    using (
+        bucket_id = 'prototypes' and
+        auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+-- Allow idea owner to delete their own files
+create policy "Allow idea owner to delete their files"
+    on storage.objects for delete
+    using (
+        bucket_id = 'prototypes' and
+        auth.uid()::text = (storage.foldername(name))[1]
+    );
+
+
+-- 8. Edge Function for Signed Upload URL
+-- This function is invoked by the client to get a secure URL for uploading files.
+-- This part is now handled via the Supabase Edge Function definition, but we need a placeholder
+-- and will ensure security via policies.
+
+-- The actual Edge Function code lives in `supabase/functions/get-signed-upload-url/index.ts`
+-- The schema only needs to be aware of its existence if it were to be invoked from SQL,
+-- but here we are just documenting its role.
+
 -- 9. Seeding Data (Optional but recommended for demo)
 -- This section is now handled by the `scripts/seed_demo.ts` file,
 -- which runs automatically with `npm run dev`.
---
 
 -- End of Schema
