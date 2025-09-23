@@ -74,7 +74,7 @@ export default function InvestorLayout({
           <SidebarHeader>
             <div className="flex items-center gap-2">
                <Logo className="w-6 h-6 text-primary"/>
-               <span className="text-lg font-bold tracking-wider">VentureLink</span>
+               <span className="font-body text-lg font-bold tracking-wider">VentureLink</span>
             </div>
           </SidebarHeader>
           <SidebarContent>

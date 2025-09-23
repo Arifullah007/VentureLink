@@ -101,12 +101,12 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background font-body">
+    <div className="flex flex-col min-h-screen bg-background font-sans">
       <header className="sticky top-0 z-50 bg-white shadow-sm text-foreground">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
             <Logo className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold tracking-wider">VentureLink</h1>
+            <h1 className="font-body text-3xl font-bold tracking-wider">VentureLink</h1>
             </div>
             <nav className="hidden md:flex items-center gap-6 text-sm">
                 <Link href="/" className="font-semibold text-primary underline-offset-4 hover:underline">Home</Link>
