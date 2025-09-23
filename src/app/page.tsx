@@ -1,6 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { ArrowRight, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagram, Linkedin, FileText, CircleDollarSign, Users, Crosshair, MessageSquare, FileSignature, Lightbulb } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { useEffect, useState, useRef } from 'react';
@@ -27,6 +27,57 @@ const homeFeatures = [
     title: 'Collaboration Features',
     description: 'Combine Invest and Combine Grow features allow multiple parties to collaborate on single ideas.',
   },
+];
+
+const funnelSteps = [
+    {
+        side: 'left',
+        title: 'Entrepreneur Journey',
+        description: 'Entrepreneurs post ideas and prototypes',
+        icon: <Lightbulb className="w-8 h-8" />,
+        color: 'text-blue-400',
+        bgColor: 'bg-blue-900/50'
+    },
+    {
+        side: 'right',
+        title: 'Investor Journey',
+        description: 'Investors browse ideas and select subscriptions',
+        icon: <CircleDollarSign className="w-8 h-8" />,
+        color: 'text-green-400',
+        bgColor: 'bg-green-900/50'
+    },
+    {
+        side: 'left',
+        title: 'Collaboration Features',
+        description: 'Entrepreneurs and investors collaborate',
+        icon: <Users className="w-8 h-8" />,
+        color: 'text-lime-400',
+        bgColor: 'bg-lime-900/50'
+    },
+    {
+        side: 'right',
+        title: 'AI Matchmaking',
+        description: 'AI matches users based on criteria',
+        icon: <Bot className="w-8 h-8" />,
+        color: 'text-yellow-400',
+        bgColor: 'bg-yellow-900/50'
+    },
+    {
+        side: 'left',
+        title: 'Secure Communication',
+        description: 'Secure in-app communication',
+        icon: <MessageSquare className="w-8 h-8" />,
+        color: 'text-orange-400',
+        bgColor: 'bg-orange-900/50'
+    },
+    {
+        side: 'right',
+        title: 'Deal Closure',
+        description: 'Finalizing agreements and payments',
+        icon: <FileSignature className="w-8 h-8" />,
+        color: 'text-red-400',
+        bgColor: 'bg-red-900/50'
+    }
 ];
 
 export default function Home() {
@@ -118,31 +169,33 @@ export default function Home() {
           </div>
         </section>
 
-        <section id="how-it-works" ref={howItWorksRef} className="py-20 md:py-24 bg-muted/40">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h3 className="text-3xl md:text-4xl font-bold tracking-tight">How It Works</h3>
-              <p className="mt-2 text-lg text-muted-foreground">A simple, streamlined process for funding and innovation.</p>
+        <section id="how-it-works" ref={howItWorksRef} className="py-20 md:py-24 bg-[#242933] text-white">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="text-center mb-16">
+                    <h3 className="text-3xl md:text-4xl font-bold tracking-tight">Entrepreneur-Investor Collaboration Funnel</h3>
+                    <p className="mt-2 text-lg text-gray-400">A streamlined process for funding and innovation.</p>
+                </div>
+                
+                <div className="relative max-w-4xl mx-auto">
+                    {/* Central line for larger screens */}
+                    <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-600"></div>
+
+                    {funnelSteps.map((step, index) => (
+                        <div key={index} className="relative flex items-center mb-12 md:mb-0">
+                            {/* Content */}
+                            <div className={`w-full md:w-1/2 p-6 rounded-lg shadow-lg ${step.bgColor} ${step.side === 'left' ? 'md:pr-12' : 'md:pl-12'} ${step.side === 'left' ? 'md:text-right' : 'md:text-left'}`}>
+                                <h4 className={`text-xl font-bold ${step.color}`}>{step.title}</h4>
+                                <p className="text-gray-300 mt-2">{step.description}</p>
+                            </div>
+
+                            {/* Icon & connecting line */}
+                            <div className={`absolute flex items-center justify-center w-20 h-20 rounded-full bg-[#242933] border-4 border-gray-600 z-10 ${step.color} ${step.side === 'left' ? 'md:right-0 md:transform md:translate-x-1/2' : 'md:left-0 md:transform md:-translate-x-1/2'} left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0`}>
+                               {step.icon}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-            <div className="relative grid gap-8 md:grid-cols-3">
-               <div className="absolute top-1/2 left-0 w-full h-0.5 bg-border -translate-y-1/2 hidden md:block"></div>
-               <div className="relative flex flex-col items-center text-center p-4">
-                   <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold z-10 mb-4 ring-8 ring-background">1</div>
-                   <h4 className="mt-4 text-xl font-semibold">Submit Your Idea</h4>
-                   <p className="mt-2 text-muted-foreground">Entrepreneurs securely submit their business plans and prototypes.</p>
-               </div>
-               <div className="relative flex flex-col items-center text-center p-4">
-                   <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold z-10 mb-4 ring-8 ring-background">2</div>
-                   <h4 className="mt-4 text-xl font-semibold">Discover & Match</h4>
-                   <p className="mt-2 text-muted-foreground">Investors browse opportunities or use our AI to find the perfect match.</p>
-               </div>
-               <div className="relative flex flex-col items-center text-center p-4">
-                   <div className="h-12 w-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xl font-bold z-10 mb-4 ring-8 ring-background">3</div>
-                   <h4 className="mt-4 text-xl font-semibold">Connect & Invest</h4>
-                   <p className="mt-2 text-muted-foreground">Subscribe to unlock details, connect directly, and fuel the next big thing.</p>
-               </div>
-            </div>
-          </div>
         </section>
 
       </main>
