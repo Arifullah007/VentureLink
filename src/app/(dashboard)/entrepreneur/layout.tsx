@@ -14,6 +14,8 @@ import { LogOut, Plus, Settings, User } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import { useState, useEffect } from 'react';
 
 const navItems = [
   { href: '/entrepreneur/dashboard', label: 'Dashboard' },
@@ -28,10 +30,24 @@ export default function EntrepreneurLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const supabase = createClient();
+  const [userName, setUserName] = useState<string | null>('E');
 
   const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
+    router.refresh();
   }
+
+  useEffect(() => {
+    const fetchUser = async () => {
+        const { data: { user }} = await supabase.auth.getUser();
+        if (user) {
+            setUserName(user.user_metadata.full_name || user.email);
+        }
+    }
+    fetchUser();
+  }, [supabase.auth]);
 
   return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -69,7 +85,7 @@ export default function EntrepreneurLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarFallback>E</AvatarFallback>
+                    <AvatarFallback>{userName?.charAt(0) || 'E'}</AvatarFallback>
                   </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>

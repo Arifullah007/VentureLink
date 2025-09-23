@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
-import { ideas as predefinedIdeas } from '@/lib/data';
+import { createClient } from '@/lib/supabase/client';
 
 type Idea = {
   id: string;
-  title: string;
-  summary: string;
-  field: string;
-  requiredInvestment: string;
+  idea_title: string;
+  anonymized_summary: string;
+  sector: string;
+  investment_required: string;
   views?: number;
   location?: string;
 };
@@ -38,29 +38,52 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
+    const supabase = createClient();
+
+    const fetchIdeasAndStats = useCallback(async () => {
+        setLoading(true);
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError || !user) {
+            console.error('Error fetching user or no user found:', userError?.message);
+            setLoading(false);
+            return;
+        }
+
+        const { data: ideaData, error: ideaError } = await supabase
+            .from('ideas')
+            .select('*')
+            .eq('entrepreneur_id', user.id);
+        
+        if (ideaError) {
+            console.error('Error fetching ideas:', ideaError.message);
+            setLoading(false);
+            return;
+        }
+
+        const ideasWithDefaults = ideaData.map((idea: any, index: number) => ({
+            id: idea.id,
+            idea_title: idea.idea_title,
+            anonymized_summary: idea.anonymized_summary,
+            sector: idea.sector,
+            investment_required: idea.investment_required,
+            views: Math.floor(Math.random() * 200),
+            location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
+        }));
+        
+        setIdeas(ideasWithDefaults);
+        
+        const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
+        const totalInquiries = 12; // Hardcoded for demo
+
+        setStats({ activeIdeas: ideaData.length, totalViews, investorInquiries: totalInquiries });
+        setLoading(false);
+
+    }, [supabase]);
 
     useEffect(() => {
-        const fetchIdeasAndStats = () => {
-            const ideasWithDefaults = predefinedIdeas.map((idea, index) => ({
-                id: idea.id,
-                title: idea.title,
-                summary: idea.summary,
-                field: idea.field,
-                requiredInvestment: idea.requiredInvestment,
-                views: Math.floor(Math.random() * 200),
-                location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
-            }));
-            setIdeas(ideasWithDefaults);
-            
-            const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
-            const totalInquiries = 12; // Hardcoded for demo
-
-            setStats({ activeIdeas: predefinedIdeas.length, totalViews, investorInquiries: totalInquiries });
-            setLoading(false);
-        };
-
         fetchIdeasAndStats();
-    }, []);
+    }, [fetchIdeasAndStats]);
 
 
   return (
@@ -130,12 +153,12 @@ export default function EntrepreneurDashboard() {
                 transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
               >
                 <div className="flex-1 space-y-1">
-                    <p className="font-semibold text-lg">{idea.title}</p>
-                    <p className="text-sm text-muted-foreground">{idea.summary.split('. ')[0]}</p>
+                    <p className="font-semibold text-lg">{idea.idea_title}</p>
+                    <p className="text-sm text-muted-foreground">{idea.anonymized_summary.split('. ')[0]}</p>
                     <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
                         <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {idea.location}</span>
                         <span className="flex items-center gap-1.5"><Eye className="h-4 w-4"/> {idea.views} views</span>
-                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.requiredInvestment}</span>
+                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">

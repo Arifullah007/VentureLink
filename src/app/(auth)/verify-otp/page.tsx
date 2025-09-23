@@ -42,6 +42,7 @@ function VerifyOtpForm() {
     }
     setLoading(true);
     const result = await verifyOtp({ email, otp: data.otp });
+    setLoading(false);
 
     if (result.error) {
       toast({
@@ -56,7 +57,6 @@ function VerifyOtpForm() {
       });
       router.push('/login');
     }
-    setLoading(false);
   };
 
   return (
@@ -75,7 +75,7 @@ function VerifyOtpForm() {
             </h1>
         </div>
         <p className="text-center text-sm text-muted-foreground mb-6">
-            We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Please enter it below.
+            We&apos;ve sent a 6-digit code to <strong>{email}</strong>. Please enter it below to verify your email address.
         </p>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <div>
@@ -99,7 +99,7 @@ function VerifyOtpForm() {
          <p className="mt-6 text-center text-sm text-gray-600">
             Didn&apos;t get a code?{' '}
             <button onClick={() => {}} className="font-semibold text-primary hover:underline" disabled>
-              Resend
+              Resend (Coming Soon)
             </button>
         </p>
       </motion.div>

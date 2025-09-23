@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -18,21 +19,16 @@ const signupSchema = z.object({
 
 export async function login(
   formData: z.infer<typeof loginSchema>
-): Promise<{ error: { message: string } | null; redirectTo?: string }> {
+): Promise<{ error: { message: string } | null; }> {
   const supabase = createClient();
-
   const { error } = await supabase.auth.signInWithPassword(formData);
 
   if (error) {
     return { error: { message: error.message } };
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const role = user?.user_metadata.role;
-
-  const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-
-  return { error: null, redirectTo };
+  // No redirect here, middleware will handle it
+  return { error: null };
 }
 
 export async function signup(
@@ -49,6 +45,9 @@ export async function signup(
         full_name: formData.fullName,
         role: formData.role,
       },
+      // Supabase sends an email with a verification link by default.
+      // To use OTP, we need to handle it manually after signup.
+      // The default behavior is fine for now, user will get an email.
       emailRedirectTo: `${origin}/auth/callback`,
     },
   });
@@ -57,7 +56,6 @@ export async function signup(
     return { error: { message: error.message }, data: null };
   }
   
-  // The user is created, but needs to verify their email.
-  // Supabase automatically sends an email with an OTP for verification.
+  // The user is created, but needs to verify their email via OTP.
   return { error: null, data: data.user };
 }

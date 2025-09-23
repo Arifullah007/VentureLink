@@ -9,7 +9,7 @@ export async function verifyOtp(payload: { email: string; otp: string }): Promis
   const { error } = await supabase.auth.verifyOtp({
     email: payload.email,
     token: payload.otp,
-    type: 'signup',
+    type: 'signup', // Use 'signup' for email verification OTP
   });
 
   if (error) {

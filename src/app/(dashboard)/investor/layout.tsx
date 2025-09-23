@@ -26,6 +26,7 @@ import { Logo } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
     { href: "/investor/dashboard", icon: <Home />, label: "Dashboard" },
@@ -41,21 +42,31 @@ export default function InvestorLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const supabase = createClient();
   const [hasNotifications, setHasNotifications] = useState(false);
   const [userName, setUserName] = useState<string | null>('Investor');
 
   const handleLogout = async () => {
+    await supabase.auth.signOut();
     router.push('/login');
+    router.refresh();
   }
 
   useEffect(() => {
+    const fetchUser = async () => {
+        const { data: { user }} = await supabase.auth.getUser();
+        if (user) {
+            setUserName(user.user_metadata.full_name || user.email);
+        }
+    }
     // Simulate fetching user and notification status
     const timer = setTimeout(() => {
         setHasNotifications(true);
-        setUserName('Priya S.');
     }, 1000);
+
+    fetchUser();
     return () => clearTimeout(timer);
-  }, []);
+  }, [supabase.auth]);
 
 
   return (

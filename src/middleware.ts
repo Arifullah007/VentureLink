@@ -1,9 +1,30 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 
-// This middleware is now a pass-through.
-// All logic is handled client-side for the simulation.
-export function middleware(request: NextRequest) {
-  return NextResponse.next();
+export async function middleware(request: NextRequest) {
+  const { response, supabase } = await updateSession(request);
+  const { data: { user } } = await supabase.auth.getUser();
+
+  const url = request.nextUrl.clone();
+
+  const publicRoutes = ['/', '/login', '/auth/callback', '/verify-otp'];
+  const isPublicRoute = publicRoutes.some(path => url.pathname === path);
+  
+  if (!user && !isPublicRoute) {
+    url.pathname = '/login';
+    return NextResponse.redirect(url);
+  }
+  
+  if (user) {
+    if (isPublicRoute && url.pathname !== '/') {
+        const role = user.user_metadata.role;
+        const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+        url.pathname = redirectTo;
+        return NextResponse.redirect(url);
+    }
+  }
+
+  return response;
 }
 
 export const config = {

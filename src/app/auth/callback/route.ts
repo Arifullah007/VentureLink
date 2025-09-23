@@ -6,13 +6,14 @@ export async function GET(request: Request) {
   const code = searchParams.get('code')
   
   if (code) {
-    // In a real app, you'd exchange the code for a session.
-    // For this simulation, we'll just redirect based on a role hint.
-    const role = searchParams.get('role') || 'entrepreneur';
-    const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-    return NextResponse.redirect(`${origin}${redirectTo}`);
+    const supabase = createClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+       // URL to redirect to after sign in process completes
+      return NextResponse.redirect(origin)
+    }
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+  return NextResponse.redirect(`${origin}/login?message=Could not authenticate user`)
 }
