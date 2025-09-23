@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/middleware';
 
 export async function POST(request: NextRequest) {
-  const { supabase, response } = createClient(request);
+  const { supabase, response: supabaseMiddlewareResponse } = createClient(request);
   const { email, password, role } = await request.json();
 
   if (!email || !password || !role) {
@@ -41,5 +41,12 @@ export async function POST(request: NextRequest) {
 
   // On success, return a JSON response along with the response object
   // that has the session cookie set on it.
-  return NextResponse.json({ message: 'Login successful' }, response);
+  const response = NextResponse.json({ message: 'Login successful' });
+
+  // Transfer cookies from the Supabase middleware response to the final response
+  supabaseMiddlewareResponse.cookies.getAll().forEach((cookie) => {
+    response.cookies.set(cookie.name, cookie.value, cookie);
+  });
+
+  return response;
 }
