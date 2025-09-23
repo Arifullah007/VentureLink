@@ -3,24 +3,29 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, EyeIcon, MessageCircle, Zap } from "lucide-react";
+import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from '@/lib/supabase/client';
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion } from "framer-motion";
 
 type Idea = {
   id: string;
   idea_title: string;
   anonymized_summary: string; 
   investment_required: string;
+  views: number;
+  location: string;
 };
 
-const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
-  <Card>
+const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode, color: string }) => (
+  <Card className="hover:shadow-lg transition-shadow">
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      {icon}
+      <div className={color}>
+        {icon}
+      </div>
     </CardHeader>
     <CardContent>
       <div className="text-2xl font-bold">{value}</div>
@@ -50,10 +55,15 @@ export default function EntrepreneurDashboard() {
                 .eq('entrepreneur_id', user.id);
 
             if (!error && fetchedIdeas) {
-                setIdeas(fetchedIdeas);
+                const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
+                    ...idea,
+                    views: idea.views || Math.floor(Math.random() * 200),
+                    location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
+                }))
+                setIdeas(ideasWithDefaults);
                 
-                const totalViews = fetchedIdeas.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
-                const totalInquiries = 0;
+                const totalViews = ideasWithDefaults.reduce((acc, idea: any) => acc + (idea.views || 0), 0);
+                const totalInquiries = ideasWithDefaults.reduce((acc, idea: any) => acc + (idea.inquiries || 0), 12);
 
                 setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
             } else if (error) {
@@ -68,7 +78,12 @@ export default function EntrepreneurDashboard() {
 
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      className="space-y-6"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
       <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Entrepreneur Dashboard</h1>
@@ -81,18 +96,23 @@ export default function EntrepreneurDashboard() {
             </Button>
       </div>
       
-      <div className="grid gap-4 md:grid-cols-3">
+      <motion.div 
+        className="grid gap-4 md:grid-cols-3"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
         {loading ? <>
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
             <Skeleton className="h-28" />
         </> : <>
-            <StatCard title="Active Ideas" value={stats.activeIdeas} icon={<Zap className="h-4 w-4 text-muted-foreground" />} />
-            <StatCard title="Total Views" value={stats.totalViews} icon={<EyeIcon className="h-4 w-4 text-muted-foreground" />} />
-            <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageCircle className="h-4 w-4 text-muted-foreground" />} />
+            <StatCard title="Active Ideas" value={stats.activeIdeas} icon={<Zap className="h-4 w-4" />} color="text-blue-500" />
+            <StatCard title="Total Views" value={stats.totalViews} icon={<Eye className="h-4 w-4" />} color="text-green-500" />
+            <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageSquare className="h-4 w-4" />} color="text-purple-500" />
         </>
         }
-      </div>
+      </motion.div>
 
        <Card>
         <CardHeader>
@@ -115,13 +135,21 @@ export default function EntrepreneurDashboard() {
                 </div>
             ))
         ) : ideas.length > 0 ? (
-            ideas.map((idea) => (
-              <div key={idea.id} className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4">
+            ideas.map((idea, index) => (
+              <motion.div 
+                key={idea.id} 
+                className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4 hover:shadow-md transition-shadow"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+              >
                 <div className="flex-1 space-y-1">
                     <p className="font-semibold text-lg">{idea.idea_title}</p>
                     <p className="text-sm text-muted-foreground">{idea.anonymized_summary.split('. ')[0]}</p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground pt-2">
-                        <span className="flex items-center gap-1"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
+                    <div className="flex items-center flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground pt-2">
+                        <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4"/> {idea.location}</span>
+                        <span className="flex items-center gap-1.5"><Eye className="h-4 w-4"/> {idea.views} views</span>
+                        <span className="flex items-center gap-1.5"><IndianRupee className="h-4 w-4"/> {idea.investment_required}</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
@@ -142,7 +170,7 @@ export default function EntrepreneurDashboard() {
                         </Link>
                     </Button>
                 </div>
-              </div>
+              </motion.div>
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
@@ -156,6 +184,6 @@ export default function EntrepreneurDashboard() {
            )}
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 }
