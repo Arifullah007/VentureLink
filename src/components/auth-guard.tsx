@@ -17,33 +17,27 @@ export function AuthGuard({ children, role }: AuthGuardProps) {
   const supabase = createClient();
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      
-      let targetLoginPage = `/${role}/login`;
-
-      if (error || !session) {
-        router.replace(targetLoginPage);
-        return;
-      }
-
-      const userRole = session.user.user_metadata?.role;
-      if (userRole !== role) {
-        // If wrong role, sign them out and redirect to the correct login page
-        await supabase.auth.signOut();
-        router.replace(targetLoginPage);
-        return;
-      }
-
-      setIsLoading(false);
-    };
-
-    checkSession();
-
     const { data: authListener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) {
-          router.replace(`/${role}/login`);
+      (event, session) => {
+        const targetLoginPage = `/${role}/login`;
+        
+        // If there's no session, or if the event is SIGNED_OUT, redirect to login.
+        if (!session || event === 'SIGNED_OUT') {
+          setIsLoading(false);
+          router.replace(targetLoginPage);
+          return;
+        }
+
+        // Session exists, now check the role.
+        const userRole = session.user.user_metadata?.role;
+        if (userRole === role) {
+          // Role is correct, allow access.
+          setIsLoading(false);
+        } else {
+          // Wrong role, sign them out and redirect.
+          supabase.auth.signOut().then(() => {
+            router.replace(targetLoginPage);
+          });
         }
       }
     );
