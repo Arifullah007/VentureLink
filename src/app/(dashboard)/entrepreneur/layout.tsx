@@ -10,12 +10,13 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake } from 'lucide-react';
+import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake, Info } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
 import { AuthGuard } from '@/components/auth-guard';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const navItems = [
   { href: '/entrepreneur/dashboard', label: 'Dashboard' },
@@ -29,6 +30,7 @@ export default function EntrepreneurLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
 
   return (
     <AuthGuard role="entrepreneur">
@@ -97,6 +99,14 @@ export default function EntrepreneurLayout({
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+          {isDemoMode && (
+              <Alert className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                <Info className="h-4 w-4 !text-amber-600" />
+                <AlertDescription>
+                  <b>Demo Mode:</b> This is a showcase environment with sample data. Your changes will not be saved. You can reset the data by running `npm run seed-demo`.
+                </AlertDescription>
+              </Alert>
+          )}
           {children}
         </main>
       </div>

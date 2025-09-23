@@ -22,10 +22,11 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Search, Bot, Crown, Handshake, Settings, User } from 'lucide-react';
+import { Home, Search, Bot, Crown, Handshake, Settings, User, Info } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { LogoutButton } from '@/components/logout-button';
 import { AuthGuard } from '@/components/auth-guard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const navItems = [
     { href: "/investor/dashboard", icon: <Home />, label: "Dashboard" },
@@ -40,6 +41,9 @@ export default function InvestorLayout({
 }: {
   children: React.ReactNode;
 }) {
+
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
   return (
     <AuthGuard role="investor">
       <SidebarProvider>
@@ -116,6 +120,14 @@ export default function InvestorLayout({
             </DropdownMenu>
           </header>
           <main className="flex-1 p-4 sm:p-6 bg-background">
+              {isDemoMode && (
+                  <Alert className="mb-6 border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                    <Info className="h-4 w-4 !text-amber-600" />
+                    <AlertDescription>
+                      <b>Demo Mode:</b> This is a showcase environment with sample data. Your changes will not be saved. You can reset the data by running `npm run seed-demo`.
+                    </AlertDescription>
+                  </Alert>
+              )}
               {children}
           </main>
         </SidebarInset>
