@@ -10,11 +10,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { Home, Lightbulb, Users, LogOut, Settings, User, Plus, Handshake, Info } from 'lucide-react';
+import { LogOut, Plus } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { createClient } from '@/lib/supabase/client';
 
 const navItems = [
   { href: '/entrepreneur/dashboard', label: 'Dashboard' },
@@ -28,7 +29,14 @@ export default function EntrepreneurLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+  }
 
   return (
       <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -54,7 +62,6 @@ export default function EntrepreneurLayout({
               </Link>
             ))}
           </nav>
-          {/* Mobile Menu can be added here if needed */}
           <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
              <div className="ml-auto flex-1 sm:flex-initial">
                 <Button asChild>
@@ -75,25 +82,15 @@ export default function EntrepreneurLayout({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                   <Link href="/">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Exit</span>
-                    </Link>
+                <DropdownMenuItem onClick={handleLogout}>
+                   <LogOut className="mr-2 h-4 w-4" />
+                   <span>Log out</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-          {isDemoMode && (
-              <Alert className="border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                <Info className="h-4 w-4 !text-amber-600" />
-                <AlertDescription>
-                  <b>Demo Mode:</b> This is a showcase environment with sample data. Your changes will not be saved. You can reset the data by running `npm run seed-demo`.
-                </AlertDescription>
-              </Alert>
-          )}
           {children}
         </main>
       </div>

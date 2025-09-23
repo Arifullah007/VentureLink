@@ -1,7 +1,6 @@
 'use client';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Briefcase, Lightbulb, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
+import { ArrowRight, Bot, Shield, Layers, Handshake, Twitter, Facebook, Instagram, Linkedin } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/icons';
 import { useEffect, useState, useRef } from 'react';
@@ -58,16 +57,16 @@ export default function Home() {
             </nav>
             <div className="flex items-center gap-2">
             <Button asChild>
-                <Link href="/entrepreneur/dashboard">Entrepreneur Login</Link>
+                <Link href="/login">Entrepreneur Login</Link>
             </Button>
             <Button variant="secondary" asChild>
-                <Link href="/investor/dashboard">Investor Login</Link>
+                <Link href="/login?role=investor">Investor Login</Link>
             </Button>
             </div>
         </div>
       </header>
       <main className="flex-grow">
-        <section className="relative flex items-center justify-center h-[calc(100vh-80px)] bg-gradient-to-r from-primary to-accent text-white">
+        <section className="relative flex items-center justify-center h-[calc(100vh-80px)] bg-gradient-to-r from-blue-500 to-green-400 text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">
               Connect. Invest. Grow.
@@ -78,11 +77,11 @@ export default function Home() {
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold rounded-none">
-                <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
+              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
+                <Link href="/login">I'm an Entrepreneur</Link>
               </Button>
-              <Button size="lg" variant="secondary" asChild className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold rounded-none">
-                <Link href="/investor/dashboard">I'm an Investor</Link>
+              <Button size="lg" variant="secondary" asChild className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold">
+                <Link href="/login?role=investor">I'm an Investor</Link>
               </Button>
             </div>
           </div>

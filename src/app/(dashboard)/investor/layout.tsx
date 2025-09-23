@@ -1,4 +1,4 @@
-
+'use client';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,14 +17,14 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarFooter,
   SidebarTrigger,
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Link from 'next/link';
-import { Home, Search, Bot, Crown, Handshake, Settings, User, Info, LogOut } from 'lucide-react';
+import { Home, Search, Bot, Crown, Handshake, LogOut } from 'lucide-react';
 import { Logo } from '@/components/icons';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
 const navItems = [
     { href: "/investor/dashboard", icon: <Home />, label: "Dashboard" },
@@ -39,8 +39,13 @@ export default function InvestorLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
 
-  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const handleLogout = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push('/');
+  }
 
   return (
       <SidebarProvider>
@@ -65,18 +70,6 @@ export default function InvestorLayout({
               ))}
             </SidebarMenu>
           </SidebarContent>
-          <SidebarFooter>
-              <SidebarMenu>
-                  <SidebarMenuItem>
-                      <SidebarMenuButton asChild>
-                          <Link href="/">
-                            <LogOut />
-                            <span>Exit</span>
-                          </Link>
-                      </SidebarMenuButton>
-                  </SidebarMenuItem>
-              </SidebarMenu>
-          </SidebarFooter>
         </Sidebar>
         <SidebarInset>
           <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-card px-6">
@@ -95,31 +88,18 @@ export default function InvestorLayout({
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Investor (Demo)</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      priya.sharma@demo.com
-                    </p>
+                    <p className="text-sm font-medium leading-none">Investor</p>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                 <DropdownMenuItem asChild>
-                    <Link href="/">
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Exit</span>
-                    </Link>
+                 <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
                  </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </header>
           <main className="flex-1 p-4 sm:p-6 bg-background">
-              {isDemoMode && (
-                  <Alert className="mb-6 border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                    <Info className="h-4 w-4 !text-amber-600" />
-                    <AlertDescription>
-                      <b>Demo Mode:</b> This is a showcase environment with sample data. Your changes will not be saved. You can reset the data by running `npm run seed-demo`.
-                    </AlertDescription>
-                  </Alert>
-              )}
               {children}
           </main>
         </SidebarInset>

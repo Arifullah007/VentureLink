@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, MapPin, Zap, EyeIcon, MessageCircle } from "lucide-react";
+import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, EyeIcon, MessageCircle, Zap } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from '@/lib/supabase/client';
@@ -12,8 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 type Idea = {
   id: string;
   idea_title: string;
-  anonymized_summary: string; // The short description under the title
-  investment_required: string; // The amount like 5,00,000
+  anonymized_summary: string; 
+  investment_required: string;
 };
 
 const StatCard = ({ title, value, icon }: { title: string; value: string | number; icon: React.ReactNode }) => (
@@ -37,11 +37,17 @@ export default function EntrepreneurDashboard() {
     useEffect(() => {
         const fetchIdeasAndStats = async () => {
             setLoading(true);
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                setLoading(false);
+                return;
+            }
             
-            // Bypass user check and fetch all ideas for demo
             const { data: fetchedIdeas, error, count } = await supabase
                 .from('ideas')
-                .select('*', { count: 'exact' });
+                .select('*', { count: 'exact' })
+                .eq('entrepreneur_id', user.id);
 
             if (!error && fetchedIdeas) {
                 setIdeas(fetchedIdeas);
