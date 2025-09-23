@@ -22,8 +22,11 @@ You need to have the following tools installed:
 ### 2. Set Environment Variables
 
 1.  Create a new file named `.env` in the root of your project.
-2.  Copy the contents of `.env.example` into your new `.env` file (if it exists) or create it from scratch.
-3.  Fill in the required values for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from your Supabase API settings. The other variables are not required for the app to run.
+2.  Add the `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` variables with the values you just copied.
+    ```env
+    NEXT_PUBLIC_SUPABASE_URL="YOUR_SUPABASE_URL_HERE"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY_HERE"
+    ```
 
 ### 3. Set up the Database Schema
 
@@ -33,8 +36,8 @@ The database schema, security policies, and functions must be manually set up us
 2.  Click **"New query"**.
 3.  Open the `infra/schema.sql` file in your local code editor.
 4.  Copy its **entire content**.
-5.  Paste the content into the Supabase SQL Editor and click **"Run"**.
-    *   This script creates all tables, functions, triggers, and security policies. It is safe to run multiple times.
+5.  Paste the content into the Supabase SQL Editor and click **"RUN"**.
+    *   This script creates all tables, functions, triggers, and security policies. It is idempotent, meaning it is safe to run multiple times.
 
 ### 4. Run the Next.js App Locally
 
@@ -57,7 +60,7 @@ The database is now empty. To add the sample users, ideas, and investors, you ne
     ```
     SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY_HERE"
     ```
-3.  **Run the seed script**:
+3.  **Run the seed script**: In your terminal, run the following command:
     ```bash
     npm run seed-demo
     ```
@@ -68,4 +71,4 @@ The database is now empty. To add the sample users, ideas, and investors, you ne
 *   **Password (for all demo accounts):** `password123`
 
 ---
-That's it! The Supabase CLI-related issues are bypassed with this method.
+That's it! Your VentureLink application is fully set up and ready to use.
