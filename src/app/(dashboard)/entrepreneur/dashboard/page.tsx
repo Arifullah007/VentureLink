@@ -39,39 +39,39 @@ export default function EntrepreneurDashboard() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const supabase = createClient();
         const fetchIdeasAndStats = async () => {
             setLoading(true);
-
+            const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
+
             if (!user) {
+                console.log("No user found, stopping fetch.");
                 setLoading(false);
                 return;
             }
             
-            // Explicitly type the data returned from Supabase
             const { data: fetchedIdeas, error, count } = await supabase
                 .from('ideas')
                 .select('*', { count: 'exact' })
-                .eq('entrepreneur_id', user.id) as { data: Idea[] | null; error: any; count: number | null };
+                .eq('entrepreneur_id', user.id);
 
-            if (!error && fetchedIdeas) {
+            if (error) {
+                console.error("Error fetching ideas:", error.message);
+                setIdeas([]);
+            } else if (fetchedIdeas) {
                 const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
                     ...idea,
                     views: idea.views || Math.floor(Math.random() * 200),
                     location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
                 }));
-                setIdeas(ideasWithDefaults);
+                setIdeas(ideasWithDefaults as Idea[]);
                 
                 const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
                 const totalInquiries = 12; // Hardcoded for demo
 
                 setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
-            } else if (error) {
-                console.error("Error fetching ideas", error.message);
-                setIdeas([]); // Ensure ideas array is empty on error
             } else {
-                setIdeas([]); // Ensure ideas array is empty if no ideas are fetched
+                 setIdeas([]);
             }
             
             setLoading(false);
