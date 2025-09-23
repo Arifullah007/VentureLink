@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { createClient } from '@/lib/supabase/client';
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
@@ -37,55 +37,42 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
-
-    const fetchIdeasAndStats = useCallback(async () => {
-        setLoading(true);
-        console.log('Starting to fetch data...');
-        const supabase = createClient();
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-        if (userError || !user) {
-            console.error('Error fetching user or no user found:', userError?.message);
-            setLoading(false);
-            return;
-        }
-
-        console.log('User found:', user.id);
-
-        const { data: fetchedIdeas, error: ideasError, count } = await supabase
-            .from('ideas')
-            .select('*', { count: 'exact' })
-            .eq('entrepreneur_id', user.id);
-
-        if (ideasError) {
-            console.error("Error fetching ideas:", ideasError.message);
-            setIdeas([]);
-        } else if (fetchedIdeas) {
-            console.log('Successfully fetched ideas:', fetchedIdeas);
-            const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
-                ...idea,
-                views: idea.views || Math.floor(Math.random() * 200),
-                location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
-            }));
-            setIdeas(ideasWithDefaults as Idea[]);
-            
-            const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
-            const totalInquiries = 12; // Hardcoded for demo
-
-            setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
-        } else {
-             console.log('No ideas found for this user.');
-             setIdeas([]);
-             setStats({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
-        }
-        
-        setLoading(false);
-        console.log('Finished fetching data.');
-    }, []);
+    const supabase = createClient();
 
     useEffect(() => {
+        const fetchIdeasAndStats = async () => {
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                setLoading(false);
+                return;
+            }
+
+            const { data: fetchedIdeas, error: ideasError, count } = await supabase
+                .from('ideas')
+                .select('*', { count: 'exact' })
+                .eq('entrepreneur_id', user.id);
+
+            if (ideasError) {
+                setIdeas([]);
+            } else if (fetchedIdeas) {
+                 const ideasWithDefaults = fetchedIdeas.map((idea, index) => ({
+                    ...idea,
+                    views: idea.views || Math.floor(Math.random() * 200),
+                    location: idea.location || (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
+                }));
+                setIdeas(ideasWithDefaults as Idea[]);
+                
+                const totalViews = ideasWithDefaults.reduce((acc, idea) => acc + (idea.views || 0), 0);
+                const totalInquiries = 12; // Hardcoded for demo
+
+                setStats({ activeIdeas: count || 0, totalViews, investorInquiries: totalInquiries });
+            }
+            setLoading(false);
+        };
+
         fetchIdeasAndStats();
-    }, [fetchIdeasAndStats]);
+    }, [supabase]);
 
 
   return (
