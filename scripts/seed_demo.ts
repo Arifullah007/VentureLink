@@ -16,17 +16,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // Define demo users
 const demoUsers = [
   // Entrepreneurs
-  { email: 'rohan.kumar@demo.com', password: 'password123', id: '5a99a46a-31b3-4798-8224-74ce3585d41c', metadata: { role: 'entrepreneur', full_name: 'Rohan Kumar' } },
-  { email: 'isha.reddy@demo.com', password: 'password123', id: '3f58a74e-7b70-4f51-9c64-41b1a7d7b6e7', metadata: { role: 'entrepreneur', full_name: 'Isha Reddy' } },
-  { email: 'arjun.singh@demo.com', password: 'password123', id: 'a8e7a6e4-4d2c-4b13-9c86-64c8f2d4a7c1', metadata: { role: 'entrepreneur', full_name: 'Arjun Singh' } },
-  { email: 'meera.patel@demo.com', password: 'password123', id: 'd2e3f4c1-9b8e-4a7d-8c6f-5b4a3c2d1e0f', metadata: { role: 'entrepreneur', full_name: 'Meera Patel' } },
-  { email: 'karan.chopra@demo.com', password: 'password123', id: 'c1b2a3d4-8e7f-4c6a-9b5d-4a3c2d1e0f9b', metadata: { role: 'entrepreneur', full_name: 'Karan Chopra' } },
-
+  { email: 'shaikarifullah06@gmail.com', password: 'password123', id: '5a99a46a-31b3-4798-8224-74ce3585d41c', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
+  
   // Investors
-  { email: 'priya.sharma@demo.com', password: 'password123', id: 'b9d8c7e6-5f4a-4b3c-2d1e-0f9a8b7c6d5e', metadata: { role: 'investor', full_name: 'Priya Sharma' } },
-  { email: 'vikram.mehta@demo.com', password: 'password123', id: 'a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d', metadata: { role: 'investor', full_name: 'Vikram Mehta' } },
-  { email: 'anjali.gupta@demo.com', password: 'password123', id: 'f5e4d3c2-b1a0-9c8d-7e6f-5a4b3c2d1e0f', metadata: { role: 'investor', full_name: 'Anjali Gupta' } },
-  { email: 'ravi.kapoor@demo.com', password: 'password123', id: 'd4c3b2a1-e0f9-a8b7-c6d5-e4f3a2b1c0d9', metadata: { role: 'investor', full_name: 'Ravi Kapoor' } },
+  { email: 'injarapusharad2017@gmail.com', password: 'password123', id: 'b9d8c7e6-5f4a-4b3c-2d1e-0f9a8b7c6d5e', metadata: { role: 'investor', full_name: 'Injarapu Sharad' } },
 ];
 
 async function createOrUpdateUser(user: typeof demoUsers[0]) {
@@ -111,8 +104,8 @@ async function seedDatabase() {
     console.log('--- Database seeding successful! ---');
     console.log('\n✅ Demo mode setup is complete. You can now start the application.');
     console.log('\nSample Login Credentials:');
-    console.log('Investor: priya.sharma@demo.com');
-    console.log('Entrepreneur: rohan.kumar@demo.com');
+    console.log('Investor: injarapusharad2017@gmail.com');
+    console.log('Entrepreneur: shaikarifullah06@gmail.com');
     console.log("Password (for all demo accounts): password123");
 
   } catch (error) {
