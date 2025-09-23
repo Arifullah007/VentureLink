@@ -1,6 +1,5 @@
+
 import { createClient } from '@supabase/supabase-js';
-import * as fs from 'fs';
-import * as path from 'path';
 import 'dotenv/config';
 
 // Make sure to set these in your .env file
@@ -19,7 +18,28 @@ const demoUsers = [
   { email: 'shaikarifullah06@gmail.com', password: 'password123', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
   
   // Investors
-  { email: 'injarapusharad2017@gmail.com', password: 'password123', metadata: { role: 'investor', full_name: 'Injarapu Sharad' } },
+  { email: 'injarapusharad2017@gmail.com', password: 'password123', metadata: { role: 'investor', full_name: 'Injarapu Sharad', preferred_sector: 'Tech', investment_range: '5L-25L', expected_returns: 'Medium', bio: 'Seasoned investor in emerging technologies.' } },
+];
+
+const ideas = [
+    {
+        idea_title: 'Eco-Friendly Packaging Solution',
+        anonymized_summary: 'A biodegradable and compostable packaging alternative to plastics, made from agricultural waste. Aims to reduce plastic pollution and provide a sustainable solution for businesses.',
+        full_text: 'Full details of the eco-friendly packaging solution, including materials, manufacturing process, and go-to-market strategy. This part is hidden until an investor signs an NDA.',
+        sector: 'Sustainability',
+        investment_required: '5L-25L',
+        estimated_returns: 'Medium',
+        prototype_url: 'placeholder_url_1',
+    },
+    {
+        idea_title: 'AI-Powered Health Monitoring App',
+        anonymized_summary: 'A mobile application that uses AI to monitor vital signs through the phone\'s camera, providing real-time health insights and alerts. Connects users with doctors for virtual consultations.',
+        full_text: 'Complete breakdown of the AI health app, including the technology stack, data privacy measures, and monetization plan. This part is hidden until an investor signs an NDA.',
+        sector: 'Healthcare',
+        investment_required: '26L-1CR',
+        estimated_returns: 'High',
+        prototype_url: 'placeholder_url_2',
+    },
 ];
 
 async function createOrUpdateUser(user: typeof demoUsers[0]) {
@@ -28,85 +48,106 @@ async function createOrUpdateUser(user: typeof demoUsers[0]) {
 
     if (listUsersError) {
         console.error(`Error checking for user ${user.email}:`, listUsersError.message);
-        return;
+        throw listUsersError;
     }
     
     const existingUser = users && users.length > 0 ? users[0] : null;
 
     if (existingUser) {
-        // User exists, update them
         console.log(`User ${user.email} already exists. Updating...`);
         const { data: updatedUser, error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
-        existingUser.id,
-        {
+            existingUser.id,
+            {
+                password: user.password,
+                user_metadata: user.metadata,
+                email_confirm: true,
+            }
+        );
+        if (updateUserError) {
+            console.error(`Error updating user ${user.email}:`, updateUserError.message);
+            throw updateUserError;
+        }
+        console.log(`Successfully updated user ${updatedUser.user.email}`);
+        return updatedUser.user;
+    } else {
+        console.log(`User ${user.email} not found. Creating...`);
+        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
             email: user.email,
             password: user.password,
             user_metadata: user.metadata,
-            email_confirm: true, // Auto-confirm email for demo users
-        }
-        );
-        if (updateUserError) {
-        console.error(`Error updating user ${user.email}:`, updateUserError.message);
-        } else {
-        console.log(`Successfully updated user ${updatedUser.user.email}`);
-        }
-    } else {
-        // User does not exist, create them
-        console.log(`User ${user.email} not found. Creating...`);
-        const { data: newUser, error: createUserError } = await supabaseAdmin.auth.admin.createUser({
-        email: user.email,
-        password: user.password,
-        user_metadata: user.metadata,
-        email_confirm: true,
+            email_confirm: true,
         });
 
         if (createUserError) {
-        console.error(`Error creating user ${user.email}:`, createUserError.message);
-        } else if (newUser.user) {
-        console.log(`Successfully created user ${newUser.user.email}`);
+            console.error(`Error creating user ${user.email}:`, createUserError.message);
+            throw createUserError;
         }
+        console.log(`Successfully created user ${newUser.user.email}`);
+        return newUser.user;
     }
 }
 
 async function seedDatabase() {
   try {
     console.log('--- Step 1: Creating or updating demo users in Supabase Auth ---');
+    const createdUsers: { [email: string]: any } = {};
     for (const user of demoUsers) {
-      await createOrUpdateUser(user);
+      const createdUser = await createOrUpdateUser(user);
+      createdUsers[user.email] = createdUser;
     }
     console.log('--- Finished creating/updating users. ---');
-
-    console.log('\n--- Step 2: Running SQL seed script to populate database tables ---');
-    const seedSql = fs.readFileSync(path.join(__dirname, '../infra/seed.sql'), 'utf-8');
     
-    const { error: sqlError } = await supabaseAdmin.rpc('execute_sql', { sql: seedSql });
+    const entrepreneur = createdUsers['shaikarifullah06@gmail.com'];
+    const investor = createdUsers['injarapusharad2017@gmail.com'];
 
-    if (sqlError) {
-        // Fallback for local development if the RPC function doesn't exist
-        if (sqlError.message.includes('function execute_sql(sql => text) does not exist')) {
-            console.warn('`execute_sql` RPC not found. Executing SQL query directly. This is common in local dev.');
-            const { error: directSqlError } = await supabaseAdmin.from('profiles').select('*'); // This is just to test connection, the real seeding is below.
-            if(directSqlError && directSqlError.message.includes("permission denied")){
-               console.error("Direct SQL execution failed. Please ensure you have an `execute_sql` RPC function in your database for seeding, or that the service role has direct access.")
-               throw directSqlError
-            }
-            // A bit of a hack: Supabase JS SDK doesn't support arbitrary multi-statement SQL execution.
-            // The proper way is using the `psql` command or an RPC as intended.
-            // For the sake of this script, we'll log a message and assume the user can run the SQL manually if needed.
-            console.log("Executing query with supabase.sql()...")
-            const { error: queryError } = await (supabaseAdmin as any).sql(seedSql);
-            if(queryError) throw queryError
-
-        } else {
-            throw sqlError;
-        }
+    if (!entrepreneur || !investor) {
+        throw new Error('Failed to create or find one of the demo users.');
     }
-    
-    console.log('--- Database seeding successful! ---');
+
+    console.log('\n--- Step 2: Seeding profiles ---');
+    const { error: deleteProfilesError } = await supabaseAdmin.from('profiles').delete().in('id', [entrepreneur.id, investor.id]);
+    if (deleteProfilesError) throw deleteProfilesError;
+
+    const profilesToInsert = demoUsers.map(u => ({
+        id: createdUsers[u.email].id,
+        full_name: u.metadata.full_name,
+        role: u.metadata.role,
+        bio: (u.metadata as any).bio,
+        preferred_sector: (u.metadata as any).preferred_sector,
+        investment_range: (u.metadata as any).investment_range,
+        expected_returns: (u.metadata as any).expected_returns,
+    }));
+
+    const { error: profilesError } = await supabaseAdmin.from('profiles').insert(profilesToInsert);
+    if (profilesError) throw profilesError;
+    console.log('--- Profiles seeded successfully. ---');
+
+
+    console.log('\n--- Step 3: Seeding ideas for entrepreneur ---');
+    // Clear old ideas from this entrepreneur to avoid duplicates
+    const { error: deleteIdeasError } = await supabaseAdmin.from('ideas').delete().eq('entrepreneur_id', entrepreneur.id);
+    if (deleteIdeasError) throw deleteIdeasError;
+
+    const ideasToInsert = ideas.map(idea => ({
+        ...idea,
+        entrepreneur_id: entrepreneur.id,
+    }));
+
+    const { error: ideasError } = await supabaseAdmin.from('ideas').insert(ideasToInsert);
+    if (ideasError) throw ideasError;
+    console.log('--- Ideas seeded successfully. ---');
+
+
+    console.log('\n--- Step 4: Clearing old notifications ---');
+    const { error: deleteNotificationsError } = await supabaseAdmin.from('notifications').delete().in('recipient_id', [investor.id]);
+    if (deleteNotificationsError) throw deleteNotificationsError;
+    console.log('--- Old notifications cleared. ---');
+
+    console.log('\n--- Database seeding successful! ---');
     console.log('\n✅ Demo mode setup is complete. You can now start the application.');
     console.log('\nSample Login Credentials:');
-    console.log('Investor: injarapusharad2017@gmail.com');
-    console.log('Entrepreneur: shaikarifullah06@gmail.com');
+    console.log(`Investor: ${investor.email}`);
+    console.log(`Entrepreneur: ${entrepreneur.email}`);
     console.log("Password (for all demo accounts): password123");
 
   } catch (error) {
@@ -120,3 +161,5 @@ async function seedDatabase() {
 }
 
 seedDatabase();
+
+    
