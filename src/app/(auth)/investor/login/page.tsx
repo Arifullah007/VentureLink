@@ -4,18 +4,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 export default function InvestorLoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const supabase = createClient();
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,36 +20,35 @@ export default function InvestorLoginPage() {
       return;
     }
     setLoading(true);
-    const { data: { user }, error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error || !user) {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role: 'investor' }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'An unknown error occurred.');
+      }
+
+      toast({
+        title: 'Login Successful',
+        description: 'Redirecting to your dashboard...',
+      });
+      
+      window.location.href = '/investor/dashboard';
+
+    } catch (error: any) {
       toast({
         title: 'Login Failed',
-        description: error?.message || "An unknown error occurred.",
+        description: error.message,
         variant: 'destructive',
       });
       setLoading(false);
-      return;
     }
-
-    if (user.user_metadata?.role !== 'investor') {
-        await supabase.auth.signOut();
-        toast({
-            title: 'Access Denied',
-            description: 'This account is not registered as an investor.',
-            variant: 'destructive',
-        });
-        setLoading(false);
-        return;
-    }
-
-    toast({
-      title: 'Login Successful',
-      description: 'Redirecting to your dashboard...',
-    });
-    
-    // Use window.location.href for a full page reload to ensure session is picked up by middleware
-    window.location.href = '/investor/dashboard';
   };
 
   return (
