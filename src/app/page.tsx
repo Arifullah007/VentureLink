@@ -32,29 +32,34 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background font-body">
-      <header className="absolute top-0 left-0 right-0 z-10 bg-transparent text-white">
+      <header className="absolute top-0 left-0 right-0 z-10 bg-white shadow-sm text-foreground">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-            <Logo className="h-8 w-8" />
+            <Logo className="h-8 w-8 text-primary" />
             <h1 className="text-2xl font-bold tracking-wider">VentureLink</h1>
             </div>
+            <nav className="hidden md:flex items-center gap-6 text-sm">
+                <Link href="/" className="font-semibold text-primary underline-offset-4 underline">Home</Link>
+                <Link href="#" className="text-muted-foreground hover:text-primary">Features</Link>
+                <Link href="#" className="text-muted-foreground hover:text-primary">How It Works</Link>
+            </nav>
             <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white">
-                <Link href="/entrepreneur/dashboard">For Entrepreneurs</Link>
+            <Button asChild>
+                <Link href="/entrepreneur/dashboard">Entrepreneur Login</Link>
             </Button>
-            <Button asChild className="bg-white text-primary hover:bg-gray-200">
-                <Link href="/investor/dashboard">For Investors</Link>
+            <Button variant="secondary" asChild>
+                <Link href="/investor/dashboard">Investor Login</Link>
             </Button>
             </div>
         </div>
       </header>
       <main className="flex-grow">
-        <section className="relative flex items-center justify-center h-screen bg-gradient-to-br from-primary to-accent text-white">
+        <section className="relative flex items-center justify-center h-screen bg-gradient-to-r from-primary to-accent text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">
               Connect. Invest. Grow.
               <br />
-              <span className="text-white/90">With VentureLink</span>
+              <span className="text-white/90">With Venture Link</span>
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-white/80">
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
@@ -63,7 +68,7 @@ export default function Home() {
               <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
                 <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild className="text-white border-white/50 hover:bg-white/10 hover:text-white font-semibold bg-white/20">
+              <Button size="lg" variant="secondary" asChild className="bg-primary/80 hover:bg-primary/90 text-white font-semibold">
                 <Link href="/investor/dashboard">I'm an Investor</Link>
               </Button>
             </div>
