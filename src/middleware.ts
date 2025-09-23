@@ -1,5 +1,7 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import { type NextRequest } from 'next/server';
+import { updateSession } from '@/lib/supabase/middleware';
 import { createClient } from '@/lib/supabase/server';
+import { NextResponse } from 'next/server';
 
 const PROTECTED_ROUTES = {
   ENTREPRENEUR: '/entrepreneur',
@@ -8,17 +10,17 @@ const PROTECTED_ROUTES = {
 const PUBLIC_ROUTES = ['/login', '/verify-otp', '/'];
 
 export async function middleware(request: NextRequest) {
+  // This is the first step, to refresh the session and make it available to all Supabase server clients.
+  const { response, supabase } = await updateSession(request);
+
   const { pathname } = request.nextUrl;
 
   // If the route is public, let them pass
   if (PUBLIC_ROUTES.some(route => pathname.startsWith(route)) && pathname !== '/') {
-    return NextResponse.next();
+    return response;
   }
-
-  const supabase = createClient();
-  const { data: { session }, error } = await supabase.auth.getSession();
-
-  const user = session?.user;
+  
+  const { data: { user } } = await supabase.auth.getUser();
   const role = user?.user_metadata.role;
 
   // If no user and trying to access a protected route, redirect to login
@@ -42,7 +44,7 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
