@@ -2,7 +2,6 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-// This import is needed for the admin client
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 
 const passwordSchema = z.object({
