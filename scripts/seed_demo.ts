@@ -15,10 +15,10 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // Define demo users
 const demoUsers = [
   // Entrepreneurs
-  { email: 'shaikarifullah06@gmail.com', password: 'password123', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
+  { email: 'shaikarifullah06@gmail.com', password: 'Arif_007', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
   
   // Investors
-  { email: 'injarapusharad2017@gmail.com', password: 'password123', metadata: { role: 'investor', full_name: 'Injarapu Sharad', preferred_sector: 'Tech', investment_range: '5L-25L', expected_returns: 'Medium', bio: 'Seasoned investor in emerging technologies.' } },
+  { email: 'injarapusharad2017@gmail.com', password: 'Sharad_007', metadata: { role: 'investor', full_name: 'Injarapu Sharad', preferred_sector: 'Tech', investment_range: '5L-25L', expected_returns: 'Medium', bio: 'Seasoned investor in emerging technologies.' } },
 ];
 
 const ideas = [
@@ -54,13 +54,14 @@ async function createOrUpdateUser(user: typeof demoUsers[0]) {
     const existingUser = users && users.length > 0 ? users[0] : null;
 
     if (existingUser) {
-        console.log(`User ${user.email} already exists. Updating...`);
+        console.log(`User ${user.email} already exists. Updating metadata...`);
         const { data: updatedUser, error: updateUserError } = await supabaseAdmin.auth.admin.updateUserById(
             existingUser.id,
             {
-                password: user.password,
+                // We no longer update the password if the user exists.
+                // We only update the metadata to ensure role and name are correct.
                 user_metadata: user.metadata,
-                email_confirm: true,
+                email_confirm: true, // Ensure the email is always confirmed for demo purposes.
             }
         );
         if (updateUserError) {
@@ -104,10 +105,16 @@ async function seedDatabase() {
         throw new Error('Failed to create or find one of the demo users.');
     }
 
-    console.log('\n--- Step 2: Seeding profiles ---');
-    const { error: deleteProfilesError } = await supabaseAdmin.from('profiles').delete().in('id', [entrepreneur.id, investor.id]);
-    if (deleteProfilesError) throw deleteProfilesError;
+    console.log('\n--- Step 2: Clearing old profiles for demo users ---');
+    const userIds = Object.values(createdUsers).map(u => u.id);
+    const { error: deleteProfilesError } = await supabaseAdmin.from('profiles').delete().in('id', userIds);
+    if (deleteProfilesError) {
+        console.error('Error deleting old profiles:', deleteProfilesError.message);
+        throw deleteProfilesError;
+    }
+    console.log('--- Old profiles cleared successfully. ---');
 
+    console.log('\n--- Step 3: Seeding new profiles ---');
     const profilesToInsert = demoUsers.map(u => ({
         id: createdUsers[u.email].id,
         full_name: u.metadata.full_name,
@@ -123,7 +130,7 @@ async function seedDatabase() {
     console.log('--- Profiles seeded successfully. ---');
 
 
-    console.log('\n--- Step 3: Seeding ideas for entrepreneur ---');
+    console.log('\n--- Step 4: Seeding ideas for entrepreneur ---');
     // Clear old ideas from this entrepreneur to avoid duplicates
     const { error: deleteIdeasError } = await supabaseAdmin.from('ideas').delete().eq('entrepreneur_id', entrepreneur.id);
     if (deleteIdeasError) throw deleteIdeasError;
@@ -138,7 +145,7 @@ async function seedDatabase() {
     console.log('--- Ideas seeded successfully. ---');
 
 
-    console.log('\n--- Step 4: Clearing old notifications ---');
+    console.log('\n--- Step 5: Clearing old notifications ---');
     const { error: deleteNotificationsError } = await supabaseAdmin.from('notifications').delete().in('recipient_id', [investor.id]);
     if (deleteNotificationsError) throw deleteNotificationsError;
     console.log('--- Old notifications cleared. ---');
@@ -146,9 +153,8 @@ async function seedDatabase() {
     console.log('\n--- Database seeding successful! ---');
     console.log('\n✅ Demo mode setup is complete. You can now start the application.');
     console.log('\nSample Login Credentials:');
-    console.log(`Investor: ${investor.email}`);
-    console.log(`Entrepreneur: ${entrepreneur.email}`);
-    console.log("Password (for all demo accounts): password123");
+    console.log(`Investor: ${investor.email} (Password: ${demoUsers.find(u => u.email === investor.email)?.password})`);
+    console.log(`Entrepreneur: ${entrepreneur.email} (Password: ${demoUsers.find(u => u.email === entrepreneur.email)?.password})`);
 
   } catch (error) {
     if (error instanceof Error){
@@ -161,5 +167,3 @@ async function seedDatabase() {
 }
 
 seedDatabase();
-
-    
