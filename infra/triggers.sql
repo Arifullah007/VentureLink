@@ -1,72 +1,90 @@
--- This function runs when a user is created and inserts a matching profile.
-create or replace function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, full_name, email, role)
-  values (
-    new.id,
-    new.raw_user_meta_data->>'full_name',
-    new.email,
-    new.raw_user_meta_data->>'role'
+-- This script contains triggers and functions that must be manually applied
+-- to your Supabase project in the SQL Editor.
+
+-- Function to check for contact information in idea summaries.
+CREATE OR REPLACE FUNCTION public.check_idea_summary_for_contact_info()
+RETURNS trigger AS $$
+DECLARE
+  contact_regex TEXT := '(\w+@\w+\.\w+)|(\+?\d[\d -]{8,12}\d)|(https?:\/\/[^\s]+)';
+BEGIN
+  -- Check if the new anonymized summary contains contact info
+  IF NEW.anonymized_summary ~* contact_regex THEN
+    -- Insert a report about the violation
+    INSERT INTO public.reports(report_type, description, related_idea_id, related_user_id)
+    VALUES ('contact_info_in_summary', 'Contact information detected in idea summary.', NEW.id, NEW.entrepreneur_id);
+
+    -- Prevent the operation from completing
+    RAISE EXCEPTION 'Idea summary cannot contain contact information like emails, phone numbers, or links.';
+  END IF;
+
+  -- If no contact info is found, allow the operation
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+
+-- Trigger to run the check BEFORE a new idea is inserted.
+DROP TRIGGER IF EXISTS before_idea_insert_check_summary ON public.ideas;
+CREATE TRIGGER before_idea_insert_check_summary
+BEFORE INSERT ON public.ideas
+FOR EACH ROW
+EXECUTE FUNCTION public.check_idea_summary_for_contact_info();
+
+
+-- Trigger to run the check BEFORE an existing idea is updated.
+DROP TRIGGER IF EXISTS before_idea_update_check_summary ON public.ideas;
+CREATE TRIGGER before_idea_update_check_summary
+BEFORE UPDATE OF anonymized_summary ON public.ideas
+FOR EACH ROW
+WHEN (OLD.anonymized_summary IS DISTINCT FROM NEW.anonymized_summary)
+EXECUTE FUNCTION public.check_idea_summary_for_contact_info();
+
+
+-- Function to automatically create a user profile when a new user signs up in Auth.
+CREATE OR REPLACE FUNCTION public.create_user_profile()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data ->> 'full_name',
+    NEW.raw_user_meta_data ->> 'role'
   );
-  return new;
-end;
-$$ language plpgsql security definer;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- This trigger calls the function when a new user is created in auth.users.
-drop trigger if exists on_auth_user_created on auth.users;
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+-- Trigger to create a profile when a user is created.
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW
+EXECUTE FUNCTION public.create_user_profile();
 
 
--- Function to check for contact information in an idea summary.
--- If contact info is found, it inserts a report and raises an exception.
-create or replace function public.check_idea_summary_for_contact_info()
-returns trigger as $$
-declare
-  contact_regex text := '(\w+@\w+\.\w+)|(\+?\d[\d -]{8,12}\d)|(https?:\/\/[^\s]+)';
-begin
-  if NEW.anonymized_summary ~* contact_regex then
-    insert into public.reports (report_type, description, related_idea_id, related_user_id)
-    values ('contact_info_in_summary', 'Contact information detected in idea summary.', NEW.id, NEW.entrepreneur_id);
-    
-    raise exception 'Idea summary cannot contain contact information like emails, phone numbers, or links.';
-  end if;
-  
-  return NEW;
-end;
-$$ language plpgsql;
+-- Function to trigger the file processing webhook when a file record is inserted.
+CREATE OR REPLACE FUNCTION request_file_processing()
+RETURNS trigger AS $$
+DECLARE
+  function_url TEXT := 'https://<YOUR_PROJECT_REF>.supabase.co/functions/v1/process-upload-webhook';
+BEGIN
+  -- We need to replace <YOUR_PROJECT_REF> with the actual project reference.
+  -- This is a bit of a hack as we can't get it dynamically here easily.
+  -- A better approach is to store the full URL in a config table.
+  -- For now, this demonstrates the concept. The user must replace this manually
+  -- or we must handle it in the deployment script.
 
--- Trigger to check idea summary on insert
-drop trigger if exists before_idea_insert_check_summary on public.ideas;
-create trigger before_idea_insert_check_summary
-  before insert on public.ideas
-  for each row
-  execute procedure public.check_idea_summary_for_contact_info();
+  -- This trigger is now primarily for logging and potential future use.
+  -- The core logic is handled by the Edge Function listening to table inserts.
+  RAISE NOTICE 'File record inserted for idea_id: %, file_path: %', NEW.idea_id, NEW.file_path;
 
--- Trigger to check idea summary on update
-drop trigger if exists before_idea_update_check_summary on public.ideas;
-create trigger before_idea_update_check_summary
-  before update of anonymized_summary on public.ideas
-  for each row
-  execute procedure public.check_idea_summary_for_contact_info();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Function to automatically call the process-upload-webhook when a file is inserted
-create or replace function public.request_file_processing()
-returns trigger as $$
-begin
-  -- This will now be handled by a Supabase webhook on the idea_files table instead of a direct function call
-  -- to allow for asynchronous processing. This function is a placeholder for that logic.
-  -- The webhook should be configured to listen to inserts on the `idea_files` table
-  -- and call the `process-upload-webhook` Edge Function.
-  return NEW;
-end;
-$$ language plpgsql;
-
--- Trigger for file processing (though now handled by webhook)
-drop trigger if exists on_new_idea_file on public.idea_files;
-create trigger on_new_idea_file
-  after insert on public.idea_files
-  for each row
-  execute procedure public.request_file_processing();
+-- Trigger to call the webhook function (for logging purposes).
+DROP TRIGGER IF EXISTS on_file_upload ON public.idea_files;
+CREATE TRIGGER on_file_upload
+AFTER INSERT ON public.idea_files
+FOR EACH ROW
+EXECUTE FUNCTION request_file_processing();
