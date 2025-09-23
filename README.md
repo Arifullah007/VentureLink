@@ -21,7 +21,7 @@ You need to have the following tools installed:
 
 ### 2. Set Environment Variables
 
-1.  Create a new file named `.env` in the root of your project.
+1.  Create a new file named `.env.local` in the root of your project. This file is for your local secrets and will not be tracked by git.
 2.  Add the `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` variables with the values you just copied.
     ```env
     NEXT_PUBLIC_SUPABASE_URL="YOUR_SUPABASE_URL_HERE"
@@ -30,7 +30,7 @@ You need to have the following tools installed:
 
 ### 3. Set up the Database Schema
 
-The database schema, security policies, and functions must be manually set up using the Supabase SQL Editor. This is the most critical step.
+This is the most critical step. The database schema, security policies, and functions must be manually set up using the Supabase SQL Editor.
 
 1.  Navigate to the **SQL Editor** in your Supabase project dashboard.
 2.  Click **"New query"**.
@@ -56,7 +56,7 @@ The database schema, security policies, and functions must be manually set up us
 The database is now empty. To add the sample users, ideas, and investors, you need to run the seed script.
 
 1.  **Get Service Role Key**: In your Supabase Project's API Settings, find the `service_role` key (it will be hidden by default). Copy this key.
-2.  **Add to `.env` file**: Add the key to your `.env` file:
+2.  **Add to `.env.local` file**: Add the key to your `.env.local` file:
     ```
     SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY_HERE"
     ```
@@ -66,9 +66,9 @@ The database is now empty. To add the sample users, ideas, and investors, you ne
     ```
 
 ### Demo Login Credentials
-*   **Investor:** `priya.sharma@demo.com`
-*   **Entrepreneur:** `rohan.kumar@demo.com`
+*   **Investor:** `injarapusharad2017@gmail.com`
+*   **Entrepreneur:** `shaikarifullah06@gmail.com`
 *   **Password (for all demo accounts):** `password123`
 
 ---
-That's it! Your VentureLink application is fully set up and ready to use.
+That's it! The VentureLink application is fully set up and ready to use.
