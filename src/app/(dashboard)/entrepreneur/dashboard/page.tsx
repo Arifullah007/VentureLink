@@ -83,30 +83,17 @@ export default function EntrepreneurDashboard() {
 
     useEffect(() => {
       const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
-          // fetch data once the session is available
-          fetchIdeasAndStats();
-        } else if (event === 'SIGNED_OUT') {
-          // handle logout if necessary
-          setIdeas([]);
-          setStats({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
-          setLoading(false);
-        }
-      });
-  
-      // Check if there is already a session
-      const checkSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
         if (session) {
           fetchIdeasAndStats();
+        } else if (event === 'SIGNED_OUT') {
+           setIdeas([]);
+           setStats({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
+           setLoading(false);
         } else {
-            // If no session on initial load, maybe it's still being restored.
-            // onAuthStateChange will handle it. If not, loading will remain true
-            // or you can set it to false after a timeout.
+           // If there's no session, we stop loading and the UI will show the empty state.
+           setLoading(false);
         }
-      };
-      
-      checkSession();
+      });
 
       return () => {
         subscription.unsubscribe();
@@ -211,7 +198,7 @@ export default function EntrepreneurDashboard() {
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
-              <p>You haven&apos;t submitted any ideas yet.</p>
+              <p>You haven't submitted any ideas yet.</p>
                <Button asChild className="mt-4">
                   <Link href="/entrepreneur/ideas/new">
                     <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Idea
@@ -224,5 +211,3 @@ export default function EntrepreneurDashboard() {
     </motion.div>
   );
 }
-
-    
