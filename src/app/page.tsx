@@ -181,17 +181,31 @@ export default function Home() {
                     <div className="hidden md:block absolute top-0 bottom-0 left-1/2 w-0.5 bg-gray-600"></div>
 
                     {funnelSteps.map((step, index) => (
-                        <div key={index} className="relative flex items-center mb-12 md:mb-0">
-                            {/* Content */}
-                            <div className={`w-full md:w-1/2 p-6 rounded-lg shadow-lg ${step.bgColor} ${step.side === 'left' ? 'md:pr-12' : 'md:pl-12'} ${step.side === 'left' ? 'md:text-right' : 'md:text-left'}`}>
-                                <h4 className={`text-xl font-bold ${step.color}`}>{step.title}</h4>
-                                <p className="text-gray-300 mt-2">{step.description}</p>
-                            </div>
+                        <div key={index} className={`relative flex items-center mb-12 md:mb-0 ${step.side === 'left' ? 'md:justify-start' : 'md:justify-end'}`}>
+                            {/* Content for left side */}
+                            {step.side === 'left' && (
+                                <div className="md:w-1/2 md:pr-12">
+                                     <div className={`p-6 rounded-lg shadow-lg ${step.bgColor} text-right`}>
+                                        <h4 className={`text-xl font-bold ${step.color}`}>{step.title}</h4>
+                                        <p className="text-gray-300 mt-2">{step.description}</p>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Icon & connecting line */}
-                            <div className={`absolute flex items-center justify-center w-20 h-20 rounded-full bg-[#242933] border-4 border-gray-600 z-10 ${step.color} ${step.side === 'left' ? 'md:right-0 md:transform md:translate-x-1/2' : 'md:left-0 md:transform md:-translate-x-1/2'} left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0`}>
-                               {step.icon}
+                            <div className="absolute flex items-center justify-center w-20 h-20 rounded-full bg-[#242933] border-4 border-gray-600 z-10 left-1/2 -translate-x-1/2">
+                               <div className={step.color}>{step.icon}</div>
                             </div>
+                            
+                            {/* Content for right side */}
+                            {step.side === 'right' && (
+                                <div className="md:w-1/2 md:pl-12">
+                                    <div className={`p-6 rounded-lg shadow-lg ${step.bgColor} text-left`}>
+                                        <h4 className={`text-xl font-bold ${step.color}`}>{step.title}</h4>
+                                        <p className="text-gray-300 mt-2">{step.description}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>
