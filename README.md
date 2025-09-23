@@ -23,10 +23,7 @@ You need to have the following tools installed:
 
 1.  Create a new file named `.env` in the root of your project.
 2.  Copy the contents of `.env.example` into your new `.env` file (if it exists) or create it from scratch.
-3.  Fill in the required values:
-    *   `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from your Supabase API settings.
-    *   Generate a long, random, secret string for `JWT_SECRET`.
-    *   The other variables (`SUPABASE_SERVICE_ROLE_KEY`, `STRIPE_*`) are not required for the initial setup to run, but will be needed to test backend functions.
+3.  Fill in the required values for `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` from your Supabase API settings. The other variables are not required for the app to run.
 
 ### 3. Set up the Database Schema
 
@@ -49,7 +46,21 @@ The database schema, security policies, and functions must be manually set up us
     ```bash
     npm run dev
     ```
-    The first time you run this, it will also seed the database with demo users and ideas. Your application should now be running at `http://localhost:3000`.
+    Your application should now be running at `http://localhost:3000`.
+
+### 5. (Optional) Seed with Demo Data
+
+The database is now empty. To add the sample users, ideas, and investors, you need to run the seed script.
+
+1.  **Get Service Role Key**: In your Supabase Project's API Settings, find the `service_role` key (it will be hidden by default). Copy this key.
+2.  **Add to `.env` file**: Add the key to your `.env` file:
+    ```
+    SUPABASE_SERVICE_ROLE_KEY="YOUR_SERVICE_ROLE_KEY_HERE"
+    ```
+3.  **Run the seed script**:
+    ```bash
+    npm run seed-demo
+    ```
 
 ### Demo Login Credentials
 *   **Investor:** `priya.sharma@demo.com`
