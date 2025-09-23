@@ -29,7 +29,7 @@ function VerifyOtpForm() {
     const { error } = await supabase.auth.verifyOtp({
       email,
       token: otp,
-      type: 'email',
+      type: 'signup',
     });
 
     if (error) {
