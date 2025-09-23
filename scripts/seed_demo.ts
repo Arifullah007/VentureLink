@@ -16,14 +16,14 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 // Define demo users
 const demoUsers = [
   // Entrepreneurs
-  { email: 'shaikarifullah06@gmail.com', password: 'password123', id: '5a99a46a-31b3-4798-8224-74ce3585d41c', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
+  { email: 'shaikarifullah06@gmail.com', password: 'password123', metadata: { role: 'entrepreneur', full_name: 'Shaik Arifullah' } },
   
   // Investors
-  { email: 'injarapusharad2017@gmail.com', password: 'password123', id: 'b9d8c7e6-5f4a-4b3c-2d1e-0f9a8b7c6d5e', metadata: { role: 'investor', full_name: 'Injarapu Sharad' } },
+  { email: 'injarapusharad2017@gmail.com', password: 'password123', metadata: { role: 'investor', full_name: 'Injarapu Sharad' } },
 ];
 
 async function createOrUpdateUser(user: typeof demoUsers[0]) {
-    // Check if user exists by email, as ID might change.
+    // Check if user exists by email
     const { data: { users }, error: listUsersError } = await supabaseAdmin.auth.admin.listUsers({ email: user.email } as any);
 
     if (listUsersError) {
