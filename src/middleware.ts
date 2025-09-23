@@ -1,6 +1,7 @@
+
 import { type NextRequest, NextResponse } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
 
 const PROTECTED_ROUTES = {
   ENTREPRENEUR: '/entrepreneur',
@@ -11,7 +12,20 @@ const PUBLIC_ROUTES = ['/login', '/verify-otp', '/'];
 export async function middleware(request: NextRequest) {
   // This will refresh the session and make it available to all Supabase server clients.
   const response = await updateSession(request);
-  const supabase = createClient();
+
+  // We are creating a new client here because we need to get the user to check their role.
+  // The `updateSession` function above doesn't return the user.
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+      },
+    }
+  );
 
   const { pathname } = request.nextUrl;
 
@@ -25,7 +39,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // If the route is public, let them pass
-  if (PUBLIC_ROUTES.includes(pathname)) {
+  if (PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/auth/callback')) {
+     // But if they are logged in and trying to access login, redirect them away
+    if (user && pathname === '/login') {
+      const role = user.user_metadata.role;
+      const redirectTo = role === 'investor' ? PROTECTED_ROUTES.INVESTOR + '/dashboard' : PROTECTED_ROUTES.ENTREPRENEUR + '/dashboard';
+      return NextResponse.redirect(new URL(redirectTo, request.url));
+    }
     return response;
   }
   
