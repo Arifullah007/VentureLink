@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 import { createClient as createAdminClient } from '@supabase/supabase-js';
 import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
 
 const passwordSchema = z.object({
   currentPassword: z.string(),
@@ -56,11 +55,12 @@ export async function deleteAccountAction(): Promise<{ error: Error | null }> {
         }
 
         // For user deletion, we need to use the admin client.
+        // These are now read from .env.local
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
         if (!supabaseUrl || !supabaseServiceKey) {
-            throw new Error('Supabase admin credentials are not configured.');
+            throw new Error('Supabase admin credentials are not configured. Make sure SUPABASE_SERVICE_ROLE_KEY is set in your .env.local file.');
         }
     
         const supabaseAdmin = createAdminClient(supabaseUrl, supabaseServiceKey);

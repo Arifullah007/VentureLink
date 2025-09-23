@@ -2,12 +2,12 @@
 import { createClient } from '@supabase/supabase-js';
 import 'dotenv/config';
 
-// Make sure to set these in your .env file
+// Make sure to set these in your .env or .env.local file
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Supabase URL and Service Role Key must be defined in your .env file.');
+  throw new Error('Supabase URL and Service Role Key must be defined in your .env or .env.local file.');
 }
 
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);

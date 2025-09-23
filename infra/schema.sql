@@ -1,9 +1,6 @@
--- This script is idempotent, so it can be run multiple times without causing errors.
-
--- 1. Create Profiles Table
--- This table stores public user data.
-CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY REFERENCES auth.users(id),
+-- Create Profiles table
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     full_name TEXT,
     role TEXT CHECK (role IN ('investor', 'entrepreneur')),
     bio TEXT,
@@ -15,17 +12,11 @@ CREATE TABLE IF NOT EXISTS profiles (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
--- RLS for profiles
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR SELECT USING (true);
-CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update their own profile." ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- 2. Create Ideas Table
--- Stores the business ideas submitted by entrepreneurs.
-CREATE TABLE IF NOT EXISTS ideas (
+-- Create Ideas table
+CREATE TABLE IF NOT EXISTS public.ideas (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    entrepreneur_id UUID REFERENCES auth.users(id),
+    entrepreneur_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     idea_title TEXT NOT NULL,
     anonymized_summary TEXT NOT NULL,
     full_text TEXT,
@@ -36,82 +27,155 @@ CREATE TABLE IF NOT EXISTS ideas (
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
--- RLS for ideas
-ALTER TABLE ideas ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Ideas are viewable by authenticated users." ON ideas FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "Entrepreneurs can insert their own ideas." ON ideas FOR INSERT WITH CHECK (auth.uid() = entrepreneur_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'entrepreneur');
-CREATE POLICY "Entrepreneurs can update their own ideas." ON ideas FOR UPDATE USING (auth.uid() = entrepreneur_id);
 
--- 3. Create Notifications Table
-CREATE TABLE IF NOT EXISTS notifications (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    recipient_id UUID REFERENCES auth.users(id),
-    sender_id UUID REFERENCES auth.users(id),
-    idea_id UUID REFERENCES ideas(id),
-    type TEXT NOT NULL, -- e.g., 'nda_request', 'nda_signed', 'contact_unlock'
+-- Create Notifications table
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    recipient_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
+    idea_id UUID REFERENCES public.ideas(id) ON DELETE CASCADE,
+    type TEXT NOT NULL, -- e.g., 'nda_request', 'nda_accepted', 'message'
     message TEXT,
     is_read BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
--- RLS for notifications
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view their own notifications." ON notifications FOR SELECT USING (auth.uid() = recipient_id);
-CREATE POLICY "Users can create notifications." ON notifications FOR INSERT WITH CHECK (auth.uid() = sender_id);
-CREATE POLICY "Users can mark their notifications as read." ON notifications FOR UPDATE USING (auth.uid() = recipient_id);
 
-
--- 4. Create NDAs Table
--- Tracks Non-Disclosure Agreements signed by investors for specific ideas.
-CREATE TABLE IF NOT EXISTS ndas (
-    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    investor_id UUID REFERENCES auth.users(id),
-    idea_id UUID REFERENCES ideas(id),
+-- Create NDAs table to track agreements
+CREATE TABLE IF NOT EXISTS public.ndas (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    idea_id UUID REFERENCES public.ideas(id) ON DELETE CASCADE,
+    investor_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     signed_at TIMESTAMPTZ DEFAULT NOW(),
     signature TEXT NOT NULL,
-    UNIQUE(investor_id, idea_id)
+    UNIQUE(idea_id, investor_id) -- An investor only needs to sign once per idea
 );
--- RLS for ndas
-ALTER TABLE ndas ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Investors can view NDAs they have signed." ON ndas FOR SELECT USING (auth.uid() = investor_id);
-CREATE POLICY "Investors can sign NDAs." ON ndas FOR INSERT WITH CHECK (auth.uid() = investor_id AND (SELECT role FROM profiles WHERE id = auth.uid()) = 'investor');
 
-
--- 5. Create a function to automatically create a profile for a new user.
+-- Function to handle new user and create a profile
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
 BEGIN
   INSERT INTO public.profiles (id, full_name, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'role');
+  VALUES (
+    new.id,
+    new.raw_user_meta_data->>'full_name',
+    new.raw_user_meta_data->>'role'
+  );
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- 6. Create a trigger to call the function when a new user signs up.
+-- Trigger to call the function when a new user signs up
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
 
 
--- 7. Create a function to automatically delete all user-related data.
+-- Function to automatically delete a user's public data when their auth entry is deleted.
 CREATE OR REPLACE FUNCTION public.delete_user_data()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
 BEGIN
-  -- Delete from profiles
-  DELETE FROM public.profiles WHERE id = old.id;
-  -- Delete from ideas where the user is the entrepreneur
-  DELETE FROM public.ideas WHERE entrepreneur_id = old.id;
-  -- Delete notifications sent to or from the user
-  DELETE FROM public.notifications WHERE recipient_id = old.id OR sender_id = old.id;
-  -- Delete NDAs signed by the user
-  DELETE FROM public.ndas WHERE investor_id = old.id;
+  -- This function is now a placeholder. 
+  -- The ON DELETE CASCADE on the tables referencing auth.users(id) handles the cleanup.
+  -- You could add more complex logic here if needed, like logging or cleanup in other schemas.
+  RAISE NOTICE 'User data for % is being deleted due to ON DELETE CASCADE.', old.id;
   RETURN old;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$;
 
--- 8. Create a trigger to call the cleanup function before a user is deleted.
+-- Trigger to call the user data deletion function
 DROP TRIGGER IF EXISTS on_auth_user_deleted ON auth.users;
 CREATE TRIGGER on_auth_user_deleted
-  BEFORE DELETE ON auth.users
+  AFTER DELETE ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.delete_user_data();
 
+-- RLS Policies
+
+-- Enable RLS for all tables
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ideas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ndas ENABLE ROW LEVEL SECURITY;
+
+-- Profiles Policies
+DROP POLICY IF EXISTS "Allow authenticated users to read any profile" ON public.profiles;
+CREATE POLICY "Allow authenticated users to read any profile"
+  ON public.profiles FOR SELECT
+  USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Users can create their own profile" ON public.profiles;
+CREATE POLICY "Users can create their own profile"
+    ON public.profiles FOR INSERT
+    WITH CHECK (auth.uid() = id);
+
+DROP POLICY IF EXISTS "Users can update their own profile" ON public.profiles;
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- Ideas Policies
+DROP POLICY IF EXISTS "Allow authenticated users to read ideas" ON public.ideas;
+CREATE POLICY "Allow authenticated users to read ideas"
+    ON public.ideas FOR SELECT
+    USING (auth.role() = 'authenticated');
+
+DROP POLICY IF EXISTS "Entrepreneurs can create ideas" ON public.ideas;
+CREATE POLICY "Entrepreneurs can create ideas"
+    ON public.ideas FOR INSERT
+    WITH CHECK (
+      auth.uid() = entrepreneur_id AND
+      (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'entrepreneur'
+    );
+
+DROP POLICY IF EXISTS "Entrepreneurs can update their own ideas" ON public.ideas;
+CREATE POLICY "Entrepreneurs can update their own ideas"
+    ON public.ideas FOR UPDATE
+    USING (auth.uid() = entrepreneur_id)
+    WITH CHECK (auth.uid() = entrepreneur_id);
+
+DROP POLICY IF EXISTS "Entrepreneurs can delete their own ideas" ON public.ideas;
+CREATE POLICY "Entrepreneurs can delete their own ideas"
+    ON public.ideas FOR DELETE
+    USING (auth.uid() = entrepreneur_id);
+
+-- Notifications Policies
+DROP POLICY IF EXISTS "Users can read their own notifications" ON public.notifications;
+CREATE POLICY "Users can read their own notifications"
+    ON public.notifications FOR SELECT
+    USING (auth.uid() = recipient_id);
+
+DROP POLICY IF EXISTS "Users can create notifications for others" ON public.notifications;
+CREATE POLICY "Users can create notifications for others"
+    ON public.notifications FOR INSERT
+    WITH CHECK (auth.uid() = sender_id);
+
+-- NDAs Policies
+DROP POLICY IF EXISTS "Investors can see NDAs they have signed" ON public.ndas;
+CREATE POLICY "Investors can see NDAs they have signed"
+    ON public.ndas FOR SELECT
+    USING (auth.uid() = investor_id);
+
+DROP POLICY IF EXISTS "Entrepreneurs can see NDAs for their ideas" ON public.ndas;
+CREATE POLICY "Entrepreneurs can see NDAs for their ideas"
+    ON public.ndas FOR SELECT
+    USING (EXISTS (
+        SELECT 1
+        FROM public.ideas
+        WHERE ideas.id = ndas.idea_id AND ideas.entrepreneur_id = auth.uid()
+    ));
+
+DROP POLICY IF EXISTS "Investors can sign an NDA" ON public.ndas;
+CREATE POLICY "Investors can sign an NDA"
+    ON public.ndas FOR INSERT
+    WITH CHECK (
+        auth.uid() = investor_id AND
+        (SELECT role FROM public.profiles WHERE id = auth.uid()) = 'investor'
+    );
