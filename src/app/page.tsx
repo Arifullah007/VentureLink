@@ -31,40 +31,40 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="flex flex-col min-h-screen bg-background font-body">
       <header className="absolute top-0 left-0 right-0 z-10 bg-transparent text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
             <Logo className="h-8 w-8" />
-            <h1 className="text-2xl font-bold">VentureLink</h1>
+            <h1 className="text-2xl font-bold tracking-wider">VentureLink</h1>
             </div>
             <div className="flex items-center gap-2">
-            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white">
-                <Link href="/entrepreneur/dashboard">Entrepreneur Dashboard</Link>
+            <Button variant="ghost" asChild className="hover:bg-white/10 hover:text-white rounded-full">
+                <Link href="/entrepreneur/dashboard">For Entrepreneurs</Link>
             </Button>
-            <Button asChild className="bg-white/90 text-primary hover:bg-white">
-                <Link href="/investor/dashboard">Investor Dashboard</Link>
+            <Button asChild className="bg-white text-primary hover:bg-gray-200 rounded-full">
+                <Link href="/investor/dashboard">For Investors</Link>
             </Button>
             </div>
         </div>
       </header>
       <main className="flex-grow">
-        <section className="relative flex items-center justify-center h-screen bg-gradient-to-r from-primary to-accent text-white">
+        <section className="relative flex items-center justify-center h-screen bg-gradient-to-br from-primary to-accent text-white">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Connect. Invest. Grow.
+            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight">
+              Where Great Ideas
               <br />
-              <span className="text-white/90">With Venture Link</span>
+              <span className="text-white">Meet Smart Capital</span>
             </h2>
             <p className="mt-4 max-w-2xl mx-auto text-lg md:text-xl text-white/80">
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" variant="secondary" asChild className="bg-white text-primary hover:bg-gray-200">
-                <Link href="/entrepreneur/dashboard">I'm an Entrepreneur</Link>
+              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 rounded-full font-semibold">
+                <Link href="/entrepreneur/dashboard">Submit Your Idea</Link>
               </Button>
-              <Button size="lg" asChild className="bg-white/20 hover:bg-white/30 border border-white/50">
-                <Link href="/investor/dashboard">I'm an Investor</Link>
+              <Button size="lg" variant="outline" asChild className="text-white border-white/50 hover:bg-white/10 hover:text-white rounded-full font-semibold">
+                <Link href="/investor/dashboard">Discover Ventures</Link>
               </Button>
             </div>
           </div>
