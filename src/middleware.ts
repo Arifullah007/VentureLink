@@ -23,6 +23,7 @@ export async function middleware(request: NextRequest) {
   // If no session, redirect to the appropriate login page
   if (!session) {
     const loginUrl = new URL(isInvestorPath ? '/investor/login' : '/entrepreneur/login', request.url);
+    loginUrl.searchParams.set('next', pathname);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -31,14 +32,16 @@ export async function middleware(request: NextRequest) {
 
   // If on an entrepreneur path, but the role is not 'entrepreneur', redirect
   if (isEntrepreneurPath && userRole !== 'entrepreneur') {
-    const loginUrl = new URL('/entrepreneur/login', request.url);
-    return NextResponse.redirect(loginUrl);
+     await supabase.auth.signOut();
+     const loginUrl = new URL('/entrepreneur/login', request.url);
+     return NextResponse.redirect(loginUrl);
   }
 
   // If on an investor path, but the role is not 'investor', redirect
   if (isInvestorPath && userRole !== 'investor') {
-    const loginUrl = new URL('/investor/login', request.url);
-    return NextResponse.redirect(loginUrl);
+     await supabase.auth.signOut();
+     const loginUrl = new URL('/investor/login', request.url);
+     return NextResponse.redirect(loginUrl);
   }
 
   return response;
