@@ -37,9 +37,9 @@ export default function EntrepreneurDashboard() {
     const [ideas, setIdeas] = useState<Idea[]>([]);
     const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
     const [loading, setLoading] = useState(true);
-    const supabase = createClient();
 
     useEffect(() => {
+        const supabase = createClient();
         const fetchIdeasAndStats = async () => {
             setLoading(true);
 
@@ -78,7 +78,7 @@ export default function EntrepreneurDashboard() {
         };
 
         fetchIdeasAndStats();
-    }, [supabase]);
+    }, []);
 
 
   return (
