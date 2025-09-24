@@ -135,7 +135,7 @@ export function NdaModal({ isOpen, onClose, onAccept, ideaTitle, entrepreneurNam
             </div>
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel onClick={onClose}>Do it later</AlertDialogCancel>
           <AlertDialogAction onClick={handleAccept} disabled={!canAccept}>I Agree & Sign</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
