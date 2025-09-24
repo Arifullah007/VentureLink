@@ -45,8 +45,8 @@ export function NdaModal({ isOpen, onClose, onAccept, ideaTitle, entrepreneurNam
   }, [checkedState]);
 
   const canAccept = useMemo(() => {
-    return allChecked && signature.trim() !== '';
-  }, [allChecked, signature]);
+    return allChecked && signature.trim() !== '' && !!signatureFile;
+  }, [allChecked, signature, signatureFile]);
 
   if (!isOpen) return null;
 
@@ -58,9 +58,17 @@ export function NdaModal({ isOpen, onClose, onAccept, ideaTitle, entrepreneurNam
   };
   
   const handleAccept = () => {
+    if (!signatureFile) {
+        toast({
+            title: "Signature File Required",
+            description: "Please upload an image of your signature.",
+            variant: "destructive",
+        });
+        return;
+    }
     if (!signature.trim()) {
         toast({
-            title: "Signature Required",
+            title: "Digital Signature Required",
             description: "Please type your full name to sign the NDA.",
             variant: "destructive",
         });
@@ -108,7 +116,7 @@ export function NdaModal({ isOpen, onClose, onAccept, ideaTitle, entrepreneurNam
         </ScrollArea>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div className="space-y-2">
-                <Label htmlFor="signature-file">Upload Signature (Optional)</Label>
+                <Label htmlFor="signature-file">Upload Signature (Required)</Label>
                 <Input 
                     id="signature-file" 
                     type="file"
