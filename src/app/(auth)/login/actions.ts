@@ -11,10 +11,14 @@ const loginSchema = z.object({
 });
 
 const signupSchema = z.object({
-  fullName: z.string(),
-  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'Invalid PAN format.'),
-  email: z.string().email(),
-  password: z.string().min(8),
+  fullName: z.string().min(2, 'Please enter your full name.'),
+  pan: z
+    .string()
+    .length(10, 'PAN must be 10 characters.')
+    .regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'Please enter a valid PAN format (e.g., ABCDE1234F).')
+    .transform((val) => val.toUpperCase()),
+  email: z.string().email('Please enter a valid email address.'),
+  password: z.string().min(8, 'Password must be at least 8 characters.'),
   role: z.enum(['entrepreneur', 'investor']),
 });
 

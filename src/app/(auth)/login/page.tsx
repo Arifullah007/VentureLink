@@ -21,7 +21,8 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Please enter your full name.'),
-  pan: z.string()
+  pan: z
+    .string()
     .length(10, 'PAN must be 10 characters.')
     .regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'Please enter a valid PAN format (e.g., ABCDE1234F).')
     .transform((val) => val.toUpperCase()),
