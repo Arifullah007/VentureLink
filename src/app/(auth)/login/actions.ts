@@ -12,7 +12,7 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   fullName: z.string(),
-  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN format.'),
+  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]$/, 'Invalid PAN format.'),
   email: z.string().email(),
   password: z.string().min(8),
   role: z.enum(['entrepreneur', 'investor']),
