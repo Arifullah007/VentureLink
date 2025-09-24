@@ -12,6 +12,7 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   fullName: z.string(),
+  pan: z.string().regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Invalid PAN format.'),
   email: z.string().email(),
   password: z.string().min(8),
   role: z.enum(['entrepreneur', 'investor']),
@@ -61,6 +62,7 @@ export async function signup(
       data: {
         full_name: formData.fullName,
         role: formData.role,
+        pan_number: formData.pan,
       },
     },
   });

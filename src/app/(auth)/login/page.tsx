@@ -21,6 +21,10 @@ const loginSchema = z.object({
 
 const signupSchema = z.object({
   fullName: z.string().min(2, 'Please enter your full name.'),
+  pan: z.string()
+    .length(10, 'PAN must be 10 characters.')
+    .regex(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, 'Please enter a valid PAN format (e.g., ABCDE1234F).')
+    .transform((val) => val.toUpperCase()),
   email: z.string().email('Please enter a valid email address.'),
   password: z.string().min(8, 'Password must be at least 8 characters.'),
   role: z.enum(['entrepreneur', 'investor'], {
@@ -49,6 +53,7 @@ function AuthForm() {
     resolver: zodResolver(signupSchema),
     defaultValues: {
       fullName: '',
+      pan: '',
       email: '',
       password: '',
       role: initialRole as 'entrepreneur' | 'investor',
@@ -184,6 +189,20 @@ function AuthForm() {
                 />
                 {signupForm.formState.errors.fullName && (
                   <p className="text-sm text-red-500 mt-1">{signupForm.formState.errors.fullName.message}</p>
+                )}
+              </div>
+              <div>
+                <Label htmlFor="pan">PAN Card Number</Label>
+                <Input
+                  id="pan"
+                  type="text"
+                  placeholder="ABCDE1234F"
+                  maxLength={10}
+                  {...signupForm.register('pan')}
+                  className="mt-1 uppercase"
+                />
+                {signupForm.formState.errors.pan && (
+                  <p className="text-sm text-red-500 mt-1">{signupForm.formState.errors.pan.message}</p>
                 )}
               </div>
               <div>
