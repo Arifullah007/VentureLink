@@ -50,7 +50,7 @@ export async function login(
 
 export async function signup(
   formData: z.infer<typeof signupSchema>
-): Promise<{ error: { message: string } | null; requiresOtp: boolean; email?: string }> {
+): Promise<{ error: { message: string } | null; requiresOtp: boolean; email?: string, role?: string }> {
   const supabase = createClient();
   
   // We use OTP for email verification. The emailRedirectTo is not needed here.
@@ -71,7 +71,7 @@ export async function signup(
 
   // If signup is successful and the user is not yet confirmed, they need to verify with OTP.
   if (data.user && !data.user.email_confirmed_at) {
-    return { error: null, requiresOtp: true, email: data.user.email };
+    return { error: null, requiresOtp: true, email: data.user.email, role: formData.role };
   }
   
   return { error: null, requiresOtp: false };

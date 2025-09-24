@@ -98,8 +98,8 @@ function AuthForm() {
             title: 'Account Created!',
             description: 'Please check your email for the verification code.',
         });
-        // Redirect to the OTP verification page, passing the email as a query parameter.
-        router.push(`/verify-otp?email=${encodeURIComponent(result.email || '')}`);
+        // Redirect to the OTP verification page, passing the email and role as query parameters.
+        router.push(`/verify-otp?email=${encodeURIComponent(result.email || '')}&role=${result.role}`);
     } else {
         // This case is unlikely with email verification enabled, but good to have.
         toast({
@@ -126,7 +126,7 @@ function AuthForm() {
       >
         <div className="flex flex-col items-center justify-center mb-6">
           <Logo className="h-10 w-10 text-primary" />
-          <h1 className="mt-3 text-2xl font-bold tracking-tighter text-gray-900">
+          <h1 className="font-body text-3xl font-bold tracking-wider mt-3 text-gray-900">
             VentureLink
           </h1>
         </div>

@@ -14,6 +14,7 @@ import { verifyOtp } from './actions';
 import { Logo } from '@/components/icons';
 import { Loader2 } from 'lucide-react';
 import { type OtpType } from '@supabase/supabase-js';
+import { NdaModal } from '@/components/ui/nda-modal';
 
 const otpSchema = z.object({
   otp: z.string().min(6, 'OTP must be 6 digits.').max(6, 'OTP must be 6 digits.'),
@@ -25,9 +26,12 @@ function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
+  const role = searchParams.get('role');
   const type = (searchParams.get('type') as OtpType) || 'signup';
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [isNdaOpen, setNdaOpen] = useState(false);
+  const [showNda, setShowNda] = useState(false);
 
   const form = useForm<OtpFormValues>({
     resolver: zodResolver(otpSchema),
@@ -55,11 +59,34 @@ function VerifyOtpForm() {
     } else {
       toast({
         title: 'Account Verified!',
-        description: 'You can now log in to your account.',
+        description: 'Please accept the terms to continue.',
       });
-      router.push('/login');
+      setShowNda(true);
     }
   };
+
+  const handleNdaAccept = () => {
+     setShowNda(false);
+     toast({
+        title: 'Agreement Accepted!',
+        description: 'Redirecting to your dashboard...'
+     });
+     const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+     router.push(redirectTo);
+  };
+
+  if (showNda) {
+    return (
+        <NdaModal 
+            isOpen={true}
+            onClose={() => setShowNda(false)}
+            onAccept={handleNdaAccept}
+            ideaTitle="General Platform Use"
+            entrepreneurName="VentureLink"
+        />
+    )
+  }
+
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-gray-50">
