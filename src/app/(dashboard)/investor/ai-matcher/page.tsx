@@ -186,9 +186,11 @@ export default function AiMatcherPage() {
                                     {matchReason}
                                 </AlertDescription>
                             </Alert>
-                            <Button asChild className="mt-4">
-                                <Link href="/investor/subscriptions">Unlock Full Details</Link>
-                            </Button>
+                            <Link href="/investor/subscriptions">
+                                <Button className="mt-4">
+                                    Unlock Full Details
+                                </Button>
+                            </Link>
                         </CardContent>
                     </div>
                      <div className="p-4 md:p-0 md:pr-4 md:py-4">

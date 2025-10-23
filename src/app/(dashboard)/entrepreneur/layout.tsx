@@ -81,11 +81,11 @@ export default function EntrepreneurLayout({
           </nav>
           <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
              <div className="ml-auto flex items-center gap-4">
-                <Button asChild>
-                    <Link href="/entrepreneur/ideas/new">
+                <Link href="/entrepreneur/ideas/new">
+                    <Button>
                         <Plus className="mr-2 h-4 w-4" /> New Idea
-                    </Link>
-                </Button>
+                    </Button>
+                </Link>
                 <Button variant="ghost" size="icon" className="relative rounded-full">
                     <Bell className="h-5 w-5" />
                     {hasNotifications && (

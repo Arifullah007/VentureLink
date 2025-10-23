@@ -114,12 +114,12 @@ export default function Home() {
                 <Link href="#how-it-works" onClick={handleScrollClick(howItWorksRef)} className="text-muted-foreground hover:text-primary">How It Works</Link>
             </nav>
             <div className="flex items-center gap-2">
-            <Button asChild>
-                <Link href="/login?role=entrepreneur">Entrepreneur Login</Link>
-            </Button>
-            <Button variant="secondary" asChild>
-                <Link href="/login?role=investor">Investor Login</Link>
-            </Button>
+                <Link href="/login?role=entrepreneur">
+                    <Button>Entrepreneur Login</Button>
+                </Link>
+                <Link href="/login?role=investor">
+                    <Button variant="secondary">Investor Login</Button>
+                </Link>
             </div>
         </div>
       </header>
@@ -135,12 +135,16 @@ export default function Home() {
               The premier platform connecting visionary entrepreneurs with strategic investors to bring innovative ideas to life.
             </p>
             <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" asChild className="bg-white text-primary hover:bg-gray-200 font-semibold">
-                <Link href="/login?role=entrepreneur">I'm an Entrepreneur</Link>
-              </Button>
-              <Button size="lg" variant="secondary" asChild className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold">
-                <Link href="/login?role=investor">I'm an Investor</Link>
-              </Button>
+              <Link href="/login?role=entrepreneur">
+                <Button size="lg" className="bg-white text-primary hover:bg-gray-200 font-semibold">
+                  I'm an Entrepreneur
+                </Button>
+              </Link>
+              <Link href="/login?role=investor">
+                <Button size="lg" variant="secondary" className="bg-transparent border-2 border-white hover:bg-white/10 text-white font-semibold">
+                  I'm an Investor
+                </Button>
+              </Link>
             </div>
           </div>
         </section>

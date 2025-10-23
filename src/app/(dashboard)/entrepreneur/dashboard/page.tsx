@@ -61,11 +61,11 @@ export default function EntrepreneurDashboard() {
             <h1 className="text-3xl font-bold">Entrepreneur Dashboard</h1>
             <p className="text-muted-foreground">Manage your startup ideas and connect with potential investors</p>
           </div>
-          <Button asChild size="lg">
-              <Link href="/entrepreneur/ideas/new">
-                <PlusCircle className="mr-2 h-5 w-5" /> Submit New Idea
-              </Link>
+          <Link href="/entrepreneur/ideas/new">
+            <Button size="lg">
+              <PlusCircle className="mr-2 h-5 w-5" /> Submit New Idea
             </Button>
+          </Link>
       </div>
       
       <motion.div 
@@ -126,32 +126,32 @@ export default function EntrepreneurDashboard() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100/80">Active</Badge>
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={`/entrepreneur/ideas/${idea.id}/edit`}>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/edit`}>
+                        <Button variant="outline" size="sm">
                             <FilePenLine className="h-4 w-4 mr-1" /> Edit
-                        </Link>
-                    </Button>
-                    <Button variant="default" size="sm" asChild>
-                        <Link href={`/entrepreneur/ideas/${idea.id}/analytics`}>
+                        </Button>
+                    </Link>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/analytics`}>
+                        <Button variant="default" size="sm">
                              <BarChart className="h-4 w-4 mr-1" /> View Analytics
-                        </Link>
-                    </Button>
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={`/entrepreneur/ideas/${idea.id}/inquiries`}>
+                        </Button>
+                    </Link>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/inquiries`}>
+                        <Button variant="outline" size="sm">
                             <MessageSquare className="h-4 w-4 mr-1" /> Inquiries
-                        </Link>
-                    </Button>
+                        </Button>
+                    </Link>
                 </div>
               </motion.div>
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
               <p>You haven't submitted any ideas yet.</p>
-               <Button asChild className="mt-4">
-                  <Link href="/entrepreneur/ideas/new">
+                <Link href="/entrepreneur/ideas/new">
+                   <Button className="mt-4">
                     <PlusCircle className="mr-2 h-4 w-4" /> Submit Your First Idea
-                  </Link>
-                </Button>
+                  </Button>
+                </Link>
             </div>
            )}
         </CardContent>

@@ -64,11 +64,11 @@ export default function InvestorDashboard() {
             <p className="mb-4 text-sm text-muted-foreground">
               Filter by sector, investment size, and more to find your next opportunity.
             </p>
-            <Button asChild>
-              <Link href="/investor/ideas">
+            <Link href="/investor/ideas">
+              <Button>
                 Explore Now <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
 
@@ -88,11 +88,11 @@ export default function InvestorDashboard() {
             <p className="mb-4 text-sm text-muted-foreground">
               Define your investment thesis and get a list of perfectly aligned ventures.
             </p>
-            <Button asChild variant="secondary">
-              <Link href="/investor/ai-matcher">
+            <Link href="/investor/ai-matcher">
+              <Button variant="secondary">
                 Find Matches <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+              </Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -143,9 +143,9 @@ export default function InvestorDashboard() {
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{idea.summary}</p>
                   <div className="flex justify-between items-center mt-4">
                       <Badge variant="secondary">{idea.field}</Badge>
-                      <Button variant="link" size="sm" asChild>
-                          <Link href={`/investor/ideas`}>View Details</Link>
-                      </Button>
+                      <Link href={`/investor/ideas`}>
+                          <Button variant="link" size="sm">View Details</Button>
+                      </Link>
                   </div>
                 </div>
               </Card>
