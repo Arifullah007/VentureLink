@@ -65,28 +65,36 @@ function AuthForm() {
 
   const handleLogin = async (data: LoginFormValues) => {
     setLoading(true);
-    const result = await login(data);
-    setLoading(false);
-
-    if (result.error) {
-      toast({
-        title: 'Login Failed',
-        description: result.error.message,
-        variant: 'destructive',
-      });
-    } else if (result.redirectTo) {
-      toast({
-        title: 'Login Successful!',
-        description: 'Redirecting to your dashboard...',
-      });
-      // Use router.push for a direct, reliable client-side redirect.
-      router.push(result.redirectTo);
-    } else {
+    try {
+      const result = await login(data);
+      if (result.error) {
         toast({
-            title: 'Login Error',
-            description: 'Could not determine redirection path. Please try again.',
-            variant: 'destructive',
+          title: 'Login Failed',
+          description: result.error.message,
+          variant: 'destructive',
         });
+      } else if (result.redirectTo) {
+        toast({
+          title: 'Login Successful!',
+          description: 'Redirecting to your dashboard...',
+        });
+        // This is a more robust way to handle client-side redirects in Next.js
+        window.location.assign(result.redirectTo);
+      } else {
+        toast({
+          title: 'Login Error',
+          description: 'Could not determine redirection path. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    } catch (e: any) {
+        toast({
+          title: 'An Unexpected Error Occurred',
+          description: e.message || 'Please try again later.',
+          variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
     }
   };
 
