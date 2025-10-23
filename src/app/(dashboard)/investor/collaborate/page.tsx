@@ -1,7 +1,10 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Handshake, PlusCircle, Users } from "lucide-react";
+import { useState } from "react";
 
 const investmentGroups = [
   {
@@ -19,6 +22,12 @@ const investmentGroups = [
 ];
 
 export default function CombineInvestPage() {
+    const [joining, setJoining] = useState<Record<string, boolean>>({});
+
+    const handleJoin = (name: string) => {
+        setJoining(prev => ({...prev, [name]: true}));
+    };
+
   return (
     <div className="space-y-6">
       <Card>
@@ -73,7 +82,10 @@ export default function CombineInvestPage() {
                 </div>
               </CardContent>
               <div className="border-t p-4">
-                <Button className="w-full">Request to Join</Button>              </div>
+                <Button className="w-full" onClick={() => handleJoin(group.name)} disabled={joining[group.name]}>
+                    {joining[group.name] ? 'Requested' : 'Request to Join'}
+                </Button>
+              </div>
             </Card>
           ))}
         </div>

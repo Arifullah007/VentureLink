@@ -1,7 +1,10 @@
+'use client';
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Handshake, PlusCircle, Users } from "lucide-react";
+import { useState } from "react";
 
 const projectGroups = [
   {
@@ -19,6 +22,15 @@ const projectGroups = [
 ];
 
 export default function CombineGrowPage() {
+    const [joining, setJoining] = useState<Record<string, boolean>>({});
+
+    const handleJoin = (name: string) => {
+        setJoining(prev => ({...prev, [name]: true}));
+        // In a real app, this would be an API call.
+        // For the demo, we just update the state.
+    };
+
+
   return (
     <div className="space-y-6">
       <Card>
@@ -70,7 +82,10 @@ export default function CombineGrowPage() {
                 </div>
               </CardContent>
               <div className="border-t p-4">
-                <Button className="w-full">Request to Join Group</Button>              </div>
+                <Button className="w-full" onClick={() => handleJoin(group.name)} disabled={joining[group.name]}>
+                    {joining[group.name] ? 'Requested' : 'Request to Join Group'}
+                </Button>
+             </div>
             </Card>
           ))}
         </div>
