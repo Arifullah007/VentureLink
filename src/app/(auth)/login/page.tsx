@@ -78,8 +78,7 @@ function AuthForm() {
           title: 'Login Successful!',
           description: 'Redirecting to your dashboard...',
         });
-        // This is a more robust way to handle client-side redirects in Next.js
-        window.location.assign(result.redirectTo);
+        router.push(result.redirectTo);
       } else {
         toast({
           title: 'Login Error',
