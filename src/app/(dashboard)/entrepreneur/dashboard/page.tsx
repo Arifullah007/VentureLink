@@ -58,7 +58,7 @@ export default function EntrepreneurDashboard() {
     >
       <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Entrepreneur Dashboard</h1>
+            <h1 className="text-3xl font-bold font-body tracking-wider">Entrepreneur Dashboard</h1>
             <p className="text-muted-foreground">Manage your startup ideas and connect with potential investors</p>
           </div>
           <Link href="/entrepreneur/ideas/new">

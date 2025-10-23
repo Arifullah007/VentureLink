@@ -51,14 +51,13 @@ export default function NewIdeaPage() {
         setIsSubmitting(true);
         
         // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // await new Promise(resolve => setTimeout(resolve, 1500));
 
         toast({
-            title: 'Idea Submitted! (Simulation)',
+            title: 'Idea Submitted!',
             description: 'Your idea has been successfully submitted for review.',
         });
         
-        setIsSubmitting(false);
         router.push('/entrepreneur/dashboard');
     }
 

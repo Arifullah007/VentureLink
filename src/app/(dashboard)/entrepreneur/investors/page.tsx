@@ -28,10 +28,10 @@ export default function BrowseInvestorsPage() {
   }, []);
 
   const handleApproach = async (investor: Investor) => {
-     await new Promise(resolve => setTimeout(resolve, 500));
+    // await new Promise(resolve => setTimeout(resolve, 500));
     
     toast({
-      title: "Approach Initiated (Simulation)",
+      title: "Approach Initiated",
       description: `Your interest has been sent to ${investor.name}. You'll be notified if they accept.`,
     });
     setApproached(prev => new Set(prev).add(investor.id));

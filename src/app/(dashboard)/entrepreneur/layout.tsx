@@ -48,11 +48,9 @@ export default function EntrepreneurLayout({
     }
     fetchUser();
     
-    const timer = setTimeout(() => {
-        setHasNotifications(true);
-    }, 1000);
+    // Simulate notification appearing
+    setHasNotifications(true);
 
-    return () => clearTimeout(timer);
   }, [supabase.auth]);
 
   return (
@@ -64,7 +62,7 @@ export default function EntrepreneurLayout({
               className="flex items-center gap-2 text-lg font-semibold md:text-base"
             >
               <Logo className="h-6 w-6 text-primary" />
-              <span className="font-body text-xl font-bold tracking-wider">VentureLink</span>
+              <span className="font-body text-2xl font-bold tracking-wider">VentureLink</span>
             </Link>
             {navItems.map((item) => (
               <Link

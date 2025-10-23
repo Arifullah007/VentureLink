@@ -72,15 +72,14 @@ export default function EditIdeaPage() {
 
     async function onSubmit(data: IdeaFormValues) {
         form.formState.isSubmitting = true;
-        
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Simulate API call
+        // await new Promise(resolve => setTimeout(resolve, 1000));
             
         toast({
-            title: 'Idea Updated! (Simulation)',
+            title: 'Idea Updated!',
             description: 'Your changes have been saved successfully.',
         });
         
-        form.formState.isSubmitting = false;
         router.push('/entrepreneur/dashboard');
     }
 

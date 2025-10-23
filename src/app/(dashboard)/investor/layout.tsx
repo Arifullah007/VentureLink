@@ -59,12 +59,9 @@ export default function InvestorLayout({
         }
     }
     // Simulate fetching user and notification status
-    const timer = setTimeout(() => {
-        setHasNotifications(true);
-    }, 1000);
+    setHasNotifications(true);
 
     fetchUser();
-    return () => clearTimeout(timer);
   }, [supabase.auth]);
 
 
@@ -74,19 +71,19 @@ export default function InvestorLayout({
           <SidebarHeader>
             <div className="flex items-center gap-2">
                <Logo className="w-6 h-6 text-primary"/>
-               <span className="font-body text-lg font-bold tracking-wider">VentureLink</span>
+               <span className="font-body text-2xl font-bold tracking-wider">VentureLink</span>
             </div>
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.href}>
-                      {item.icon}
-                      <span>{item.label}</span>
+                    <Link href={item.href} passHref legacyBehavior>
+                        <SidebarMenuButton>
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
                     </Link>
-                  </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -96,7 +93,7 @@ export default function InvestorLayout({
           <header className="flex h-14 lg:h-[60px] items-center gap-4 border-b bg-card px-6">
             <SidebarTrigger className="md:hidden" />
             <div className="flex-1">
-              <h1 className="font-semibold text-lg">Investor Dashboard</h1>
+              <h1 className="font-semibold text-lg font-body tracking-wider">Investor Dashboard</h1>
             </div>
              <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
