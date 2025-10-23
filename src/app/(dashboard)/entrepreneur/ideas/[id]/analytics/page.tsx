@@ -50,15 +50,15 @@ export default function AnalyticsPage() {
       </motion.div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <StatCard title="Total Views" value="842" icon={<Eye />} color="blue" delay={0.2} />
-        <StatCard title="Investor Inquiries" value="15" icon={<Handshake />} color="green" delay={0.3} />
-        <StatCard title="Engagement Rate" value="68%" icon={<TrendingUp />} color="purple" delay={0.4} />
+        <StatCard title="Total Views" value="842" icon={<Eye />} color="blue" delay={0.1} />
+        <StatCard title="Investor Inquiries" value="15" icon={<Handshake />} color="green" delay={0.2} />
+        <StatCard title="Engagement Rate" value="68%" icon={<TrendingUp />} color="purple" delay={0.3} />
       </div>
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.5 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
       >
         <Card>
           <CardHeader>
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.7 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
       >
         <Card>
           <CardHeader>
@@ -119,7 +119,7 @@ export default function AnalyticsPage() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.9 }}
+        transition={{ duration: 0.5, delay: 0.4 }}
       >
         <Link href="/entrepreneur/dashboard" className="text-primary hover:underline">
           &larr; Back to Dashboard

@@ -72,7 +72,7 @@ export default function EntrepreneurDashboard() {
         className="grid gap-4 md:grid-cols-3"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
+        transition={{ duration: 0.5 }}
       >
         {loading ? <>
             <Skeleton className="h-28" />
@@ -113,7 +113,7 @@ export default function EntrepreneurDashboard() {
                 className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4 hover:shadow-md transition-shadow"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+                transition={{ delay: index * 0.1, duration: 0.5 }}
               >
                 <div className="flex-1 space-y-1">
                     <p className="font-semibold text-lg">{idea.title}</p>
@@ -126,17 +126,17 @@ export default function EntrepreneurDashboard() {
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-100/80">Active</Badge>
-                    <Link href={`/entrepreneur/ideas/${idea.id}/edit`}>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/edit`} passHref>
                         <Button variant="outline" size="sm">
                             <FilePenLine className="h-4 w-4 mr-1" /> Edit
                         </Button>
                     </Link>
-                    <Link href={`/entrepreneur/ideas/${idea.id}/analytics`}>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/analytics`} passHref>
                         <Button variant="default" size="sm">
                              <BarChart className="h-4 w-4 mr-1" /> View Analytics
                         </Button>
                     </Link>
-                    <Link href={`/entrepreneur/ideas/${idea.id}/inquiries`}>
+                    <Link href={`/entrepreneur/ideas/${idea.id}/inquiries`} passHref>
                         <Button variant="outline" size="sm">
                             <MessageSquare className="h-4 w-4 mr-1" /> Inquiries
                         </Button>
