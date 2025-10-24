@@ -7,37 +7,40 @@ export async function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone();
 
-  const protectedPaths = ['/investor', '/entrepreneur'];
-  const isProtectedRoute = protectedPaths.some(path => url.pathname.startsWith(path));
+  // Define routes that are part of the public-facing site or authentication flow
+  const publicRoutes = ['/', '/login', '/verify-otp'];
   
-  const publicAuthPaths = ['/login', '/verify-otp'];
-  const isPublicAuthPath = publicAuthPaths.includes(url.pathname);
+  // Check if the current route is one of the public routes
+  const isPublicRoute = publicRoutes.includes(url.pathname);
 
-
-  // If the user is not authenticated and the route is protected, redirect to login.
-  if (!user && isProtectedRoute) {
-    url.pathname = '/login';
-    return NextResponse.redirect(url);
-  }
-  
-  // If the user IS authenticated and tries to access login/signup, redirect to their dashboard.
-  if (user && isPublicAuthPath) {
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
-    
-    const role = profile?.role;
-    
-    if (role) {
-        const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-        url.pathname = redirectTo;
-        return NextResponse.redirect(url);
+  // If the user is authenticated
+  if (user) {
+    // And they are trying to access a public route (like the landing or login page)
+    if (isPublicRoute) {
+      // Redirect them to their appropriate dashboard
+      const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+      
+      const role = profile?.role;
+      const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+      url.pathname = redirectTo;
+      return NextResponse.redirect(url);
+    }
+  } 
+  // If the user is NOT authenticated
+  else {
+    // And they are trying to access a route that is NOT public
+    if (!isPublicRoute) {
+      // Redirect them to the login page
+      url.pathname = '/login';
+      return NextResponse.redirect(url);
     }
   }
 
-  // Continue with the request if no redirection is needed.
+  // If none of the above conditions are met, continue with the request as is.
   return response;
 }
 
@@ -48,8 +51,9 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
+     * - auth/callback (Supabase auth callback)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

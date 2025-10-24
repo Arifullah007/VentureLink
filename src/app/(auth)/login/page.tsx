@@ -73,7 +73,6 @@ function AuthForm() {
         });
       }
       // On success, the server action will handle the redirect.
-      // We don't need to do anything here on the client.
     });
   };
 

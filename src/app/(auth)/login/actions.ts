@@ -27,12 +27,12 @@ const signupSchema = z.object({
 
 export async function login(
   formData: z.infer<typeof loginSchema>
-): Promise<{ error: { message: string } | null; success: boolean }> {
+): Promise<{ error: { message: string } | null }> {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword(formData);
 
   if (error) {
-    return { error: { message: error.message }, success: false };
+    return { error: { message: error.message } };
   }
   
   if (data.user) {
@@ -50,7 +50,7 @@ export async function login(
   }
 
   // Fallback in case user data is not available after login.
-  return { error: { message: 'An unexpected error occurred during login.' }, success: false };
+  return { error: { message: 'An unexpected error occurred during login.' } };
 }
 
 export async function signup(
