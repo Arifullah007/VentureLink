@@ -74,14 +74,15 @@ function AuthForm() {
         variant: 'destructive',
       });
       setLoading(false);
-    } else if (result.redirectTo) {
-      // The server action was successful, now refresh the page.
-      // The middleware will handle the redirection to the correct dashboard.
+    } else if (result.success) {
+      // On success, refresh the page. The middleware will handle redirecting
+      // the user to the correct dashboard.
       router.refresh();
+      // Keep loading spinner active while the page refreshes and redirects.
     } else {
         toast({
           title: 'Login Error',
-          description: 'Could not determine redirection path. Please try again.',
+          description: 'An unexpected error occurred. Please try again.',
           variant: 'destructive',
         });
         setLoading(false);

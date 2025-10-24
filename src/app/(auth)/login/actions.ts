@@ -27,34 +27,22 @@ const signupSchema = z.object({
 
 export async function login(
   formData: z.infer<typeof loginSchema>
-): Promise<{ error: { message: string } | null; }> {
+): Promise<{ error: { message: string } | null; success: boolean }> {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword(formData);
 
   if (error) {
-    return { error: { message: error.message } };
+    return { error: { message: error.message }, success: false };
   }
   
   if (data.user) {
-    // After successful login, get the user's role from the profiles table.
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', data.user.id)
-      .single();
-
-    const role = profile?.role;
-    
-    // Determine the redirect path based on the role.
-    if (role) {
-      const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-      // Use the built-in redirect function for a robust server-side redirect.
-      return redirect(redirectTo);
-    }
+    // A successful login will trigger the middleware to handle redirection.
+    // We just need to signal success to the client so it can refresh.
+    return { error: null, success: true };
   }
 
-  // Fallback in case user data or role is not available after login.
-  return { error: { message: 'Could not determine user role. Please try again.' } };
+  // Fallback in case user data is not available after login.
+  return { error: { message: 'An unexpected error occurred during login.' }, success: false };
 }
 
 export async function signup(
