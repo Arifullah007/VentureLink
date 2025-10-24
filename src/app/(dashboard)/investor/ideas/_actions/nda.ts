@@ -8,4 +8,6 @@ export async function signNdaAction(ideaId: string) {
     // For the demo, we can't write to localStorage from a server action.
     // The client will handle this optimistically.
     console.log(`User signed NDA for idea: ${ideaId}`);
+    // In a real scenario, you might revalidate paths that depend on this data.
+    // e.g., revalidatePath(`/investor/ideas/${ideaId}`);
 }

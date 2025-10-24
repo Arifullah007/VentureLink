@@ -3,8 +3,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { predefinedIdeas } from "@/lib/data";
+import { signNdaAction } from "../_actions/nda";
 
-export function UnlockButton({ ideaId }: { ideaId: string }) {
+export function UnlockButton({ ideaId, onUnlock }: { ideaId: string, onUnlock: () => void }) {
     const [isUnlocked, setIsUnlocked] = useState(false);
     
     useEffect(() => {
@@ -19,6 +20,18 @@ export function UnlockButton({ ideaId }: { ideaId: string }) {
     const idea = predefinedIdeas.find(i => i.id === ideaId);
     const prototypeUrl = idea?.prototypeImageUrl || '#';
 
+    const handleUnlock = async () => {
+        // Call the server action
+        await signNdaAction(ideaId);
+
+        // Optimistically update the UI and localStorage
+        localStorage.setItem(`nda_signed_${ideaId}`, 'true');
+        setIsUnlocked(true);
+        
+        // This function is passed from the parent (NdaModalWrapper) to trigger the modal
+        onUnlock();
+    };
+
     if (isUnlocked) {
         return (
             <Link href={prototypeUrl} target="_blank" rel="noopener noreferrer">
@@ -27,5 +40,5 @@ export function UnlockButton({ ideaId }: { ideaId: string }) {
         );
     }
     
-    return <Button>Unlock Details</Button>;
+    return <Button onClick={handleUnlock}>Unlock Details</Button>;
 }

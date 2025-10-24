@@ -8,15 +8,16 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
   // Define routes that are part of the public-facing site or authentication flow
-  const publicRoutes = ['/', '/login', '/verify-otp'];
+  const publicRoutes = ['/', '/login', '/verify-otp', '/auth/callback'];
   
-  // Check if the current route is one of the public routes
-  const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/auth/callback');
+  // Check if the current route is one of the public routes.
+  // We use startsWith to catch routes like /auth/callback?code=...
+  const isPublicRoute = publicRoutes.some(path => url.pathname.startsWith(path));
 
   // If the user is authenticated
   if (user) {
     // And they are trying to access a public route (like the landing or login page)
-    if (publicRoutes.includes(url.pathname)) {
+    if (isPublicRoute) {
       // Redirect them to their appropriate dashboard
       const { data: profile } = await supabase
           .from('profiles')

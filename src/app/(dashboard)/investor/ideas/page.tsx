@@ -10,7 +10,6 @@ import Link from "next/link";
 import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 import type { Idea as IdeaType, Entrepreneur } from "@/lib/types";
 import { createClient } from "@/lib/supabase/server";
-import { UnlockButton } from "./_components/unlock-button";
 
 type EnrichedIdea = IdeaType & {
   entrepreneur: Entrepreneur | undefined;
@@ -80,9 +79,7 @@ export default async function BrowseIdeasPage() {
                             </div>
                           )}
                       </div>
-                        <NdaModalWrapper idea={idea} userId={user?.id}>
-                           <UnlockButton ideaId={idea.id} />
-                       </NdaModalWrapper>
+                        <NdaModalWrapper idea={idea} userId={user?.id} />
                       </div>
                   </div>
                 </CardFooter>

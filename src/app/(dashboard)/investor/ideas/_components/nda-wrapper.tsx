@@ -2,45 +2,35 @@
 import { useState } from "react";
 import { NdaModal } from "@/components/ui/nda-modal";
 import type { Idea, Entrepreneur } from "@/lib/types";
+import { UnlockButton } from "./unlock-button";
 
 type EnrichedIdea = Idea & {
     entrepreneur: Entrepreneur | undefined;
 };
 
-interface NdaModalWrapperProps {
+interface NdaWrapperProps {
     idea: EnrichedIdea;
     userId?: string;
-    children: React.ReactNode;
 }
 
-export function NdaModalWrapper({ idea, userId, children }: NdaModalWrapperProps) {
+export function NdaModalWrapper({ idea, userId }: NdaWrapperProps) {
     const [isNdaOpen, setNdaOpen] = useState(false);
 
-    const handleUnlockDetails = () => {
+    const handleUnlock = () => {
         setNdaOpen(true);
     };
 
     const handleNdaAccept = async () => {
-        if (!userId) {
-            alert("You must be logged in to accept an NDA.");
-            return;
-        }
-
-        // In a real app, you would save this to the database
-        // For example: await signNda(userId, idea.id);
-
         setNdaOpen(false);
-        // This is a client-side only alert for demo purposes
-        alert(`NDA Accepted! You can now view details for "${idea.title}". Please refresh the page if you don't see the changes.`);
-        // Ideally, revalidate the path or trigger a state update to show unlocked content
+        // The optimistic update is now handled in the UnlockButton.
+        // This just closes the modal. For demo purposes, we can alert the user.
+        alert(`NDA Accepted! You can now view details for "${idea.title}". The page will refresh to show unlocked content.`);
         window.location.reload();
     }
     
     return (
         <>
-            <div onClick={handleUnlockDetails}>
-                {children}
-            </div>
+            <UnlockButton ideaId={idea.id} onUnlock={handleUnlock} />
             {isNdaOpen && (
                 <NdaModal
                     isOpen={isNdaOpen}

@@ -112,6 +112,8 @@ export default function Home() {
     e.preventDefault();
     if (window.chatbase) {
       window.chatbase.open();
+    } else {
+      console.log("Chatbase not initialized yet.");
     }
   };
 
@@ -284,7 +286,6 @@ export default function Home() {
             onClose={() => setIsNdaOpen(false)}
             onAccept={() => {
                 setIsNdaOpen(false);
-                alert("Thank you for accepting the terms.");
             }}
             ideaTitle="General"
             entrepreneurName="the platform"
