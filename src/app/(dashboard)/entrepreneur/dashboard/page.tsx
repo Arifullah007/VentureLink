@@ -1,15 +1,32 @@
-'use client';
+'use server';
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FilePenLine, BarChart, MessageSquare, PlusCircle, IndianRupee, Eye, Zap, MapPin } from "lucide-react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import { ideas as predefinedIdeas } from "@/lib/data";
 import type { Idea } from "@/lib/types";
+
+// Mock stats - in a real app, these would come from the database
+const stats = { activeIdeas: 2, totalViews: 842, investorInquiries: 15 };
+
+type IdeaWithStats = Idea & {
+    views: number;
+    location: string;
+};
+
+async function getEntrepreneurIdeas(): Promise<IdeaWithStats[]> {
+    // In a real app, you would fetch ideas belonging to the logged-in user.
+    // For now, we simulate this with mock data and add random stats.
+    const ideasWithRandomStats = predefinedIdeas.map((idea, index) => ({
+        ...idea,
+        views: Math.floor(Math.random() * 200),
+        location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
+    }));
+    return ideasWithRandomStats;
+}
 
 const StatCard = ({ title, value, icon, color }: { title: string; value: string | number; icon: React.ReactNode, color: string }) => (
   <Card className="hover:shadow-lg transition-shadow">
@@ -25,37 +42,11 @@ const StatCard = ({ title, value, icon, color }: { title: string; value: string 
   </Card>
 );
 
-export default function EntrepreneurDashboard() {
-    const [ideas, setIdeas] = useState<Idea[]>([]);
-    const [stats, setStats] = useState({ activeIdeas: 0, totalViews: 0, investorInquiries: 0 });
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        setLoading(true);
-        // Simulate fetching data
-        const ideasWithRandomStats = predefinedIdeas.map((idea, index) => ({
-            ...idea,
-            views: Math.floor(Math.random() * 200),
-            location: (index % 2 === 0 ? 'Bengaluru, India' : 'Mumbai, India'),
-        }));
-
-        setIdeas(ideasWithRandomStats as any);
-        
-        const totalViews = (ideasWithRandomStats as any).reduce((acc: number, idea: any) => acc + (idea.views || 0), 0);
-        const totalInquiries = Math.floor(Math.random() * 5); // Simulated inquiries
-
-        setStats({ activeIdeas: predefinedIdeas.length, totalViews, investorInquiries: totalInquiries });
-        setLoading(false);
-    }, []);
-
+export default async function EntrepreneurDashboard() {
+    const ideas = await getEntrepreneurIdeas();
 
   return (
-    <motion.div 
-      className="space-y-6"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold font-body tracking-wider">Entrepreneur Dashboard</h1>
@@ -68,52 +59,22 @@ export default function EntrepreneurDashboard() {
           </Link>
       </div>
       
-      <motion.div 
-        className="grid gap-4 md:grid-cols-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
-        {loading ? <>
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-        </> : <>
-            <StatCard title="Active Ideas" value={stats.activeIdeas} icon={<Zap className="h-4 w-4" />} color="text-blue-500" />
-            <StatCard title="Total Views" value={stats.totalViews} icon={<Eye className="h-4 w-4" />} color="text-green-500" />
-            <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageSquare className="h-4 w-4" />} color="text-purple-500" />
-        </>
-        }
-      </motion.div>
+      <div className="grid gap-4 md:grid-cols-3">
+        <StatCard title="Active Ideas" value={ideas.length} icon={<Zap className="h-4 w-4" />} color="text-blue-500" />
+        <StatCard title="Total Views" value={stats.totalViews} icon={<Eye className="h-4 w-4" />} color="text-green-500" />
+        <StatCard title="Investor Inquiries" value={stats.investorInquiries} icon={<MessageSquare className="h-4 w-4" />} color="text-purple-500" />
+      </div>
 
        <Card>
         <CardHeader>
           <CardTitle>Your Startup Ideas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-        {loading ? (
-            Array.from({ length: 2 }).map((_, index) => (
-                <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg">
-                    <div className="space-y-2 flex-grow">
-                        <Skeleton className="h-5 w-1/3" />
-                        <Skeleton className="h-4 w-2/3" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </div>
-                    <div className="flex gap-2">
-                        <Skeleton className="h-9 w-20" />
-                        <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-20" />
-                    </div>
-                </div>
-            ))
-        ) : ideas.length > 0 ? (
-            ideas.map((idea: any, index) => (
-              <motion.div 
+        {ideas.length > 0 ? (
+            ideas.map((idea, index) => (
+              <div 
                 key={idea.id} 
                 className="flex flex-col md:flex-row md:items-center justify-between rounded-lg border p-4 gap-4 hover:shadow-md transition-shadow"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
               >
                 <div className="flex-1 space-y-1">
                     <p className="font-semibold text-lg">{idea.title}</p>
@@ -142,7 +103,7 @@ export default function EntrepreneurDashboard() {
                         </Button>
                     </Link>
                 </div>
-              </motion.div>
+              </div>
             ))
           ) : (
             <div className="text-center py-12 text-muted-foreground">
@@ -156,6 +117,6 @@ export default function EntrepreneurDashboard() {
            )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

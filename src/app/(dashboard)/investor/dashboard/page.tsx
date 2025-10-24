@@ -1,12 +1,10 @@
-'use client';
+'use server';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight, Bot, Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
-import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { ideas as predefinedIdeas } from "@/lib/data";
 
@@ -18,27 +16,21 @@ type Idea = {
   prototypeImageUrl: string;
 };
 
-export default function InvestorDashboard() {
-  const [featuredIdeas, setFeaturedIdeas] = useState<Idea[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchIdeas = () => {
-      setLoading(true);
-      // Use the first 2 ideas from predefined data
-      const liveIdeasWithImages = predefinedIdeas.slice(0, 2).map((idea) => ({
+async function getFeaturedIdeas() {
+    // In a real app, this would be a database call with specific logic
+    // to determine which ideas are "featured".
+    return predefinedIdeas.slice(0, 2).map((idea) => ({
         id: idea.id,
         title: idea.title,
         summary: idea.summary,
         field: idea.field,
         prototypeImageUrl: idea.prototypeImageUrl,
-      }));
-      setFeaturedIdeas(liveIdeasWithImages);
-      setLoading(false);
-    };
+    }));
+}
 
-    fetchIdeas();
-  }, []);
+
+export default async function InvestorDashboard() {
+  const featuredIdeas: Idea[] = await getFeaturedIdeas();
 
   return (
     <div className="space-y-6">
@@ -103,28 +95,7 @@ export default function InvestorDashboard() {
           <CardDescription>Check out some of the top-trending ideas on the platform.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-6 md:grid-cols-2">
-          {loading ? (
-            <>
-              <div className="space-y-3">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                  <div className="flex justify-between items-center pt-2">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-8 w-1/3" />
-                  </div>
-              </div>
-              <div className="space-y-3">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-6 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
-                   <div className="flex justify-between items-center pt-2">
-                    <Skeleton className="h-4 w-1/4" />
-                    <Skeleton className="h-8 w-1/3" />
-                  </div>
-              </div>
-            </>
-          ) : featuredIdeas.length > 0 ? (
+          {featuredIdeas.length > 0 ? (
             featuredIdeas.map((idea) => (
               <Card key={idea.id} className="overflow-hidden">
                 <div className="relative">

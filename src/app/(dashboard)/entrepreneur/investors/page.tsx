@@ -1,41 +1,22 @@
-'use client';
+'use server';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Send, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { investors as predefinedInvestors } from "@/lib/data";
 import type { Investor } from "@/lib/types";
+import { ApproachButton } from "./_components/approach-button";
 
+async function getInvestors(): Promise<Investor[]> {
+    // In a real application, you would fetch this from your database.
+    // For now, we'll use the predefined mock data.
+    return predefinedInvestors;
+}
 
-export default function BrowseInvestorsPage() {
-  const { toast } = useToast();
-  const [investors, setInvestors] = useState<Investor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [approached, setApproached] = useState<Set<string>>(new Set());
-  
-  useEffect(() => {
-    const fetchInvestors = () => {
-      setLoading(true);
-      setInvestors(predefinedInvestors);
-      setLoading(false);
-    }
-    fetchInvestors();
-  }, []);
-
-  const handleApproach = async (investor: Investor) => {
-    // await new Promise(resolve => setTimeout(resolve, 500));
-    
-    toast({
-      title: "Approach Initiated",
-      description: `Your interest has been sent to ${investor.name}. You'll be notified if they accept.`,
-    });
-    setApproached(prev => new Set(prev).add(investor.id));
-  };
+export default async function BrowseInvestorsPage() {
+  const investors = await getInvestors();
 
   return (
     <div className="space-y-6">
@@ -47,11 +28,7 @@ export default function BrowseInvestorsPage() {
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-           Array.from({ length: 3 }).map((_, index) => (
-             <Card key={index}><CardContent className="p-4"><Skeleton className="h-72 w-full" /></CardContent></Card>
-           ))
-        ) : investors.map((investor) => (
+        {investors.map((investor) => (
           <Card key={investor.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
             <CardHeader className="flex flex-col items-center text-center">
               <Avatar className="h-24 w-24 mb-4">
@@ -70,14 +47,7 @@ export default function BrowseInvestorsPage() {
               </p>
             </CardContent>
             <div className="p-4 border-t">
-              <Button 
-                className="w-full" 
-                onClick={() => handleApproach(investor)}
-                disabled={approached.has(investor.id)}
-              >
-                {approached.has(investor.id) ? <Check className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
-                {approached.has(investor.id) ? 'Approached' : 'Approach'}
-              </Button>
+                <ApproachButton investor={investor} />
             </div>
           </Card>
         ))}

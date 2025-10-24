@@ -1,57 +1,33 @@
-'use client';
+'use server';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Watermark } from "@/components/watermark";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { NdaModal } from "@/components/ui/nda-modal";
+import { NdaModalWrapper } from "./_components/nda-wrapper";
 import Link from "next/link";
 import { ideas as predefinedIdeas, entrepreneurs as predefinedEntrepreneurs } from "@/lib/data";
 import type { Idea as IdeaType, Entrepreneur } from "@/lib/types";
+import { createClient } from "@/lib/supabase/server";
+import { UnlockButton } from "./_components/unlock-button";
 
 type EnrichedIdea = IdeaType & {
   entrepreneur: Entrepreneur | undefined;
 };
 
+async function getEnrichedIdeas() {
+    const allIdeas = predefinedIdeas.map(idea => ({
+        ...idea,
+        entrepreneur: predefinedEntrepreneurs.find(e => e.id === idea.entrepreneurId),
+    }));
+    return allIdeas;
+}
 
-export default function BrowseIdeasPage() {
-    const [ideas, setIdeas] = useState<EnrichedIdea[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedIdea, setSelectedIdea] = useState<EnrichedIdea | null>(null);
-    const [isNdaOpen, setNdaOpen] = useState(false);
-    const [unlockedIdeas, setUnlockedIdeas] = useState<Set<string>>(new Set());
-
-    useEffect(() => {
-        const fetchIdeas = () => {
-            setLoading(true);
-            const allIdeas = predefinedIdeas.map(idea => ({
-              ...idea,
-              entrepreneur: predefinedEntrepreneurs.find(e => e.id === idea.entrepreneurId),
-            }));
-            
-            setIdeas(allIdeas);
-            setLoading(false);
-        };
-
-        fetchIdeas();
-    }, []);
-
-    const handleUnlockDetails = (idea: EnrichedIdea) => {
-        setSelectedIdea(idea);
-        setNdaOpen(true);
-    };
-
-    const handleNdaAccept = () => {
-        if (!selectedIdea) return;
-        setNdaOpen(false);
-        setUnlockedIdeas(prev => new Set(prev).add(selectedIdea.id));
-        alert(`NDA Accepted! You have now unlocked the details for "${selectedIdea.title}".`);
-        setSelectedIdea(null);
-    }
-
+export default async function BrowseIdeasPage() {
+    const ideas: EnrichedIdea[] = await getEnrichedIdeas();
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="space-y-6 pb-24">
@@ -63,44 +39,10 @@ export default function BrowseIdeasPage() {
       </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {loading ? (
-            Array.from({ length: 6 }).map((_, index) => (
-                <Card key={index} className="flex flex-col overflow-hidden">
-                    <CardHeader className="p-0">
-                        <Skeleton className="h-48 w-full" />
-                    </CardHeader>
-                    <CardContent className="flex-grow p-4 space-y-2">
-                        <Skeleton className="h-4 w-1/4" />
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-12 w-full" />
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0">
-                       <div className="flex justify-between items-center w-full">
-                            <div className="flex items-center gap-2">
-                                <Skeleton className="h-8 w-8 rounded-full" />
-                                <Skeleton className="h-4 w-24" />
-                           </div>
-                           <Skeleton className="h-10 w-1/3" />
-                        </div>
-                    </CardFooter>
-                </Card>
-            ))
-        ) : ideas.map((idea) => {
-          const isUnlocked = unlockedIdeas.has(idea.id);
+        {ideas.map((idea) => {
           return (
             <Card key={idea.id} className="flex flex-col overflow-hidden hover:shadow-xl transition-shadow duration-300">
                 <CardHeader className="p-0">
-                   {isUnlocked ? (
-                     <Link href={idea.prototypeImageUrl || '#'} target="_blank" rel="noopener noreferrer">
-                       <Image
-                          src={idea.prototypeImageUrl || 'https://picsum.photos/seed/placeholder/400/250'}
-                          alt={`Prototype for ${idea.title}`}
-                          width={400}
-                          height={250}
-                          className="rounded-t-lg aspect-video w-full object-cover"
-                        />
-                     </Link>
-                   ) : (
                     <Watermark text="VentureLink">
                       <Image
                         src={idea.prototypeImageUrl || 'https://picsum.photos/seed/placeholder/400/250'}
@@ -110,7 +52,6 @@ export default function BrowseIdeasPage() {
                         className="rounded-t-lg aspect-video w-full object-cover"
                       />
                     </Watermark>
-                   )}
                 </CardHeader>
                 <CardContent className="p-4 flex-grow">
                   <Badge variant="secondary" className="mb-2">{idea.field}</Badge>
@@ -133,21 +74,15 @@ export default function BrowseIdeasPage() {
                               <span className="text-sm font-medium">{idea.entrepreneur.name}</span>
                           </>
                           ) : (
-                              <div className="flex items-center gap-2">
-                                  <Skeleton className="h-8 w-8 rounded-full" />
-                                  <Skeleton className="h-4 w-24" />
-                              </div>
+                            <div className="flex items-center gap-2">
+                                <div className="h-8 w-8 rounded-full bg-muted" />
+                                <div className="h-4 w-24 bg-muted rounded-md" />
+                            </div>
                           )}
                       </div>
-                       {isUnlocked ? (
-                         <Link href={idea.prototypeImageUrl || '#'} target="_blank" rel="noopener noreferrer">
-                           <Button variant="secondary">View Prototype</Button>
-                         </Link>
-                       ) : (
-                         <Button onClick={() => handleUnlockDetails(idea)}>
-                            Unlock Details
-                         </Button>
-                       )}
+                        <NdaModalWrapper idea={idea} userId={user?.id}>
+                           <UnlockButton ideaId={idea.id} />
+                       </NdaModalWrapper>
                       </div>
                   </div>
                 </CardFooter>
@@ -155,22 +90,13 @@ export default function BrowseIdeasPage() {
           );
         })}
       </div>
-      {!loading && ideas.length === 0 && (
+      
+      {ideas.length === 0 && (
         <Card>
             <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">No ideas have been submitted yet. Check back soon!</p>
             </CardContent>
         </Card>
-      )}
-      
-       {selectedIdea && (
-        <NdaModal
-            isOpen={isNdaOpen}
-            onClose={() => setNdaOpen(false)}
-            onAccept={handleNdaAccept}
-            ideaTitle={selectedIdea.title}
-            entrepreneurName={selectedIdea.entrepreneur?.name || 'the entrepreneur'}
-        />
       )}
     </div>
   );
