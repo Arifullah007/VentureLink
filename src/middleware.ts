@@ -11,12 +11,12 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/', '/login', '/verify-otp'];
   
   // Check if the current route is one of the public routes
-  const isPublicRoute = publicRoutes.includes(url.pathname);
+  const isPublicRoute = publicRoutes.includes(url.pathname) || url.pathname.startsWith('/auth/callback');
 
   // If the user is authenticated
   if (user) {
     // And they are trying to access a public route (like the landing or login page)
-    if (isPublicRoute) {
+    if (publicRoutes.includes(url.pathname)) {
       // Redirect them to their appropriate dashboard
       const { data: profile } = await supabase
           .from('profiles')
@@ -51,9 +51,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - auth/callback (Supabase auth callback)
      * Feel free to modify this pattern to include more paths.
      */
-    '/((?!_next/static|_next/image|favicon.ico|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };
