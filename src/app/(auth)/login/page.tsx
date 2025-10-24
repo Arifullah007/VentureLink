@@ -1,5 +1,5 @@
 'use client';
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useTransition } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { z } from 'zod';
@@ -44,8 +44,7 @@ function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = searchParams.get('role') || 'entrepreneur';
-
-  const [loading, setLoading] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -64,57 +63,43 @@ function AuthForm() {
   });
 
   const handleLogin = async (data: LoginFormValues) => {
-    setLoading(true);
-    const result = await login(data);
-    
-    if (result.error) {
-      toast({
-        title: 'Login Failed',
-        description: result.error.message,
-        variant: 'destructive',
-      });
-      setLoading(false);
-    } else if (result.success) {
-      // On success, refresh the page. The middleware will handle redirecting
-      // the user to the correct dashboard.
-      router.refresh();
-      // Keep loading spinner active while the page refreshes and redirects.
-    } else {
+    startTransition(async () => {
+      const result = await login(data);
+      if (result?.error) {
         toast({
-          title: 'Login Error',
-          description: 'An unexpected error occurred. Please try again.',
+          title: 'Login Failed',
+          description: result.error.message,
           variant: 'destructive',
         });
-        setLoading(false);
-    }
+      }
+      // On success, the server action will handle the redirect.
+      // We don't need to do anything here on the client.
+    });
   };
 
   const handleSignup = async (data: SignupFormValues) => {
-    setLoading(true);
-    const result = await signup(data);
-    setLoading(false);
-    
-    if (result.error) {
-        toast({
-            title: 'Signup Failed',
-            description: result.error.message,
-            variant: 'destructive',
-        });
-    } else if (result.requiresOtp) {
-        toast({
-            title: 'Account Created!',
-            description: 'Please check your email for the verification code.',
-        });
-        // Redirect to the OTP verification page, passing the email and role as query parameters.
-        router.push(`/verify-otp?email=${encodeURIComponent(result.email || '')}&role=${result.role}`);
-    } else {
-        // This case is unlikely with email verification enabled, but good to have.
-        toast({
-            title: 'Account Created!',
-            description: 'You can now log in.',
-        });
-        setIsLogin(true);
-    }
+    startTransition(async () => {
+      const result = await signup(data);
+      if (result.error) {
+          toast({
+              title: 'Signup Failed',
+              description: result.error.message,
+              variant: 'destructive',
+          });
+      } else if (result.requiresOtp) {
+          toast({
+              title: 'Account Created!',
+              description: 'Please check your email for the verification code.',
+          });
+          router.push(`/verify-otp?email=${encodeURIComponent(result.email || '')}&role=${result.role}`);
+      } else {
+          toast({
+              title: 'Account Created!',
+              description: 'You can now log in.',
+          });
+          setIsLogin(true);
+      }
+    });
   };
 
   const formVariants = {
@@ -166,8 +151,8 @@ function AuthForm() {
                   <p className="text-sm text-red-500 mt-1">{loginForm.formState.errors.password.message}</p>
                 )}
               </div>
-              <Button type="submit" className="w-full font-semibold" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : 'Sign In'}
+              <Button type="submit" className="w-full font-semibold" disabled={isPending}>
+                {isPending ? <Loader2 className="animate-spin" /> : 'Sign In'}
               </Button>
             </form>
             <p className="mt-6 text-center text-sm text-gray-600">
@@ -253,8 +238,8 @@ function AuthForm() {
                   <p className="text-sm text-red-500 mt-1">{signupForm.formState.errors.role.message}</p>
                 )}
               </div>
-              <Button type="submit" className="w-full font-semibold" disabled={loading}>
-                {loading ? <Loader2 className="animate-spin" /> : 'Create Account'}
+              <Button type="submit" className="w-full font-semibold" disabled={isPending}>
+                {isPending ? <Loader2 className="animate-spin" /> : 'Create Account'}
               </Button>
             </form>
             <p className="mt-6 text-center text-sm text-gray-600">

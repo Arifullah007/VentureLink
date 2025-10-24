@@ -7,23 +7,21 @@ export async function middleware(request: NextRequest) {
 
   const url = request.nextUrl.clone();
 
-  // Define public routes that do not require authentication.
-  const publicRoutes = ['/', '/login', '/auth/callback', '/verify-otp'];
+  const protectedPaths = ['/investor', '/entrepreneur'];
+  const isProtectedRoute = protectedPaths.some(path => url.pathname.startsWith(path));
   
-  // The root path '/' is always public.
-  // Other public paths must be an exact match.
-  const isPublicRoute = url.pathname === '/' || publicRoutes.includes(url.pathname);
+  const publicAuthPaths = ['/login', '/verify-otp'];
+  const isPublicAuthPath = publicAuthPaths.includes(url.pathname);
 
-  // If the user is not authenticated and the route is not public, redirect to login.
-  if (!user && !isPublicRoute) {
+
+  // If the user is not authenticated and the route is protected, redirect to login.
+  if (!user && isProtectedRoute) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
   
-  // If the user is authenticated and trying to access a public page that is NOT the root page,
-  // redirect them to their appropriate dashboard.
-  if (user && isPublicRoute && url.pathname !== '/') {
-    // Fetch user's role from the 'profiles' table to determine the dashboard.
+  // If the user IS authenticated and tries to access login/signup, redirect to their dashboard.
+  if (user && isPublicAuthPath) {
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -32,7 +30,6 @@ export async function middleware(request: NextRequest) {
     
     const role = profile?.role;
     
-    // Redirect to the correct dashboard based on the role.
     if (role) {
         const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
         url.pathname = redirectTo;

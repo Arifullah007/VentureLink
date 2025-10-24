@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
-import { headers } from 'next/headers';
+import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
 const loginSchema = z.object({
@@ -36,9 +36,17 @@ export async function login(
   }
   
   if (data.user) {
-    // A successful login will trigger the middleware to handle redirection.
-    // We just need to signal success to the client so it can refresh.
-    return { error: null, success: true };
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+    
+    const role = profile?.role;
+    const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+    
+    revalidatePath('/', 'layout');
+    redirect(redirectTo);
   }
 
   // Fallback in case user data is not available after login.
