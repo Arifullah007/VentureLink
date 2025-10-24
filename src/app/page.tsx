@@ -80,6 +80,14 @@ const funnelSteps = [
     }
 ];
 
+declare global {
+  interface Window {
+    chatbase?: {
+      open: () => void;
+    };
+  }
+}
+
 export default function Home() {
   const [year, setYear] = useState<number | null>(null);
   const [isNdaOpen, setIsNdaOpen] = useState(false);
@@ -99,6 +107,13 @@ export default function Home() {
     e.preventDefault();
     setIsNdaOpen(true);
   }
+
+  const handleHelpCenterClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    if (window.chatbase) {
+      window.chatbase.open();
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background font-sans">
@@ -241,7 +256,7 @@ export default function Home() {
               <ul className="space-y-2">
                 <li><Link href="#" className="text-gray-300 hover:text-white">Blog</Link></li>
                 <li><Link href="#" className="text-gray-300 hover:text-white">Guides</Link></li>
-                <li><Link href="#" className="text-gray-300 hover:text-white">Help Center</Link></li>
+                <li><Link href="#" onClick={handleHelpCenterClick} className="text-gray-300 hover:text-white">Help Center</Link></li>
               </ul>
             </div>
             <div className="space-y-4">
