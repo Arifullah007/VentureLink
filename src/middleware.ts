@@ -9,22 +9,20 @@ export async function middleware(request: NextRequest) {
 
   // Define public routes that do not require authentication.
   const publicRoutes = ['/', '/login', '/auth/callback', '/verify-otp'];
-  const isPublicRoute = publicRoutes.some(path => url.pathname.startsWith(path));
   
+  // The root path '/' is always public.
+  // Other public paths must be an exact match.
+  const isPublicRoute = url.pathname === '/' || publicRoutes.includes(url.pathname);
+
   // If the user is not authenticated and the route is not public, redirect to login.
   if (!user && !isPublicRoute) {
     url.pathname = '/login';
     return NextResponse.redirect(url);
   }
   
-  // If the user is authenticated and trying to access a public page (like login),
+  // If the user is authenticated and trying to access a public page that is NOT the root page,
   // redirect them to their appropriate dashboard.
-  if (user && isPublicRoute) {
-    // Avoid redirecting from the root path if it's meant to be accessible.
-    if (url.pathname === '/') {
-        return response;
-    }
-      
+  if (user && isPublicRoute && url.pathname !== '/') {
     // Fetch user's role from the 'profiles' table to determine the dashboard.
     const { data: profile } = await supabase
         .from('profiles')
@@ -37,11 +35,8 @@ export async function middleware(request: NextRequest) {
     // Redirect to the correct dashboard based on the role.
     if (role) {
         const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-        // Only redirect if they are not already on their dashboard
-        if (url.pathname !== redirectTo) {
-            url.pathname = redirectTo;
-            return NextResponse.redirect(url);
-        }
+        url.pathname = redirectTo;
+        return NextResponse.redirect(url);
     }
   }
 
