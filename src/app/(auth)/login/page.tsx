@@ -65,34 +65,25 @@ function AuthForm() {
 
   const handleLogin = async (data: LoginFormValues) => {
     setLoading(true);
-    try {
-      const result = await login(data);
-      if (result.error) {
-        toast({
-          title: 'Login Failed',
-          description: result.error.message,
-          variant: 'destructive',
-        });
-      } else if (result.redirectTo) {
-        toast({
-          title: 'Login Successful!',
-          description: 'Redirecting to your dashboard...',
-        });
-        router.push(result.redirectTo);
-      } else {
+    const result = await login(data);
+    
+    if (result.error) {
+      toast({
+        title: 'Login Failed',
+        description: result.error.message,
+        variant: 'destructive',
+      });
+      setLoading(false);
+    } else if (result.redirectTo) {
+      // The server action was successful, now refresh the page.
+      // The middleware will handle the redirection to the correct dashboard.
+      router.refresh();
+    } else {
         toast({
           title: 'Login Error',
           description: 'Could not determine redirection path. Please try again.',
           variant: 'destructive',
         });
-      }
-    } catch (e: any) {
-        toast({
-          title: 'An Unexpected Error Occurred',
-          description: e.message || 'Please try again later.',
-          variant: 'destructive',
-        });
-    } finally {
         setLoading(false);
     }
   };

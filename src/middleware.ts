@@ -17,21 +17,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
   
-  // If the user is authenticated, handle redirects from public pages.
-  if (user) {
-    if (isPublicRoute && url.pathname !== '/') {
-        // Fetch user's role from the 'profiles' table.
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('role')
-            .eq('id', user.id)
-            .single();
-        
-        const role = profile?.role;
-        
-        // Redirect to the correct dashboard based on the role.
-        if (role) {
-            const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+  // If the user is authenticated and trying to access a public page (like login),
+  // redirect them to their appropriate dashboard.
+  if (user && isPublicRoute) {
+    // Avoid redirecting from the root path if it's meant to be accessible.
+    if (url.pathname === '/') {
+        return response;
+    }
+      
+    // Fetch user's role from the 'profiles' table to determine the dashboard.
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+    
+    const role = profile?.role;
+    
+    // Redirect to the correct dashboard based on the role.
+    if (role) {
+        const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
+        // Only redirect if they are not already on their dashboard
+        if (url.pathname !== redirectTo) {
             url.pathname = redirectTo;
             return NextResponse.redirect(url);
         }
