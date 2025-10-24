@@ -27,7 +27,7 @@ const signupSchema = z.object({
 
 export async function login(
   formData: z.infer<typeof loginSchema>
-): Promise<{ error: { message: string } | null; redirectTo?: string }> {
+): Promise<{ error: { message: string } | null; }> {
   const supabase = createClient();
   const { data, error } = await supabase.auth.signInWithPassword(formData);
 
@@ -48,7 +48,8 @@ export async function login(
     // Determine the redirect path based on the role.
     if (role) {
       const redirectTo = role === 'investor' ? '/investor/dashboard' : '/entrepreneur/dashboard';
-      return { error: null, redirectTo };
+      // Use the built-in redirect function for a robust server-side redirect.
+      return redirect(redirectTo);
     }
   }
 
